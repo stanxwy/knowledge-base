@@ -1,4 +1,30 @@
-## ping centos vm from host machine
+## config VMnet8 adapter on host machine
+![1783433984374](image/02_env_setup/1783433984374.png)
+
+## config vm network adaptor (NAT)
+![1783434137317](image/02_env_setup/1783434137317.png)
+
+## update network config in centos vm
+```bash
+cd /etc/sysconfig/network-scripts 
+vi ifcfg-ens33
+
+IPADDR=192.168.100.100
+GATEWAY=192.168.100.2
+NETMASK=255.255.255.0
+DNS1=192.168.100.2
+DNS2=8.8.8.8
+DNS3=114.114.114.114
+ONBOOT=yes
+
+ping 8.8.8.8
+
+ping www.baidu.com
+```
+
+## get centos vm ip address
+
+## ping centos vm ip from host machine
 ```log
 Microsoft Windows [Version 10.0.26200.8655]
 (c) Microsoft Corporation. All rights reserved.
@@ -1696,6 +1722,7 @@ milvus-etcd         quay.io/coreos/etcd:v3.5.18                "etcd -advertise-
 milvus-minio        minio/minio:RELEASE.2023-03-20T20-16-18Z   "/usr/bin/docker-ent…"   minio        7 seconds ago   Up 6 seconds (health: starting)   0.0.0.0:9002->9000/tcp, :::9002->9000/tcp, 0.0.0.0:9003->9001/tcp, :::9003->9001/tcp
 milvus-standalone   milvusdb/milvus:v2.5.5                     "/tini -- milvus run…"   standalone   7 seconds ago   Up 6 seconds (health: starting)   0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp
 ```
+
 ## access milvus using attu ui [](http://192.168.245.132:7000/)
 ![1783426669836](image/02_env_setup/1783426669836.png)
 
