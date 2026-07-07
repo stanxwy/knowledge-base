@@ -1445,7 +1445,7 @@ CONTAINER ID   IMAGE     COMMAND   CREATED   STATUS    PORTS     NAMES
        valid_lft forever preferred_lft forever
 ```
 
-## upload docker image tar archives from host to centos vm
+## upload docker image tar archives, and docker-compose.yml (for milvus and related services) from host to centos vm
 ```log
 > scp minio.tar root@192.168.245.132:/root/minio.tar
 
@@ -1513,13 +1513,16 @@ quay.io/minio/minio   RELEASE.2024-12-18T13-15-44Z   6aed1b694901   18 months ag
 
 ## start minio container
 ```log
-[root@localhost ~]# docker run -d --name minio     --restart always     -p 9000:9000     -p 9001:9001     -e "MINIO_ROOT_USER=minioadmin"     -e "MINIO_ROOT_PASSWORD=minioadmin"     -v "$(pwd)/volumes/minio/data:/data"     quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z server /data     --console-address ":9001"
+[root@localhost ~]# docker run -d --name minio --restart always -p 9000:9000 -p 9001:9001 -e "MINIO_ROOT_USER=minioadmin" -e "MINIO_ROOT_PASSWORD=minioadmin" -v "$(pwd)/volumes/minio/data:/data" quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z server /data --console-address ":9001"
 e91ffda50ff216ec38a651193ddd99ef94f829fc2edce757d65827906d9ccf51
 
 [root@localhost ~]# docker ps -a
 CONTAINER ID   IMAGE                                              COMMAND                  CREATED         STATUS         PORTS                                                           NAMES
 e91ffda50ff2   quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z   "/usr/bin/docker-ent…"   7 seconds ago   Up 6 seconds   0.0.0.0:9000-9001->9000-9001/tcp, :::9000-9001->9000-9001/tcp   minio
 ```
+
+## access minio ui [http://192.168.245.132:9001/]()
+![1783426526182](image/02_env_setup/1783426526182.png)
 
 ## observe voulumes created by minio container
 ```log
@@ -1693,6 +1696,8 @@ milvus-etcd         quay.io/coreos/etcd:v3.5.18                "etcd -advertise-
 milvus-minio        minio/minio:RELEASE.2023-03-20T20-16-18Z   "/usr/bin/docker-ent…"   minio        7 seconds ago   Up 6 seconds (health: starting)   0.0.0.0:9002->9000/tcp, :::9002->9000/tcp, 0.0.0.0:9003->9001/tcp, :::9003->9001/tcp
 milvus-standalone   milvusdb/milvus:v2.5.5                     "/tini -- milvus run…"   standalone   7 seconds ago   Up 6 seconds (health: starting)   0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp
 ```
+## access milvus using attu ui [](http://192.168.245.132:7000/)
+![1783426669836](image/02_env_setup/1783426669836.png)
 
 ## load mongodb image from tar archive
 ```log
@@ -1754,4 +1759,242 @@ switched to db admin
 admin> show collections;
 system.version
 admin> exit
+```
+
+## connect to mongodb using mongodb compass
+![1783426786147](image/02_env_setup/1783426786147.png)
+
+## config restart policy for all containers
+```log
+[root@localhost ~]# docker update --restart=unless-stopped milvus-attu
+milvus-attu
+[root@localhost ~]# docker update --restart=unless-stopped milvus-standalone
+milvus-standalone
+[root@localhost ~]# docker update --restart=unless-stopped milvus-etcd
+milvus-etcd
+[root@localhost ~]# docker update --restart=unless-stopped milvus-minio
+milvus-minio
+
+[root@localhost ~]# docker inspect milvus-attu --format='{{.HostConfig.RestartPolicy.Name}}'
+unless-stopped
+```
+
+## check all images loaded in docker
+```log
+[root@localhost ~]# docker images
+REPOSITORY            TAG                            IMAGE ID       CREATED         SIZE
+mongo                 latest                         b6fc3eda4f9a   3 months ago    950MB
+zilliz/attu           v2.5.10                        c75a41a64200   13 months ago   400MB
+milvusdb/milvus       v2.5.5                         f483514c173e   16 months ago   1.73GB
+quay.io/coreos/etcd   v3.5.18                        b9e6889272c9   17 months ago   59MB
+quay.io/minio/minio   RELEASE.2024-12-18T13-15-44Z   6aed1b694901   18 months ago   179MB
+minio/minio           RELEASE.2023-03-20T20-16-18Z   400c20c8aac0   3 years ago     252MB
+```
+
+## check all containers running
+```log
+[root@localhost ~]# docker ps -a
+CONTAINER ID   IMAGE                                              COMMAND                  CREATED             STATUS                       PORTS                                                                                      NAMES
+772b2e24080e   zilliz/attu:v2.5.10                                "docker-entrypoint.s…"   About an hour ago   Up About an hour             3000/tcp, 0.0.0.0:7000->7000/tcp, :::7000->7000/tcp                                        milvus-attu
+87321615cc8b   milvusdb/milvus:v2.5.5                             "/tini -- milvus run…"   About an hour ago   Up About an hour (healthy)   0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp   milvus-standalone
+156b13f5a1ed   minio/minio:RELEASE.2023-03-20T20-16-18Z           "/usr/bin/docker-ent…"   About an hour ago   Up About an hour (healthy)   0.0.0.0:9002->9000/tcp, :::9002->9000/tcp, 0.0.0.0:9003->9001/tcp, :::9003->9001/tcp       milvus-minio
+9bd4f9b2fff8   quay.io/coreos/etcd:v3.5.18                        "etcd -advertise-cli…"   About an hour ago   Up About an hour (healthy)   2379-2380/tcp                                                                              milvus-etcd
+bfd444b92340   mongo                                              "docker-entrypoint.s…"   3 hours ago         Up 3 hours                   0.0.0.0:27017->27017/tcp, :::27017->27017/tcp                                              mongo
+e91ffda50ff2   quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z   "/usr/bin/docker-ent…"   6 hours ago         Up 6 hours                   0.0.0.0:9000-9001->9000-9001/tcp, :::9000-9001->9000-9001/tcp                              minio
+[root@localhost ~]#
+```
+
+## check current docker status
+```log
+[root@localhost ~]# sudo systemctl status docker
+● docker.service - Docker Application Container Engine
+   Loaded: loaded (/usr/lib/systemd/system/docker.service; enabled; vendor preset: disabled)
+   Active: active (running) since Tue 2026-07-07 01:31:36 EDT; 6h ago
+     Docs: https://docs.docker.com
+ Main PID: 32280 (dockerd)
+    Tasks: 151
+   Memory: 1.0G
+   CGroup: /system.slice/docker.service
+           ├─32280 /usr/bin/dockerd -H fd:// --containerd=/run/containerd/containerd.sock
+           ├─32596 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 9001 -container-ip 172.17.0.2 -container-port 9001
+           ├─32601 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 9001 -container-ip 172.17.0.2 -container-port 9001
+           ├─32618 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 9000 -container-ip 172.17.0.2 -container-port 9000
+           ├─32626 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 9000 -container-ip 172.17.0.2 -container-port 9000
+           ├─36355 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 27017 -container-ip 172.17.0.3 -container-port 27017
+           ├─36362 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 27017 -container-ip 172.17.0.3 -container-port 27017
+           ├─50183 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 9003 -container-ip 172.21.0.2 -container-port 9001
+           ├─50191 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 9003 -container-ip 172.21.0.2 -container-port 9001
+           ├─50229 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 9002 -container-ip 172.21.0.2 -container-port 9000
+           ├─50236 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 9002 -container-ip 172.21.0.2 -container-port 9000
+           ├─50353 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 19530 -container-ip 172.21.0.4 -container-port 19530
+           ├─50361 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 19530 -container-ip 172.21.0.4 -container-port 19530
+           ├─50374 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 9091 -container-ip 172.21.0.4 -container-port 9091
+           ├─50383 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 9091 -container-ip 172.21.0.4 -container-port 9091
+           ├─50462 /usr/bin/docker-proxy -proto tcp -host-ip 0.0.0.0 -host-port 7000 -container-ip 172.21.0.5 -container-port 7000
+           └─50468 /usr/bin/docker-proxy -proto tcp -host-ip :: -host-port 7000 -container-ip 172.21.0.5 -container-port 7000
+
+Jul 07 07:01:21 localhost.localdomain dockerd[32280]: time="2026-07-07T07:01:21.421186929-04:00" level=info msg="ignoring event" container=a1dc6b7a6c7927e620ec534f9bb40b90ba57e60b375a66237f5bf3...s.TaskDelete"
+Jul 07 07:01:21 localhost.localdomain dockerd[32280]: time="2026-07-07T07:01:21.592952675-04:00" level=info msg="ignoring event" container=1850bea6b5b382eb37fbd804103f21adfdcb8278f57c7e825b732d...s.TaskDelete"
+Jul 07 07:01:22 localhost.localdomain dockerd[32280]: time="2026-07-07T07:01:22.115588913-04:00" level=info msg="ignoring event" container=2ab7e23749af071fd387f06ac2f85c032e2c8d8c2af0958c724d85...s.TaskDelete"
+Jul 07 07:01:58 localhost.localdomain dockerd[32280]: time="2026-07-07T07:01:58.317892570-04:00" level=warning msg="Security options with `:` as a separator are deprecated and will be completel...`=` instead."
+Jul 07 07:02:32 localhost.localdomain dockerd[32280]: time="2026-07-07T07:02:32.739428767-04:00" level=error msg="[resolver] failed to query external DNS server" client-addr="udp:172.21.0.5:41062" dns-serve...
+Jul 07 07:02:32 localhost.localdomain dockerd[32280]: time="2026-07-07T07:02:32.836132938-04:00" level=error msg="[resolver] failed to query external DNS server" client-addr="udp:172.21.0.5:58360" dns-serve...
+Jul 07 07:02:34 localhost.localdomain dockerd[32280]: time="2026-07-07T07:02:34.903130307-04:00" level=error msg="[resolver] failed to query external DNS server" client-addr="udp:172.21.0.5:39446" dns-serve...
+Jul 07 07:05:13 localhost.localdomain dockerd[32280]: time="2026-07-07T07:05:13.312099905-04:00" level=error msg="[resolver] failed to query external DNS server" client-addr="udp:172.21.0.5:36615" dns-serve...
+Jul 07 07:05:15 localhost.localdomain dockerd[32280]: time="2026-07-07T07:05:15.313283142-04:00" level=error msg="[resolver] failed to query external DNS server" client-addr="udp:172.21.0.5:51327" dns-serve...
+Jul 07 07:06:20 localhost.localdomain dockerd[32280]: time="2026-07-07T07:06:20.824701510-04:00" level=error msg="[resolver] failed to query external DNS server" client-addr="udp:172.21.0.5:56638" dns-serve...
+Hint: Some lines were ellipsized, use -l to show in full.
+```
+
+## check current docker compose config
+```log
+[root@localhost ~]# docker compose config
+WARN[0000] /root/docker-compose.yml: `version` is obsolete
+name: root
+services:
+  attu:
+    container_name: milvus-attu
+    depends_on:
+      standalone:
+        condition: service_started
+        required: true
+    environment:
+      ATTU_LOG_LEVEL: info
+      HOST: 0.0.0.0
+      MILVUS_URL: standalone:19530
+      SERVER_NAME: auto_gui
+      SERVER_PORT: "7000"
+    image: zilliz/attu:v2.5.10
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 7000
+        published: "7000"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: /root/milvus
+        target: /app/tls
+        bind:
+          create_host_path: true
+  etcd:
+    command:
+      - etcd
+      - -advertise-client-urls=http://127.0.0.1:2379
+      - -listen-client-urls
+      - http://0.0.0.0:2379
+      - --data-dir
+      - /etcd
+    container_name: milvus-etcd
+    environment:
+      ETCD_AUTO_COMPACTION_MODE: revision
+      ETCD_AUTO_COMPACTION_RETENTION: "1000"
+      ETCD_QUOTA_BACKEND_BYTES: "4294967296"
+      ETCD_SNAPSHOT_COUNT: "50000"
+    healthcheck:
+      test:
+        - CMD
+        - etcdctl
+        - endpoint
+        - health
+      timeout: 20s
+      interval: 30s
+      retries: 3
+    image: quay.io/coreos/etcd:v3.5.18
+    networks:
+      default: null
+    volumes:
+      - type: bind
+        source: /root/volumes/etcd
+        target: /etcd
+        bind:
+          create_host_path: true
+  minio:
+    command:
+      - minio
+      - server
+      - /minio_data
+      - --console-address
+      - :9001
+    container_name: milvus-minio
+    environment:
+      MINIO_ACCESS_KEY: minioadmin
+      MINIO_SECRET_KEY: minioadmin
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9000/minio/health/live
+      timeout: 20s
+      interval: 30s
+      retries: 3
+    image: minio/minio:RELEASE.2023-03-20T20-16-18Z
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 9001
+        published: "9003"
+        protocol: tcp
+      - mode: ingress
+        target: 9000
+        published: "9002"
+        protocol: tcp
+    volumes:
+      - type: bind
+        source: /root/volumes/minio
+        target: /minio_data
+        bind:
+          create_host_path: true
+  standalone:
+    command:
+      - milvus
+      - run
+      - standalone
+    container_name: milvus-standalone
+    depends_on:
+      etcd:
+        condition: service_started
+        required: true
+      minio:
+        condition: service_started
+        required: true
+    environment:
+      ETCD_ENDPOINTS: etcd:2379
+      MINIO_ADDRESS: minio:9000
+    healthcheck:
+      test:
+        - CMD
+        - curl
+        - -f
+        - http://localhost:9091/healthz
+      timeout: 20s
+      interval: 30s
+      retries: 3
+      start_period: 1m30s
+    image: milvusdb/milvus:v2.5.5
+    networks:
+      default: null
+    ports:
+      - mode: ingress
+        target: 19530
+        published: "19530"
+        protocol: tcp
+      - mode: ingress
+        target: 9091
+        published: "9091"
+        protocol: tcp
+    security_opt:
+      - seccomp:unconfined
+    volumes:
+      - type: bind
+        source: /root/volumes/milvus
+        target: /var/lib/milvus
+        bind:
+          create_host_path: true
+networks:
+  default:
+    name: milvus
 ```
