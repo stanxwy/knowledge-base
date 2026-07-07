@@ -68,6 +68,7 @@ services:
       - ATTU_LOG_LEVEL=info
       - SERVER_NAME=auto_gui
       - SERVER_PORT=7000
+      - HOST=0.0.0.0  # 添加这一行，让 Attu 监听所有接口
     ports:
       - "7000:7000"
     volumes:
