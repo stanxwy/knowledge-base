@@ -1737,8 +1737,13 @@ milvus-minio        minio/minio:RELEASE.2023-03-20T20-16-18Z   "/usr/bin/docker-
 milvus-standalone   milvusdb/milvus:v2.5.5                     "/tini -- milvus run…"   standalone   7 seconds ago   Up 6 seconds (health: starting)   0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp
 ```
 
-## access milvus using attu ui [](http://192.168.245.132:7000/)
-![1783426669836](image/02_env_setup/1783426669836.png)
+## access milvus using attu web ui [](http://192.168.245.132:7000/)
+![1783486424638](image/02_env_setup/1783486424638.png)
+![1783486361561](image/02_env_setup/1783486361561.png)
+
+## access milvus using attu desktop client
+![1783486235684](image/02_env_setup/1783486235684.png)
+![1783486277309](image/02_env_setup/1783486277309.png)
 
 ## load mongodb image from tar archive
 ```log
