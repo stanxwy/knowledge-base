@@ -1,5 +1,5 @@
-from processor.import_processor.base import BaseNode
-from processor.import_processor.state import ImportGraphState
+from app.processor.import_processor.base import BaseNode
+from app.processor.import_processor.state import ImportGraphState
 
 
 class NodeMDImg(BaseNode):
