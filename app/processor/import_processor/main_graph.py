@@ -109,12 +109,14 @@ if __name__ == "__main__":
     workflow = KBImportWorkflow()
     
     # 方式1：实例化后使用（推荐方式，可复用）
+    print("=== 方式1：流式执行 ===")
     for event in workflow.run(init_state, stream=True):
         print(f"state: {event}")
 
     # 方式2：非流式执行
+    print("\n=== 方式2：非流式执行 ===")
     final_state = workflow.run(init_state, stream=False)
     print(json.dumps(final_state, ensure_ascii=False, indent=4))
     
     # 打印编译后的图结构
-    workflow.graph.get_graph().print_ascii()
+    # workflow.graph.get_graph().print_ascii()
