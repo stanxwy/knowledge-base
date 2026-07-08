@@ -1,8 +1,9 @@
 ## config VMnet8 adapter on host machine
-![1783433984374](image/02_env_setup/1783433984374.png)
+![1783471092531](image/02_env_setup/1783471092531.png)
 
 ## config vm network adaptor (NAT)
 ![1783434137317](image/02_env_setup/1783434137317.png)
+![1783472447562](image/02_env_setup/1783472447562.png)
 
 ## no ip address assigned to centos vm yet
 ```log
