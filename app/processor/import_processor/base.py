@@ -14,6 +14,21 @@ from app.processor.import_processor.exceptions import ImportProcessError
 
 T = TypeVar("T")  # 泛型状态类型
 
+"""
+1、抽象的类（ABC），子类需要实现这个类
+2、抽象的方法（@abstractmethod process），子类需要实现这个方法
+3、name属性，子类必须覆盖这个属性
+4、__init__() 方法中初始化了日志记录器，日志记录器的名字是 self所在类的名字
+5、__init__() 方法中初始化了全局配置，获取全局单例配置对象
+6、__call__() 方法的调用时机  
+    (1)对象 = 类名() 
+    (2)结果 = 对象()     圆括号调用了__call__()方法
+7、self.process()， 当前这句话是从哪调用过来的，process()就定义在哪个位置
+8、未来可以在父类的process()中实现任务追踪
+9、封装了统一日志处理，使用logging、colorlog
+    注意：使用日志记录器记录日志时一定要先激活日志setup_logging(logging.INFO)，并指定日志级别
+    
+"""
 
 class BaseNode(ABC):
     """
@@ -124,6 +139,26 @@ def setup_logging(level: int = logging.INFO):
         format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
+
+    # import colorlog
+    # logger = logging.getLogger()
+    # logger.setLevel(level)
+    # 
+    # handler = colorlog.StreamHandler()
+    # handler.setFormatter(colorlog.ColoredFormatter(
+    #     '%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    #     datefmt='%Y-%m-%d %H:%M:%S',
+    #     log_colors={
+    #         'DEBUG': 'cyan',
+    #         'INFO': 'green',  # INFO 显示为绿色
+    #         'WARNING': 'yellow',
+    #         'ERROR': 'red',
+    #         'CRITICAL': 'bold_red',
+    #     }
+    # ))
+
+    # logger.handlers.clear()
+    # logger.addHandler(handler)
 
 if __name__ == "__main__":
     print(BaseNode.__dict__)
