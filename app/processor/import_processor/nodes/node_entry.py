@@ -23,7 +23,7 @@ class NodeEntry(BaseNode):
         :param state: `import_file_path`
         :return: `is_pdf_read_enabled/pdf_path` 或 `is_md_read_enabled/md_path` 、`file_title`
         """
-        
+
         update_state = {}
         # 1. 从state中获取文件
         import_file_path = state.get("import_file_path")
@@ -55,8 +55,6 @@ class NodeEntry(BaseNode):
         return update_state
     
 if __name__ == "__main__":
-    import logging
-    import json
     setup_logging()
     
     init_state = {"import_file_path": "./docs/readme.md"}
