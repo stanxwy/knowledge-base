@@ -24,7 +24,11 @@ class KBImportWorkflow:
 
     @property
     def graph(self):
-        """懒加载：只在第一次使用时编译图"""
+        """
+        懒加载：只在第一次使用时编译图
+        这个写法是“延迟初始化 + 缓存”的范式，核心目的是把“编译图”这个高成本操作推迟到必须执行时才做。
+        这不仅提升了对象实例化的速度，也避免了无效的资源浪费，是 LangGraph 项目中的最佳实践。
+        """
         if self.__compiled_graph is None:
             self.__compiled_graph = self.build_graph()
         return self.__compiled_graph
