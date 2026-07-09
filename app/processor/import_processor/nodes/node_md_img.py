@@ -100,7 +100,7 @@ class NodeMDImg(BaseNode):
         :return: md_path、md_content
         """
 
-        update_state = {}
+        update_state: ImportGraphState = {}
         # 步骤1：初始化数据，获取MD核心信息
         md_content, md_path_obj, images_dir = self._step_1_get_content(state)
         if not images_dir.exists():

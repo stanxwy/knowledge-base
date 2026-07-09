@@ -24,7 +24,7 @@ class NodeEntry(BaseNode):
         :return: `is_pdf_read_enabled/pdf_path` 或 `is_md_read_enabled/md_path` 、`file_title`
         """
 
-        update_state = {}
+        update_state: ImportGraphState = {}
         # 1. 从state中获取文件
         import_file_path = state.get("import_file_path")
         # import_file_path = state["import_file_path"] #这样写的话字段不存在直接报错
