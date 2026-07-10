@@ -9,8 +9,7 @@ import requests
 
 from app.config.mineru_config import mineru_config
 from app.processor.import_processor.base import BaseNode, setup_logging
-from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError, ConfigurationError, \
-    PdfConversionError
+from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError, PdfConversionError
 from app.processor.import_processor.state import ImportGraphState
 
 
@@ -201,9 +200,8 @@ class NodePDFToMD(BaseNode):
         self.logger.info(f"【ZIP解压】ZIP解压完成，解压目录：{extract_target_dir}")
 
         # 5、重命名
-        self.logger.info(f"【MD重命名】找到MinerU生成的full.md文件")
         target_md_file = extract_target_dir / "full.md"
-        self.logger.info(f"【MD重命名】开始将full.md文件进行重命名")
+        self.logger.info(f"【MD重命名】开始将full.md文件重命名为{pdf_stem}.md")
         new_md_path = target_md_file.with_name(f"{pdf_stem}.md")
         target_md_file.rename(new_md_path)
         self.logger.info(f"【MD重命名】重命名成功，文件名：{pdf_stem}.md")

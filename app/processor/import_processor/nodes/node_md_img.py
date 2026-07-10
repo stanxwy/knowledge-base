@@ -11,7 +11,6 @@ from typing import Tuple, List, Dict, Deque
 from langchain_openai import ChatOpenAI
 from minio import Minio
 from minio.deleteobjects import DeleteObject
-from openai import OpenAI
 
 from config.lm_config import lm_config
 from config.minio_config import minio_config

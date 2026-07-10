@@ -258,3 +258,152 @@ Processing pages: 100%|███████████████████
 2026-07-10 20:07:33.509 | INFO     | mineru.cli.client:run_planned_task:883 - Completed batch 1/1 | Processed 6/6 pages | 1 of 1 batch finished | task#1 [H3C]
 (py311) PS D:\>
 ```
+
+## test run without `--backend pipeline` argument
+```bash
+(py311) PS D:\> mineru -p H3C.pdf -o output1
+2026-07-10 20:35:42.491 | INFO     | mineru.cli.client:run_orchestrated_cli:953 - Started local mineru-api at http://127.0.0.1:1976
+2026-07-10 20:35:47.255 | INFO     | __main__:create_app:236 - Request concurrency limited to 3
+Start MinerU FastAPI Service: http://127.0.0.1:1976
+API documentation: http://127.0.0.1:1976/docs
+INFO:     Started server process [34800]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:1976 (Press CTRL+C to quit)
+2026-07-10 20:35:47.605 | INFO     | mineru.cli.client:run_planned_task:832 - Submitting batch 1/1 | 1 document, 6 pages in this batch | 6 pages total | task#1 [H3C]
+2026-07-10 20:35:51.378 | INFO     | mineru.utils.engine_utils:get_vlm_engine:34 - Using lmdeploy-engine as the inference engine for VLM.
+2026-07-10 20:35:54.278 | ERROR    | __main__:_process_task:1154 - Async task failed: 3cf37013-4f11-4c6c-993c-4550beffda66
+Traceback (most recent call last):
+
+  File "<frozen runpy>", line 198, in _run_module_as_main
+  File "<frozen runpy>", line 88, in _run_code
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\cli\fast_api.py", line 1474, in <module>
+    main()
+    └ <Command main>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\click\core.py", line 1569, in __call__
+    return self.main(*args, **kwargs)
+           │    │     │       └ {}
+           │    │     └ ()
+           │    └ <function Command.main at 0x0000019DE3184360>
+           └ <Command main>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\click\core.py", line 1490, in main
+    rv = self.invoke(ctx)
+         │    │      └ <click.core.Context object at 0x0000019D9CEB0FD0>
+         │    └ <function Command.invoke at 0x0000019DE3184040>
+         └ <Command main>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\click\core.py", line 1353, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+           │   │      │    │           │   └ {'host': '127.0.0.1', 'port': 1976, 'reload': False, 'allow_public_http_client': False, 'enable_vlm_preload': False}
+           │   │      │    │           └ <click.core.Context object at 0x0000019D9CEB0FD0>
+           │   │      │    └ <function main at 0x0000019D9CE64EA0>
+           │   │      └ <Command main>
+           │   └ <function Context.invoke at 0x0000019DE3177240>
+           └ <click.core.Context object at 0x0000019D9CEB0FD0>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\click\core.py", line 907, in invoke
+    return callback(*args, **kwargs)
+           │         │       └ {'host': '127.0.0.1', 'port': 1976, 'reload': False, 'allow_public_http_client': False, 'enable_vlm_preload': False}
+           │         └ ()
+           └ <function main at 0x0000019D9CE64EA0>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\click\decorators.py", line 34, in new_func
+    return f(get_current_context(), *args, **kwargs)
+           │ │                       │       └ {'host': '127.0.0.1', 'port': 1976, 'reload': False, 'allow_public_http_client': False, 'enable_vlm_preload': False}
+           │ │                       └ ()
+           │ └ <function get_current_context at 0x0000019DE31394E0>
+           └ <function main at 0x0000019D9CE651C0>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\cli\fast_api.py", line 1470, in main
+    server.run()
+    │      └ <function Server.run at 0x0000019DE3293BA0>
+    └ <uvicorn.server.Server object at 0x0000019D9CD603D0>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\uvicorn\server.py", line 74, in run
+    return asyncio_run(self.serve(sockets=sockets), loop_factory=self.config.get_loop_factory())
+           │           │    │             │                      │    │      └ <function Config.get_loop_factory at 0x0000019DE3235800>
+           │           │    │             │                      │    └ <uvicorn.config.Config object at 0x0000019D9CEB1ED0>
+           │           │    │             │                      └ <uvicorn.server.Server object at 0x0000019D9CD603D0>
+           │           │    │             └ None
+           │           │    └ <function Server.serve at 0x0000019DE3293C40>
+           │           └ <uvicorn.server.Server object at 0x0000019D9CD603D0>
+           └ <function asyncio_run at 0x0000019DE31E67A0>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\uvicorn\_compat.py", line 30, in asyncio_run
+    return runner.run(main)
+           │      │   └ <coroutine object Server.serve at 0x0000019D9CCF2C50>
+           │      └ <function Runner.run at 0x0000019DE2AB0C20>
+           └ <asyncio.runners.Runner object at 0x0000019D9CD52650>
+  File "D:\dev\miniconda3\envs\py311\Lib\asyncio\runners.py", line 118, in run
+    return self._loop.run_until_complete(task)
+           │    │     │                  └ <Task pending name='Task-1' coro=<Server.serve() running at D:\dev\miniconda3\envs\py311\Lib\site-packages\uvicorn\server.py:...
+           │    │     └ <function BaseEventLoop.run_until_complete at 0x0000019DE2AAA840>
+           │    └ <ProactorEventLoop running=True closed=False debug=False>
+           └ <asyncio.runners.Runner object at 0x0000019D9CD52650>
+  File "D:\dev\miniconda3\envs\py311\Lib\asyncio\base_events.py", line 641, in run_until_complete
+    self.run_forever()
+    │    └ <function ProactorEventLoop.run_forever at 0x0000019DE2B85C60>
+    └ <ProactorEventLoop running=True closed=False debug=False>
+  File "D:\dev\miniconda3\envs\py311\Lib\asyncio\windows_events.py", line 321, in run_forever
+    super().run_forever()
+  File "D:\dev\miniconda3\envs\py311\Lib\asyncio\base_events.py", line 608, in run_forever
+    self._run_once()
+    │    └ <function BaseEventLoop._run_once at 0x0000019DE2AB05E0>
+    └ <ProactorEventLoop running=True closed=False debug=False>
+  File "D:\dev\miniconda3\envs\py311\Lib\asyncio\base_events.py", line 1936, in _run_once
+    handle._run()
+    │      └ <function Handle._run at 0x0000019DE29FE980>
+    └ <Handle Task.task_wakeup(<Future finis... available.')>)>
+  File "D:\dev\miniconda3\envs\py311\Lib\asyncio\events.py", line 84, in _run
+    self._context.run(self._callback, *self._args)
+    │    │            │    │           │    └ <member '_args' of 'Handle' objects>
+    │    │            │    │           └ <Handle Task.task_wakeup(<Future finis... available.')>)>
+    │    │            │    └ <member '_callback' of 'Handle' objects>
+    │    │            └ <Handle Task.task_wakeup(<Future finis... available.')>)>
+    │    └ <member '_context' of 'Handle' objects>
+    └ <Handle Task.task_wakeup(<Future finis... available.')>)>
+> File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\cli\fast_api.py", line 1144, in _process_task
+    await self._run_task(task)
+          │    │         └ AsyncParseTask(task_id='3cf37013-4f11-4c6c-993c-4550beffda66', status='failed', backend='hybrid-engine', file_names=['H3C'], ...
+          │    └ <function AsyncTaskManager._run_task at 0x0000019D9CD56660>
+          └ <__main__.AsyncTaskManager object at 0x0000019D9CF04690>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\cli\fast_api.py", line 1174, in _run_task
+    await run_parse_job(
+          └ <function run_parse_job at 0x0000019D9CD559E0>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\cli\fast_api.py", line 866, in run_parse_job
+    await aio_do_parse(**parse_kwargs)
+          │              └ {'output_dir': 'C:\\Users\\stan\\AppData\\Local\\Temp\\mineru-api-client-0afj16gh\\output\\3cf37013-4f11-4c6c-993c-4550beffda...
+          └ <function aio_do_parse at 0x0000019D9CD35940>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\cli\common.py", line 846, in aio_do_parse
+    await _async_process_hybrid(
+          └ <function _async_process_hybrid at 0x0000019D9CD35760>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\cli\common.py", line 595, in _async_process_hybrid
+    middle_json, infer_result = await aio_hybrid_doc_analyze(
+                                      └ <function aio_doc_analyze at 0x0000019DA3B6BC40>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\backend\hybrid\hybrid_analyze.py", line 1116, in aio_doc_analyze
+    predictor = await _get_model_async(backend, model_path, server_url, **kwargs)
+                      │                │        │           │             └ {}
+                      │                │        │           └ None
+                      │                │        └ None
+                      │                └ 'lmdeploy-engine'
+                      └ <function _get_model_async at 0x0000019D90314400>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\backend\vlm\vlm_analyze.py", line 271, in _get_model_async
+    return await asyncio.to_thread(
+                 │       └ <function to_thread at 0x0000019DE2AD1BC0>
+                 └ <module 'asyncio' from 'D:\\dev\\miniconda3\\envs\\py311\\Lib\\asyncio\\__init__.py'>
+  File "D:\dev\miniconda3\envs\py311\Lib\asyncio\threads.py", line 25, in to_thread
+    return await loop.run_in_executor(None, func_call)
+                 │    │                     └ functools.partial(<built-in method run of _contextvars.Context object at 0x0000019D9CEB1B40>, <bound method ModelSingleton.ge...
+                 │    └ <function BaseEventLoop.run_in_executor at 0x0000019DE2AAB100>
+                 └ <ProactorEventLoop running=True closed=False debug=False>
+  File "D:\dev\miniconda3\envs\py311\Lib\concurrent\futures\thread.py", line 58, in run
+    result = self.fn(*self.args, **self.kwargs)
+             │        │            └ None
+             │        └ None
+             └ None
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\backend\vlm\vlm_analyze.py", line 199, in get_model
+    lm_backend = set_lmdeploy_backend(device_type)
+                 │                    └ 'cuda'
+                 └ <function set_lmdeploy_backend at 0x0000019D99275E40>
+  File "D:\dev\miniconda3\envs\py311\Lib\site-packages\mineru\backend\vlm\utils.py", line 66, in set_lmdeploy_backend
+    raise ValueError("CUDA is not available.")
+
+ValueError: CUDA is not available.
+
+Aborted!
+(py311) PS D:\>
+```
