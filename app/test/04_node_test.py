@@ -40,3 +40,18 @@ if __name__ == "__main__":
         print("\n最终状态:", final_state)
     except ImportProcessError as e:
         print("捕获到流程错误:", e)
+
+"""
+config loaded True...
+ImportConfig instance not found...
+creating ImportConfig instance...
+初始状态: {'data': [1, 2, 3], 'status': 'raw'}
+
+开始执行节点...
+
+2026-07-10 19:35:14 - import.test_node - INFO - --- test_node 开始 ---
+2026-07-10 19:35:14 - import.test_node - INFO - [数据清洗] 移除空值完成
+2026-07-10 19:35:14 - import.test_node - INFO - --- test_node 完成 ---
+
+最终状态: {'data': [1, 2, 3], 'status': 'raw', 'processed_by': 'test_node'}
+"""

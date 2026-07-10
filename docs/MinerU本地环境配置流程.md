@@ -1,7 +1,5 @@
 
-"""
-    工程环境
-"""
+## 工程环境
 ```bash
 conda create -n py311 python=3.11
 conda activate py311
@@ -9,9 +7,7 @@ python -m venv kb311
 .\Scripts\activate
 ```
 
-"""
-    pytorch
-"""
+## pytorch
 ```bash
 pip install torch torchvision --index-url https://download.pytorch.org/whl/cu118
 # 如果安装失败，可以先清除旧版本
@@ -36,9 +32,7 @@ print(torch.cuda.is_available())  # 如果输出 True，说明成功认出显卡
 print(torch.version.cuda)         # 这会显示你安装的 PyTorch 自带的 CUDA 版本（比如 12.1）
 ```
 
-"""
-    mineru
-"""
+## mineru
 - 官方：https://opendatalab.github.io/MinerU/zh/
 - 官方：https://mineru.net/apiManage/docs
 
@@ -53,19 +47,21 @@ uv pip install -U "mineru[all]" -i https://mirrors.aliyun.com/pypi/simple
 mineru --version
 ```
 
-"""
-    mineru模型
-"""
-- 模型缓存：$env:MODELSCOPE_CACHE="D:\ai_models\modelscope_cache"
-- 下模型：mineru-models-download
-- 桌面客户端：https://mineru.net/
+## mineru模型
+
+```powershell
+# 模型缓存：
+$env:MODELSCOPE_CACHE="D:\ai_models\modelscope_cache"
+# 下模型：
+mineru-models-download
+```
+
+桌面客户端：https://mineru.net/
 
 测试：
 ```bash
 mineru -p xxx.pdf -o output --backend pipeline
 ```
-
-> 注意：安装完`mineru`后，要先安装模型(过程中选择`modelscope`源，选择模型`all`)，再安装`pytorch`，才能使用GPU，否则会使用CPU
 
 测试：
 ```bash
@@ -73,18 +69,16 @@ testTorch.py
 testMineru.py
 ```
 
-"""
-    milvus
-"""
+> 注意：安装完`mineru`后，要先安装模型(过程中选择`modelscope`源，选择模型`all`)，再安装`pytorch`，才能使用GPU，否则会使用CPU
+
+## milvus
 ```bash
 pip uninstall -y pymilvus milvus-model FlagEmbedding
 uv add pymilvus[model] transformers FlagEmbedding
 pip install "pymilvus[model]" transformers FlagEmbedding
 ```
 
-"""
-    安装BGE-M3
-"""
+## 安装BGE-M3
 ```bash
 uv add pymilvus[model] transformers FlagEmbedding
 pip install "pymilvus[model]" transformers FlagEmbedding
@@ -95,6 +89,7 @@ pip install modelscope
 ```bash
 python download_bgem3.py
 ```
+
 ```python
 from modelscope.hub.snapshot_download import snapshot_download
 # 下载模型到当前目录下的 models/bge-m3 文件夹
@@ -112,27 +107,21 @@ pip install --pre torch torchvision torchaudio --index-url https://download.pyto
 ```
 
 
-"""
-    fastapi
-"""
+## fastapi
 ```bash
 pip install fastapi
 pip install "uvicorn[standard]"
 ```
 
 
-"""
-    清华镜像
-"""
+## 清华镜像
 ```bash
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/free/
 conda config --add channels https://mirrors.tuna.tsinghua.edu.cn/anaconda/pkgs/main/
 conda config --set show_channel_urls yes
 ```
 
-"""
-    若安装minio会报错，升级版本
-"""
+## 若安装minio会报错，升级版本
 ```bash
 python -m pip install --upgrade pip
 ```
@@ -217,8 +206,6 @@ knowledge/
 └── uv.locl							# uv版本锁定文件
 ```
 
-"""
-    笔记
-"""
+## 笔记
 - 扫描后的图片：List[Tuple[str,str,Tuple[str,str]]]
 - 扫描后的图片：list[(图片名，图片路径,(图片上文，图片下文))]

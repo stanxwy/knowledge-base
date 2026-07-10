@@ -54,6 +54,7 @@ class NodeEntry(BaseNode):
         # 5. 返回state
         return update_state
     
+# python -m app.processor.import_processor.nodes.node_entry
 if __name__ == "__main__":
     setup_logging()
     
