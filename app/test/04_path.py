@@ -1,4 +1,5 @@
 from pathlib import Path
+import shutil
 
 # 创建 Path 对象
 path = Path("./docs/Docker镜像加速.md")
@@ -17,3 +18,14 @@ print(path.is_dir())   # True/False - 是否为目录
 # 路径拼接（使用 / 运算符）
 output_path = path.parent / "output" / "result.md"
 print(output_path)
+
+new_dir = path.parent / "a" / "b" / "c"
+print("type(new_dir)", type(new_dir))
+print(new_dir) # relative path
+print(new_dir.absolute()) # absolute path
+new_dir.mkdir(parents=True, exist_ok=True)
+print(new_dir.exists())
+
+# 删除目录
+shutil.rmtree((path.parent / "a"))
+print(new_dir.exists())
