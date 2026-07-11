@@ -239,7 +239,7 @@ if __name__ == "__main__":
     setup_logging()
 
     init_state = {
-        "pdf_path": "./kb/H3C LA2608室内无线网关 用户手册-6W100-整本手册.pdf",
+        "pdf_path": "./kb/hak180.pdf",
         "output_file_dir": "./output"
     }
     node_pdf_to_md = NodePDFToMD()
@@ -251,31 +251,30 @@ python -m app.processor.import_processor.nodes.node_pdf_to_md
 config loaded True...
 ImportConfig instance not found...
 creating ImportConfig instance...
-2026-07-10 19:30:39 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 开始 ---
-2026-07-10 19:30:39 - import.node_pdf_to_md - INFO - 开始[获取上传链接]请求，url：https://mineru.net/api/v4/file-urls/batch，参数：{'files': [{'name': 'H3C LA2608室内无线网关 用户手册-6W100-整本手册.pdf'}], 'model_version': 'vlm'}
-2026-07-10 19:30:39 - import.node_pdf_to_md - INFO - [获取上传链接]响应结果：{'code': 0, 'msg': 'ok', 'trace_id': '25b86f477408bdd012b16d850152cbab', 'data': {'batch_id': '46a284c6-330f-484b-a1fb-087a014b19d1', 'file_urls': ['https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-10/46a284c6-330f-484b-a1fb-087a014b19d1/96f1faa8-ca77-4bae-a444-338d5032f73f.pdf?Expires=1783769440&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=9XBBZNPnRZGz9%2FuTi7hD8R31HDg%3D']}}
-2026-07-10 19:30:39 - import.node_pdf_to_md - INFO - [获取上传链接]成功！batch_id：46a284c6-330f-484b-a1fb-087a014b19d1，signed_url：https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-10/46a284c6-330f-484b-a1fb-087a014b19d1/96f1faa8-ca77-4bae-a444-338d5032f73f.pdf?Expires=1783769440&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=9XBBZNPnRZGz9%2FuTi7hD8R31HDg%3D
-2026-07-10 19:30:40 - import.node_pdf_to_md - INFO - 开始[文件上传]请求，signed_url：https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-10/46a284c6-330f-484b-a1fb-087a014b19d1/96f1faa8-ca77-4bae-a444-338d5032f73f.pdf?Expires=1783769440&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=9XBBZNPnRZGz9%2FuTi7hD8R31HDg%3D
-2026-07-10 19:30:40 - import.node_pdf_to_md - INFO - [文件上传]成功！
-2026-07-10 19:30:40 - import.node_pdf_to_md - INFO - 【任务轮询】最大超时：600s，batch_id：46a284c6-330f-484b-a1fb-087a014b19d1
-2026-07-10 19:30:40 - import.node_pdf_to_md - INFO - 开始[任务轮询]，url：https://mineru.net/api/v4/extract-results/batch/46a284c6-330f-484b-a1fb-087a014b19d1
-2026-07-10 19:30:40 - import.node_pdf_to_md - INFO - 【任务轮询】轮询结果：{'code': 0, 'msg': 'ok', 'trace_id': 'e1d5cedeb59fe83f76299dac6b385648', 'data': {'batch_id': '46a284c6-330f-484b-a1fb-087a014b19d1', 'extract_result': [{'file_name': 'H3C LA2608室内无线网关 用户手册-6W100-整本手册.pdf', 'state': 'waiting-file', 'err_msg': ''}]}}
-2026-07-10 19:30:40 - import.node_pdf_to_md - INFO - 【任务轮询】处理中... 已耗时0s，状态：waiting-file， batch_id：46a284c6-330f-484b-a1fb-087a014b19d1
-2026-07-10 19:30:43 - import.node_pdf_to_md - INFO - 开始[任务轮询]，url：https://mineru.net/api/v4/extract-results/batch/46a284c6-330f-484b-a1fb-087a014b19d1
-2026-07-10 19:30:43 - import.node_pdf_to_md - INFO - 【任务轮询】轮询结果：{'code': 0, 'msg': 'ok', 'trace_id': '499db7697a532093a5c7675d7627e899', 'data': {'batch_id': '46a284c6-330f-484b-a1fb-087a014b19d1', 'extract_result': [{'file_name': 'H3C LA2608室内无线网关 用户手册-6W100-整本手册.pdf', 'state': 'done', 'err_msg': '', 'full_zip_url': 'https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/61bd4b2e-b9f1-4782-b162-5c480189fb91.zip'}]}}
-2026-07-10 19:30:43 - import.node_pdf_to_md - INFO - 【任务轮询】解析任务完成！总耗时3s，batch_id：46a284c6-330f-484b-a1fb-087a014b19d1
-2026-07-10 19:30:43 - import.node_pdf_to_md - INFO - 【任务轮询】返回ZIP包下载链接：https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/61bd4b2e-b9f1-4782-b162-5c480189fb91.zip，batch_id：46a284c6-330f-484b-a1fb-087a014b19d1
-2026-07-10 19:30:43 - import.node_pdf_to_md - INFO - 【ZIP下载】开始下载ZIP包：https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/61bd4b2e-b9f1-4782-b162-5c480189fb91.zip ...
-2026-07-10 19:30:45 - import.node_pdf_to_md - INFO - 【ZIP下载】ZIP包下载成功：保存路径：output\H3C LA2608室内无线网关 用户手册-6W100-整本手册_result.zip
-2026-07-10 19:30:45 - import.node_pdf_to_md - INFO - 【ZIP解压】已清空旧的解压目录：output\H3C LA2608室内无线网关 用户手册-6W100-整本手册
-2026-07-10 19:30:45 - import.node_pdf_to_md - INFO - 【ZIP解压】开始解压ZIP包：output ...
-2026-07-10 19:30:45 - import.node_pdf_to_md - INFO - 【ZIP解压】ZIP解压完成，解压目录：output\H3C LA2608室内无线网关 用户手册-6W100-整本手册
-2026-07-10 19:30:45 - import.node_pdf_to_md - INFO - 【MD重命名】找到MinerU生成的full.md文件
-2026-07-10 19:30:45 - import.node_pdf_to_md - INFO - 【MD重命名】开始将full.md文件进行重命名
-2026-07-10 19:30:45 - import.node_pdf_to_md - INFO - 【MD重命名】重命名成功，文件名：H3C LA2608室内无线网关 用户手册-6W100-整本手册.md
-2026-07-10 19:30:45 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 完成 ---
-2026-07-10 19:30:45 - root - INFO - {
-    "md_path": "D:\\knowledge-base\\output\\H3C LA2608室内无线网关 用户手册-6W100-整本手册\\H3C LA2608室内无线网关 用户手册-6W100-整本手册.md",
-    "md_content": "# H3C LA2608 室内无线网关\n\n用户手册\n\nCopyright © 2014 ...```"
+2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 开始 ---
+2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - 开始[获取上传链接]请求，url：https://mineru.net/api/v4/file-urls/batch，参数：{'files': [{'name': 'hak180.pdf'}], 'model_version': 'vlm'}
+2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - [获取上传链接]响应结果：{'code': 0, 'msg': 'ok', 'trace_id': '88411a9b6b7f5417a71fd9169f939f10', 'data': {'batch_id': '192583d0-eeaa-446a-987a-e831f5b7638f', 'file_urls': ['https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-11/192583d0-eeaa-446a-987a-e831f5b7638f/914879f7-eab8-47d4-a4b7-e0cf87a47587.pdf?Expires=1783816152&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=u%2BUxi4kYct7ub%2BbXMWiqsiGWqdk%3D']}}
+2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - [获取上传链接]成功！batch_id：192583d0-eeaa-446a-987a-e831f5b7638f，signed_url：https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-11/192583d0-eeaa-446a-987a-e831f5b7638f/914879f7-eab8-47d4-a4b7-e0cf87a47587.pdf?Expires=1783816152&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=u%2BUxi4kYct7ub%2BbXMWiqsiGWqdk%3D
+2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - 开始[文件上传]请求，signed_url：https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-11/192583d0-eeaa-446a-987a-e831f5b7638f/914879f7-eab8-47d4-a4b7-e0cf87a47587.pdf?Expires=1783816152&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=u%2BUxi4kYct7ub%2BbXMWiqsiGWqdk%3D
+2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - [文件上传]成功！
+2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - 【任务轮询】最大超时：600s，batch_id：192583d0-eeaa-446a-987a-e831f5b7638f
+2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - 开始[任务轮询]，url：https://mineru.net/api/v4/extract-results/batch/192583d0-eeaa-446a-987a-e831f5b7638f
+2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - 【任务轮询】轮询结果：{'code': 0, 'msg': 'ok', 'trace_id': 'e264130df945f652348ec346c6ad75a1', 'data': {'batch_id': '192583d0-eeaa-446a-987a-e831f5b7638f', 'extract_result': [{'file_name': 'hak180.pdf', 'state': 'waiting-file', 'err_msg': ''}]}}
+2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - 【任务轮询】处理中... 已耗时0s，状态：waiting-file， batch_id：192583d0-eeaa-446a-987a-e831f5b7638f
+2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 开始[任务轮询]，url：https://mineru.net/api/v4/extract-results/batch/192583d0-eeaa-446a-987a-e831f5b7638f
+2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 【任务轮询】轮询结果：{'code': 0, 'msg': 'ok', 'trace_id': '3b3f1fbc882bf0b6aca12f1a3c6a55ab', 'data': {'batch_id': '192583d0-eeaa-446a-987a-e831f5b7638f', 'extract_result': [{'file_name': 'hak180.pdf', 'state': 'done', 'err_msg': '', 'full_zip_url': 'https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip'}]}}
+2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 【任务轮询】解析任务完成！总耗时3s，batch_id：192583d0-eeaa-446a-987a-e831f5b7638f
+2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 【任务轮询】返回ZIP包下载链接：https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip，batch_id：192583d0-eeaa-446a-987a-e831f5b7638f
+2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 【ZIP下载】开始下载ZIP包：https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip ...
+2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【ZIP下载】ZIP包下载成功：保存路径：output\hak180_result.zip
+2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【ZIP解压】已清空旧的解压目录：output\hak180
+2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【ZIP解压】开始解压ZIP包：output ...
+2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【ZIP解压】ZIP解压完成，解压目录：output\hak180
+2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【MD重命名】开始将full.md文件重命名为hak180.md
+2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【MD重命名】重命名成功，文件名：hak180.md
+2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 完成 ---
+2026-07-11 08:29:17 - root - INFO - {
+    "md_path": "D:\\output\\hak180\\hak180.md",
+    "md_content": "![](images/677a08ee041965bbbdb6b483d6c17d5aaa36a26b6dc96870a2019f0307b8616f.jpg)  \nD01WD7001-00\n\nSCHN\n\n## HAK 180 烫金机...）"
 }
 """

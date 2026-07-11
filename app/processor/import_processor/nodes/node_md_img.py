@@ -12,12 +12,12 @@ from langchain_openai import ChatOpenAI
 from minio import Minio
 from minio.deleteobjects import DeleteObject
 
-from config.lm_config import lm_config
-from config.minio_config import minio_config
-from processor.import_processor.base import BaseNode, setup_logging
-from processor.import_processor.exceptions import StateFieldError, FileProcessingError
-from processor.import_processor.state import ImportGraphState
-from utils.minio_utils import get_minio_client
+from app.config.lm_config import lm_config
+from app.config.minio_config import minio_config
+from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
+from app.processor.import_processor.state import ImportGraphState
+from app.utils.minio_utils import get_minio_client
 
 class NodeMDImg(BaseNode):
     """
@@ -424,7 +424,7 @@ class NodeMDImg(BaseNode):
 if __name__ == "__main__":
     setup_logging(level=logging.DEBUG)
 
-    md_path = r"D:\output\H3C LA2608室内无线网关 用户手册-6W100-整本手册\H3C LA2608室内无线网关 用户手册-6W100-整本手册.md"
+    md_path = "./output/hak180/hak180.md"
     with open(md_path, "r", encoding="utf-8") as f:
         md_content = f.read()
     init_state = {

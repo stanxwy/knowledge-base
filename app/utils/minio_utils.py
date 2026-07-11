@@ -1,6 +1,7 @@
 import json
 from minio import Minio
 from app.config.minio_config import minio_config
+
 try:
     minio_client = Minio(
         endpoint=minio_config.endpoint,
