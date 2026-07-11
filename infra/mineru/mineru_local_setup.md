@@ -407,3 +407,95 @@ ValueError: CUDA is not available.
 Aborted!
 (py311) PS D:\>
 ```
+
+## mineru command arguments
+```bash
+mineru --help
+Usage: mineru [OPTIONS]
+
+Options:
+  -v, --version                   display the version and exit
+  -p, --path PATH                 local filepath or directory. support pdf,
+                                  image, docx, pptx, xlsx files  [required]
+  -o, --output PATH               output local directory  [required]
+  --api-url TEXT                  MinerU FastAPI base URL. If omitted, mineru
+                                  starts a temporary local mineru-api service.
+  -m, --method [auto|txt|ocr]     the method for parsing pdf:
+                                    auto: Automatically determine the method based on the file type.
+                                    txt: Use text extraction method.
+                                    ocr: Use OCR method for image-based PDFs.
+                                  Without method specified, 'auto' will be used by default.
+                                  Adapted only for the case where the backend is set to 'pipeline' and 'hybrid-*'.
+  -b, --backend [pipeline|vlm-engine|hybrid-engine|vlm-http-client|hybrid-http-client]
+                                  the backend for parsing pdf:
+                                    pipeline: More general.
+                                    vlm-engine: High accuracy via local computing power.
+                                    vlm-http-client: High accuracy via remote computing power(client suitable for openai-compatible servers).
+                                    hybrid-engine: Next-generation high accuracy solution via local computing power.
+                                    hybrid-http-client: High accuracy but requires a little local computing power(client suitable for openai-compatible servers).
+                                  Without backend specified, hybrid-engine will be used by default.
+  --effort [medium|high]          Hybrid parsing effort:
+                                    medium: Faster parsing for most documents, balancing accuracy and efficiency. Image/chart analysis is disabled.
+                                    high: Higher-accuracy parsing with image/chart analysis support, which may take longer.
+                                  Without effort specified, medium will be used by default.
+                                  Adapted only for the case where the backend is set to 'hybrid-*'.
+  -l, --lang [ch|ch_server|korean|ta|te|ka|th|el|arabic|east_slavic|cyrillic|devanagari]
+                                  Input the languages in the pdf (if known) to
+                                  improve OCR accuracy. Without languages
+                                  specified, 'ch' will be used by default.
+                                  Specify document language (improves OCR
+                                  accuracy, pipeline backend only).
+  -u, --url TEXT                  When the backend is `<vlm/hybrid>-http-
+                                  client`, you need to specify the server_url,
+                                  for example:`http://127.0.0.1:30000`
+  -s, --start INTEGER             The starting page for PDF parsing, beginning
+                                  from 0.
+  -e, --end INTEGER               The ending page for PDF parsing, beginning
+                                  from 0.
+  -f, --formula BOOLEAN           Enable formula parsing. Default is True.
+  -t, --table BOOLEAN             Enable table parsing. Default is True.
+  --image-analysis BOOLEAN        Enable image/chart analysis for VLM and
+                                  hybrid backends. Hybrid medium effort
+                                  automatically disables image/chart analysis.
+                                  Default is True.
+  --client-side-output-generation BOOLEAN
+                                  Generate markdown and content lists locally
+                                  from server-returned middle json, images,
+                                  and original files.
+  --help                          Show this message and exit.
+```
+
+## test run mineru
+```bash
+(py311) PS D:\knowledge-base> mineru serve --host 0.0.0.0 --port 8080 --backend pipeline -p kb -o output
+2026-07-11 13:10:28.344 | INFO     | mineru.cli.client:run_orchestrated_cli:953 - Started local mineru-api at http://127.0.0.1:24199
+2026-07-11 13:10:38.939 | INFO     | __main__:create_app:236 - Request concurrency limited to 3
+Start MinerU FastAPI Service: http://127.0.0.1:24199
+API documentation: http://127.0.0.1:24199/docs
+INFO:     Started server process [31084]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://127.0.0.1:24199 (Press CTRL+C to quit)
+2026-07-11 13:10:39.044 | INFO     | mineru.cli.client:run_planned_task:832 - Submitting batch 1/1 | 4 documents, 37 pages in this batch | 37 pages total | task#1 [B3-211H, B530, H3C LA2608室内无线网关 用户手册-6W100-整本手册, +1 more]
+2026-07-11 13:11:15.235 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:209 - Pipeline processing-window multi-file run. doc_count=4, total_pages=37, window_size=64, total_batches=1
+2026-07-11 13:11:23.194 | INFO     | mineru.backend.pipeline.pipeline_analyze:doc_analyze_streaming:264 - Pipeline processing window batch 1/1: 37/37 pages, batch_pages=37, doc_slices=doc0:1-17,doc1:1-13,doc2:1-6,doc3:1-1
+2026-07-11 13:11:23.196 | INFO     | mineru.backend.pipeline.pipeline_analyze:batch_image_analyze:364 - GPU Memory: 1 GB, Batch Ratio: 1.
+2026-07-11 13:11:23.196 | INFO     | mineru.backend.pipeline.model_init:__init__:239 - DocAnalysis init, this may take some times......
+2026-07-11 13:11:25.373 | INFO     | mineru.backend.pipeline.model_init:__init__:291 - DocAnalysis init done!
+2026-07-11 13:11:25.397 | INFO     | mineru.backend.pipeline.pipeline_analyze:custom_model_init:83 - model init cost: 2.2010278701782227
+Layout Predict: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 37/37 [00:55<00:00,  1.49s/it]
+MFR Predict: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 3/3 [00:05<00:00,  1.87s/it]
+Table orientation: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 13/13 [00:13<00:00,  1.04s/it]
+Table-ocr det: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 13/13 [00:12<00:00,  1.05it/s]
+Table-ocr rec ch: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 557/557 [00:22<00:00, 24.69it/s]
+Table-wireless Predict: 100%|███████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 13/13 [00:02<00:00,  6.27it/s]
+Table-wired Predict: 100%|██████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 12/12 [00:16<00:00,  1.37s/it]
+OCR-det ch: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 456/456 [01:20<00:00,  5.67it/s]
+OCR-rec Predict: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 200/200 [00:16<00:00, 11.93it/s]
+Seal Predict: 0it [00:00, ?it/s]
+OCR-rec Predict: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 3/3 [00:00<00:00, 22.95it/s]
+OCR-rec Predict: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 5/5 [00:00<00:00, 14.74it/s]
+OCR-rec Predict: 100%|████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 1/1 [00:00<00:00, 15.07it/s]
+Processing pages: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 37/37 [00:03<00:00, 11.50it/s]
+2026-07-11 13:15:17.782 | INFO     | mineru.cli.client:run_planned_task:883 - Completed batch 1/1 | Processed 37/37 pages | 1 of 1 batch finished | task#1 [B3-211H, B530, H3C LA2608室内无线网关 用户手册-6W100-整本手册, +1 more]
+```

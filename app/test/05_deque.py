@@ -45,15 +45,16 @@ def limit(request_deque: Deque[float],
     global index
     print(f"{timestamp()} 新增API请求{index}时间戳{to_timestamp(current_time)}，当前{window_seconds}秒窗口内请求数：{len(request_deque)}")
 
-timestamps = deque()
 
-# 2、循环处理图片
-index = 0
-for i in range(20):
-    index += 1
-    print(f"{timestamp()} 请求{index}，当前队列长度：", len(timestamps))
-    limit(timestamps, max_requests=5, window_seconds=10)
-    run_task()
+if __name__ == '__main__':
+    timestamps = deque()
+
+    index = 0
+    for i in range(20):
+        index += 1
+        print(f"{timestamp()} 请求{index}，当前队列长度：", len(timestamps))
+        limit(timestamps, max_requests=5, window_seconds=10)
+        run_task()
 
 """
 python -m app.test.05_deque    

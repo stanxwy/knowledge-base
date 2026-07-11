@@ -214,7 +214,6 @@ class NodePDFToMD(BaseNode):
         :return: `md_path`、`md_content`
         """
 
-        update_state: ImportGraphState = {}
         # 步骤1：校验PDF路径和输出目录
         pdf_path_obj, output_dir_obj = self._step_1_validate_paths(state)
 
@@ -229,10 +228,10 @@ class NodePDFToMD(BaseNode):
             md_content = f.read()
 
         # 步骤5：更新state状态
-        update_state["md_path"] = md_path
-        update_state["md_content"] = md_content
-
-        return update_state
+        return {
+            "md_path": md_path,
+            "md_content": md_content
+        }
 
     
 if __name__ == "__main__":

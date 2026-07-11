@@ -109,7 +109,7 @@ if __name__ == "__main__":
     setup_logging()
     
     # 定义初始状态
-    init_state = {"import_file_path": r"../../docs/readme.md"}
+    init_state = {"import_file_path": "./README.md"}
     workflow = KBImportWorkflow()
     
     # 方式1：实例化后使用（推荐方式，可复用）

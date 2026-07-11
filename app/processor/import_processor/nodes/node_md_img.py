@@ -12,11 +12,11 @@ from langchain_openai import ChatOpenAI
 from minio import Minio
 from minio.deleteobjects import DeleteObject
 
-from app.config.lm_config import lm_config
 from app.config.minio_config import minio_config
 from app.processor.import_processor.base import BaseNode, setup_logging
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
 from app.processor.import_processor.state import ImportGraphState
+from app.utils.llm_utils import get_llm_client
 from app.utils.minio_utils import get_minio_client
 
 class NodeMDImg(BaseNode):
@@ -194,12 +194,7 @@ class NodeMDImg(BaseNode):
             base64_image = base64.b64encode(img_file.read()).decode("utf-8")
 
         try:
-            chat_model = ChatOpenAI(
-                model=lm_config.vl_model,
-                api_key=lm_config.api_key,
-                base_url=lm_config.base_url,
-                temperature=lm_config.llm_temperature
-            )
+            chat_model = get_llm_client()
             messages = [
                 {
                     "role": "user",
@@ -394,18 +389,17 @@ class NodeMDImg(BaseNode):
         :return: md_path、md_content
         """
 
-        update_state: ImportGraphState = {}
         # 步骤1：初始化数据，获取MD核心信息
         md_content, md_path_obj, images_dir = self._step_1_get_content(state)
         if not images_dir.exists():
             self.logger.info("无图片文件夹，跳过图片处理")
-            return update_state
+            return {}
 
         # 步骤2：扫描并筛选MD中引用的图片
         target_images = self._step_2_scan_images(md_content, images_dir)
         if not target_images:
             self.logger.info("未检测到MD中引用了图片，跳过图片处理")
-            return update_state
+            return {}
 
         # 步骤3：调用多模态大模型生成图片摘要
         summaries = self._step_3_generate_summaries(md_path_obj.stem, target_images)
@@ -417,9 +411,10 @@ class NodeMDImg(BaseNode):
         new_md_file_name = self._step_5_backup_new_md_file(state['md_path'], new_md_content)
 
         # 步骤6：更新state状态值
-        update_state["md_content"] = new_md_content
-        update_state["md_path"] = new_md_file_name
-        return update_state
+        return {
+            "md_path": new_md_file_name,
+            "md_content": new_md_content
+        }
 
 if __name__ == "__main__":
     setup_logging(level=logging.DEBUG)
