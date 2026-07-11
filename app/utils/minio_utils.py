@@ -3,14 +3,19 @@ from minio import Minio
 from app.config.minio_config import minio_config
 
 try:
+    # 1) 初始化MinIO客户端
     minio_client = Minio(
         endpoint=minio_config.endpoint,
         access_key=minio_config.access_key,
         secret_key=minio_config.secret_key,
+        # secure=False 是否启用HTTPS加密连接；False=用HTTP，True=用HTTPS；本地/内网部署一律写False
         secure=False)
-    # secure=False 是否启用HTTPS加密连接；False=用HTTP，True=用HTTPS；本地/内网部署一律写False
+
+    # 2) 创建存储桶
     if not minio_client.bucket_exists(minio_config.bucket_name):
         minio_client.make_bucket(minio_config.bucket_name)
+    
+    # 3) 设置存储桶策略
     # 设置存储桶策略为 Public Read (只读权限开放给匿名用户)
     # 这样前端可以直接通过 URL 访问图片，而不需要预签名 URL
     policy = {
@@ -26,8 +31,12 @@ try:
     }
     minio_client.set_bucket_policy(minio_config.bucket_name, json.dumps(policy))
 except Exception as e:
-    print("Minio init failed:{e}")
+    print(f"Minio init failed:{e}")
     minio_client = None
 
 def get_minio_client():
     return minio_client
+
+if __name__ == "__main__":
+    minio_client = get_minio_client()
+    print(f"bucket {minio_config.bucket_name}", minio_client.bucket_exists(minio_config.bucket_name))

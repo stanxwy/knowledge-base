@@ -1562,6 +1562,7 @@ e91ffda50ff2   quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z   "/usr/bin/dock
 ```
 
 ## access minio ui [http://192.168.245.132:9001/]()
+![minio_login](image/02_env_setup/minio_login.png)
 ![1783426526182](image/02_env_setup/1783426526182.png)
 
 ## observe voulumes created by minio container

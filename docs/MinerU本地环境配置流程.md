@@ -60,6 +60,7 @@ mineru-models-download
 
 测试：
 ```bash
+# 无独显，需要带参数 --backend pipeline
 mineru -p xxx.pdf -o output --backend pipeline
 ```
 

@@ -17,5 +17,5 @@ minio_config = MinIOConfig(
     access_key=os.getenv("MINIO_ACCESS_KEY"),
     secret_key=os.getenv("MINIO_SECRET_KEY"),
     bucket_name=os.getenv("MINIO_BUCKET_NAME"),
-    img_dir=os.getenv("MINIO_IMG_DIR"),
+    img_dir=os.getenv("MINIO_IMG_DIR", ""),
 )
