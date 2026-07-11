@@ -69,7 +69,49 @@ testTorch.py
 testMineru.py
 ```
 
-> 注意：安装完`mineru`后，要先安装模型(过程中选择`modelscope`源，选择模型`all`)，再安装`pytorch`，才能使用GPU，否则会使用CPU
+> 注意：安装完`mineru`后，要先安装模型(过程中选择`modelscope`源，选择模型`all`)，再安装`pytorch`，才能使用GPU，否则会使用CPU  
+> 模型安装完成后，确认 `%USERPROFILE%/mineru.json` 中 `models-dir` 配置
+```json
+{
+    "bucket_info": {
+        "bucket-name-1": [
+            "ak",
+            "sk",
+            "endpoint"
+        ],
+        "bucket-name-2": [
+            "ak",
+            "sk",
+            "endpoint"
+        ]
+    },
+    "latex-delimiter-config": {
+        "display": {
+            "left": "$$",
+            "right": "$$"
+        },
+        "inline": {
+            "left": "$",
+            "right": "$"
+        }
+    },
+    "llm-aided-config": {
+        "title_aided": {
+            "api_key": "your_api_key",
+            "base_url": "https://dashscope.aliyuncs.com/compatible-mode/v1",
+            "model": "qwen3.5-plus",
+            "enable_thinking": false,
+            "enable": false
+        }
+    },
+    "models-dir": {
+        "pipeline": "D:\\ai_models\\modelscope_cache\\models\\OpenDataLab--PDF-Extract-Kit-1.0\\snapshots\\master",
+        "vlm": "D:\\ai_models\\modelscope_cache\\models\\OpenDataLab--MinerU2.5-Pro-2605-1.2B\\snapshots\\master"
+    },
+    "model-source": "modelscope",
+    "config_version": "1.3.2"
+}
+```
 
 ## milvus
 ```bash
