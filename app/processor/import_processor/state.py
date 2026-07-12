@@ -24,31 +24,31 @@ class ImportGraphState(TypedDict, total=False):
     task_id: str  # 任务 ID，用于任务追踪(web交互的时候用到，实时看到节点的处理日志)
 
     # ==================== 控制标志 ====================
-
+    # step 1 node_entry
     is_md_read_enabled: bool  # 是否启用 MD 读取
-
+    # step 1 node_entry
     is_pdf_read_enabled: bool  # 是否启用 PDF 读取
 
     # ==================== 路径信息 ====================
-
+    # step 0 init state
     import_file_path: str  # 导入文件路径
-
+    # step 0 init state
     output_file_dir: str  # 导入(出)文件目录
-
+    # step 1 node_entry
     pdf_path: str  # PDF 文件路径
-
+    # step 1 node_entry, # step 2 node_pdf_to_md, step 3 node_md_img
     md_path: str  # 转换后Markdown 文件路径
 
     # ==================== 文件信息 ====================
-
+    # step 1 node_entry
     file_title: str  # 文件标题（不含扩展名）
-
+    # step 5 node_item_name_recognition
     item_name: str  # 识别出的商品/产品名称(方便程序员用)
 
     # ==================== 处理中间数据 ====================
-
+    # step 2 node_pdf_to_md, step 3 node_md_img
     md_content: str  # Markdown 文档内容
-
+    # step 4 node_document_split
     chunks: List  # 文档切片列表
 
     # ==================== 默认状态 ====================

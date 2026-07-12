@@ -72,7 +72,7 @@ class NodeDocumentSplit(BaseNode):
                 return
             sections.append({
                 "title": current_title,
-                # 每段使用 \n换行区分
+                # 每段时间使用 \n换行区分
                 "content": "\n".join(current_lines),
                 "file_title": file_title,
             })
@@ -80,10 +80,21 @@ class NodeDocumentSplit(BaseNode):
         # 4、逐行遍历，识别标题和普通行以及代码快
         for line in lines:
             stripped_line = line.strip()
+            # 4.1 识别代码块边界 ```、~~~、````、~~~~ 等（至少 3 个连续字符）
+            # 使用正则匹配：行首到行尾只有 ` 或 ~ 字符，且数量>=3
+            code_block_marker_match = re.match(r'^(`{3,}|~{3,})', stripped_line)
+            if code_block_marker_match:
+                marker = code_block_marker_match.group(1)
 
-            # 4.1 识别代码快边界 ``` 或 ~~~
-            if stripped_line.startswith("```") or stripped_line.startswith("~~~"):
-                in_code_block = not in_code_block
+                if not in_code_block:
+                    # 进入代码块，记录开始的标记特征
+                    in_code_block = True
+                    code_block_start_marker = marker
+                elif in_code_block and stripped_line == code_block_start_marker:
+                    # 遇到匹配的结束标记（相同字符且相同长度）
+                    in_code_block = False
+                    code_block_start_marker = None
+
                 current_lines.append(line)
                 continue
 
@@ -103,7 +114,7 @@ class NodeDocumentSplit(BaseNode):
         _flush_section()
         self.logger.info(f"文档粗切（按标题切分）完成，共{len(sections)}个章节，标题数量是{title_count}，文本共有{len(lines)}行")
         return sections, title_count, len(lines)
-
+    
     def process(self, state: ImportGraphState) -> ImportGraphState:
         """
         节点：文档切分（node_document_split）

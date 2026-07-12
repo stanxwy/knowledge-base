@@ -159,9 +159,3 @@ def setup_logging(level: int = logging.INFO):
 
     # logger.handlers.clear()
     # logger.addHandler(handler)
-
-if __name__ == "__main__":
-    print(BaseNode.__dict__)
-    print(BaseNode().__dict__)
-    print(hasattr(BaseNode, "name"))
-    print(hasattr(BaseNode(), "name"))
