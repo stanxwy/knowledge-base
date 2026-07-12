@@ -68,6 +68,7 @@ mineru -p xxx.pdf -o output --backend pipeline
 ```bash
 testTorch.py
 testMineru.py
+testGPU.py
 ```
 
 > 注意：安装完`mineru`后，要先安装模型(过程中选择`modelscope`源，选择模型`all`)，再安装`pytorch`，才能使用GPU，否则会使用CPU  

@@ -230,6 +230,12 @@ Downloading: 100%|████████████████████�
 (py311) PS D:\>
 ```
 
+## test if CUDA is available, so that mineru can use GPU
+```bash
+(py311) D:\>python -c "import torch; print('CUDA Available:', torch.cuda.is_available())"
+CUDA Available: False
+```
+
 ## test run mineru
 ```bash
 (py311) PS D:\> mineru -p H3C.pdf -o output --backend pipeline
