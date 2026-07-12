@@ -217,14 +217,14 @@ class NodeDocumentSplit(BaseNode):
 
             # 子章节元信息：保留父级关联，添加序号，便于后续检索/溯源
             sub_sections.append({
-                "title": f"{title}-{idx}" if title else f"chunk-{idx}",  # 子Chunk标题（带序号）
+                "title": f"{title}-{idx}" if title else f"chunk-{idx}",   # 子Chunk标题（带序号）
                 "content": full_text,                                     # 切分后的完整内容
                 "parent_title": title,                                    # 父章节标题（用于后续合并）
                 "part": idx,                                              # 子Chunk序号
                 "file_title": section.get("file_title"),                  # 所属文件标题
             })
 
-        self.self.logger.debug(f"超长章节切分完成：{title} → 生成{len(sub_sections)}个子Chunk")
+        self.logger.debug(f"超长章节切分完成：{title} → 生成{len(sub_sections)}个子Chunk")
         return sub_sections
 
     def _merge_short_sections(self, sections: List[Dict[str, str]]) -> List[Dict[str, str]]:
@@ -309,8 +309,8 @@ class NodeDocumentSplit(BaseNode):
                 json.dump(
                     sections,
                     f,
-                    #开启 True："title": "\u4e00\u7ea7\u6807\u9898"（乱码，无法直接看）；
-                    #开启 False："title": "一级标题"（正常中文，人工可直接阅读）。
+                    # 开启 True："title": "\u4e00\u7ea7\u6807\u9898"（乱码，无法直接看）；
+                    # 开启 False："title": "一级标题"（正常中文，人工可直接阅读）。
                     ensure_ascii=False,  # 保留中文，不转义为\u编码
                     indent=2             # 格式化缩进，便于阅读
                 )
@@ -352,26 +352,24 @@ class NodeDocumentSplit(BaseNode):
         self._step_6_backup(state, sections)
 
         # 写入状态字典
-        state["chunks"] = sections
-        return state
+        return { "chunks": sections }
 
 
 if __name__ == "__main__":
+    setup_logging(level=logging.DEBUG)
 
-    setup_logging()
-
-    md_path = "./output/hak180/hak180.md"
+    md_path = "./output/B3-211H/auto/B3-211H.md"
     with open(md_path, "r", encoding="utf-8") as f:
         md_content = f.read()
 
     init_state = {
         "md_path": md_path,
         "md_content": md_content,
-        "file_title": "hak180",
+        "file_title": "B3-211H",
         "output_file_dir": "./output"
     }
     # 执行文档切分节点
     node_document_split = NodeDocumentSplit()
     result = node_document_split(init_state)
 
-    logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+    logging.getLogger().info(json.dumps(result["chunks"], ensure_ascii=False, indent=4))
