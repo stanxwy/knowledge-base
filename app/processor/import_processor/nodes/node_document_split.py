@@ -205,7 +205,8 @@ class NodeDocumentSplit(BaseNode):
         sub_sections = []
 
         # 遍历切分后的每个文本块，idx 从 1 开始计数
-        for idx, chunk in enumerate(splitter.split_text(body), start=1):
+        chunks = splitter.split_text(body)
+        for idx, chunk in enumerate(chunks, start=1):
 
             # 清理空内容：跳过切分后的空字符串
             text = chunk.strip()
