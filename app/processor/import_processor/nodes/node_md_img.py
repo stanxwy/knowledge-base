@@ -290,6 +290,7 @@ class NodeMDImg(BaseNode):
         for img_file, img_path, _ in target_images:
             object_name = f"{upload_dir}/{img_file}"
             urls[img_file] = self._upload_to_minio(minio_client, img_path, object_name)
+            self.logger.debug(f"图片 {img_file} 上传成功 {urls[img_file]}")
         return urls
 
     def _upload_to_minio(self, minio_client: Minio, local_path: str, object_name: str) -> str | None:
