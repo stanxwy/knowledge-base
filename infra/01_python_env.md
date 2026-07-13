@@ -29,6 +29,14 @@ Mode                 LastWriteTime         Length Name
 -a----        13/07/2026  10:46 AM              0 uv.toml
 ```
 
+## set mirror repo in uv.toml
+- %APPDATA%\uv\uv.toml
+```bash
+# 清华镜像（推荐）
+index-url = "https://pypi.tuna.tsinghua.edu.cn/simple"
+python-install-mirror = "https://mirror.nju.edu.cn/github-release/astral-sh/python-build-standalone/"
+```
+
 ## list installed python versions
 ```bash
 PS D:\> uv python list
