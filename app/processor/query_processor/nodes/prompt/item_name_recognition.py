@@ -4,7 +4,7 @@ ITEM_NAME_SYSTEM_PROMPT = "你是一个专业的商品名称识别模型，请�
 # User Prompt Template
 ITEM_NAME_USER_PROMPT_TEMPLATE = """
 请从以下信息中识别出商品名称与型号：
-文件名：{file_title}
+文件名：{filename}
 
 正文切片（用于辅助识别）：
 {context}

@@ -2,17 +2,14 @@ import json
 import logging
 from typing import Tuple, Dict, List
 
-from langchain_core.messages import SystemMessage, HumanMessage
-from langchain_openai import ChatOpenAI
 from pymilvus import DataType
 
-from app.config.lm_config import lm_config
 from app.config.milvus_config import milvus_config
 from app.processor.import_processor.base import BaseNode, setup_logging
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
-from app.processor.query_processor.nodes.prompt.item_name_recognition import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
 from app.utils.embedding_utils import generate_embeddings
+from app.utils.llm_utils import identify_main_product
 from app.utils.milvus_utils import get_milvus_client, escape_milvus_string
 
 
@@ -23,7 +20,7 @@ class NodeItemNameRecognition(BaseNode):
 
     name: str = "node_item_name_recognition"
 
-    def _step_1_get_inputs(self, state: ImportGraphState) -> Tuple[str, List[Dict]]:
+    def _step_1_validate_input_state(self, state: ImportGraphState) -> Tuple[str, List[Dict]]:
         """
         步骤 1: 接收并校验流程输入
         核心作用：
@@ -88,74 +85,8 @@ class NodeItemNameRecognition(BaseNode):
 
         # 6. 对返回结果进行二次截断
         final_context = context[:self.config.item_name_chunk_size]
-
         return final_context
 
-    def _step_3_call_llm(self, file_title: str, context: str) -> str:
-        """
-        步骤 3: 调用大模型实现商品名称/型号精准识别
-        核心逻辑：
-            1. 上下文为空 → 直接返回file_title（兜底，无需调用大模型）
-            2. 上下文非空 → 加载标准化prompt模板，构建大模型对话消息
-            3. 调用大模型后对返回结果做清洗，过滤无效字符
-            4. 大模型返回空/调用异常 → 均返回file_title兜底，保证流程不中断
-        核心特性：
-            - 提示词解耦：通过load_prompt加载本地模板，无需硬编码
-            - 格式兼容：兼容不同LLM客户端返回格式，防止属性报错
-            - 异常兜底：全异常捕获，大模型服务不可用时不影响主流程
-        参数：
-            file_title: 处理后的文件标题（异常/空值时的兜底值）
-            context: 步骤2构建的结构化切片上下文（大模型识别的核心依据）
-        返回值：
-            str: 清洗后的商品名称（异常/空值时返回原始file_title）
-        """
-
-        # 1. 上下文为空，返回file_title
-        if not context:
-            return file_title
-
-        try:
-            # 2. 加载提示词模板
-            user_prompt = ITEM_NAME_USER_PROMPT_TEMPLATE.format(
-                file_title=file_title, context=context
-            )
-
-            # 3. 初始化大模型客户端
-            llm = ChatOpenAI(
-                model=lm_config.llm_model,
-                api_key=lm_config.api_key,
-                base_url=lm_config.base_url,
-                temperature=lm_config.llm_temperature,
-                extra_body={"enable_thinking": False}
-            )
-
-            # 4. 创建消息对象
-            messages = [
-                SystemMessage(content=ITEM_NAME_SYSTEM_PROMPT),
-                HumanMessage(content=user_prompt)
-            ]
-
-            # 5. 模型调用
-            response = llm.invoke(messages)
-            item_name = response.content
-
-            # 6. 数据清洗
-            item_name = (item_name.replace(" ", "")
-                         .replace("\n", "")
-                         .replace("\t", "")
-                         .replace("\r", ""))
-
-            # 7. 如果返回空字符串
-            if not item_name:
-                return file_title
-
-            # 8. 返回结果
-            return item_name
-
-        except Exception as e:
-            self.logger.error(f"大模型调用异常：{e}")
-            return file_title
-        
     def _step_4_update_chunks(self, state: ImportGraphState, chunks: List[Dict[str, str]], item_name: str):
         """
         步骤 4: 回填商品名称到流程状态和所有文本切片
@@ -354,13 +285,13 @@ class NodeItemNameRecognition(BaseNode):
         """
 
         # 步骤1：提取并校验输入
-        file_title, chunks = self._step_1_get_inputs(state)
+        filename, chunks = self._step_1_validate_input_state(state)
 
         # 步骤2：构建大模型识别的上下文
         context = self._step_2_build_context(chunks)
 
         # 步骤3：调用大模型识别商品名称
-        item_name = self._step_3_call_llm(file_title, context)
+        item_name = identify_main_product(filename, context)
 
         # 步骤4：回填商品名称到状态和切片
         self._step_4_update_chunks(state, chunks, item_name)
@@ -369,7 +300,7 @@ class NodeItemNameRecognition(BaseNode):
         dense_vector, sparse_vector = self._step_5_generate_vectors(item_name)
 
         # 步骤6：将数据存入Milvus向量数据库
-        self._step_6_save_to_milvus(state, file_title, item_name, dense_vector, sparse_vector)
+        self._step_6_save_to_milvus(state, filename, item_name, dense_vector, sparse_vector)
 
         # 打印识别结果
         self.logger.info(f"--- 识别完成: {item_name} ---")

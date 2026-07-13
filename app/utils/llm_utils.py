@@ -1,8 +1,11 @@
 import base64
 from loguru import logger
 from typing import Tuple
+
+from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from app.config.lm_config import get_lm_config
+from app.processor.query_processor.nodes.prompt.item_name_recognition import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
 
 _llm_client_cache = {}
 
@@ -65,6 +68,54 @@ def generate_image_caption(image_path: str, doc_stem: str, image_context: Tuple[
     except Exception as e:
         logger.error(f"图像总结失败：{image_path}, 错误{e}")
         return "图片描述"
+    
+def identify_main_product(filename: str, context: str) -> str:
+    """
+    调用大模型实现商品名称/型号精准识别
+    核心逻辑：
+        1. 上下文为空 → 直接返回filename（兜底，无需调用大模型）
+        2. 上下文非空 → 加载标准化prompt模板，构建大模型对话消息
+        3. 调用大模型后对返回结果做清洗，过滤无效字符
+        4. 大模型返回空/调用异常 → 均返回filename兜底，保证流程不中断
+    核心特性：
+        - 提示词解耦：通过load_prompt加载本地模板，无需硬编码
+        - 格式兼容：兼容不同LLM客户端返回格式，防止属性报错
+        - 异常兜底：全异常捕获，大模型服务不可用时不影响主流程
+    参数：
+        filename: 处理后的文件标题（异常/空值时的兜底值）
+        context: 步骤2构建的结构化切片上下文（大模型识别的核心依据）
+    返回值：
+        str: 清洗后的商品名称（异常/空值时返回原始filename）
+    """
+
+    if not context:
+        return filename
+
+    try:
+        llm = get_llm_client()
+        user_prompt = ITEM_NAME_USER_PROMPT_TEMPLATE.format(
+            filename=filename, context=context
+        )
+        messages = [
+            SystemMessage(content=ITEM_NAME_SYSTEM_PROMPT),
+            HumanMessage(content=user_prompt)
+        ]
+        response = llm.invoke(messages)
+        product_name = response.content
+
+        # data cleanup
+        product_name = (product_name.replace(" ", "")
+                        .replace("\n", "")
+                        .replace("\t", "")
+                        .replace("\r", ""))
+
+        if not product_name:
+            return filename
+        return product_name
+
+    except Exception as e:
+        logger.error(f"大模型调用异常：{e}")
+        return filename
 
 if __name__ == '__main__':
     llm = get_llm_client()
