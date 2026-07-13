@@ -1,4 +1,3 @@
-import base64
 import json
 import logging
 import os
@@ -7,15 +6,12 @@ from collections import deque
 from pathlib import Path
 from typing import Tuple, List, Dict
 
-from langchain_openai import ChatOpenAI
-
-from app.config.lm_config import lm_config
 from app.config.minio_config import minio_config
 from app.processor.import_processor.base import BaseNode, setup_logging
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
 from app.processor.import_processor.state import ImportGraphState
 from app.utils.api_throttle import apply_api_rate_limit
-from app.utils.llm_utils import get_llm_client
+from app.utils.llm_utils import generate_image_caption
 from app.utils.minio_utils import clean_dir, upload
 
 
@@ -54,16 +50,17 @@ class NodeMDImg(BaseNode):
 
         return md_content, md_path_obj, images_dir
 
-    def _step_2_scan_images(self, md_content: str, images_dir: Path) -> List[Tuple[str, str, Tuple[str, str]]]:
+    def _step_2_collect_ref_images(self, md_content: str, images_dir: Path) -> List[Tuple[str, str, Tuple[str, str]]]:
         """
         扫描图片文件夹，过滤出「支持格式+MD中实际引用」的图片，组装处理元数据
         :param md_content: MD文件完整内容
         :param images_dir: 图片文件夹路径对象
-        :return: 待处理图片列表，每个元素为(图片文件名, 图片完整路径, 图片上下文)元组
+        :return: 待处理图片列表，每个元素为(图片文件名, 图片完整路径, 图片上下文)元组 
+        :rtype: List of (filename, absolute_path, (pre_context, post_context))
         """
 
         # 1. 定义待处理图片列表
-        target_images = []
+        referenced_images = []
 
         # 2. 遍历图片文件夹
         for image_file in os.listdir(images_dir):
@@ -79,7 +76,7 @@ class NodeMDImg(BaseNode):
             img_path = str(images_dir / image_file)
 
             # 1.3 查找图片在MD中的引用上下文
-            context = self._find_image_in_md(md_content, image_file)
+            context = self._extract_image_context(md_content, image_file)
 
             # 过滤MD中未引用的图片
             if not context:
@@ -87,11 +84,12 @@ class NodeMDImg(BaseNode):
                 continue
 
             # 1.4 组装待处理图片元数据，取第一个匹配的图片上下文
-            target_images.append((image_file, img_path, context))
+            referenced_images.append((image_file, img_path, context))
 
-        return target_images
+        self.logger.info(f"待处理图片数量：{len(referenced_images)}")
+        return referenced_images
     
-    def _find_image_in_md(self, md_content: str, image_file: str, context_len: int = 100) -> Tuple[str, str]:
+    def _extract_image_context(self, md_content: str, image_file: str, context_len: int = 100) -> Tuple[str, str]:
         """
         查找MD内容中指定图片的所有引用位置，并返回每个位置的上下文文本
         :param md_content: MD文件完整内容
@@ -110,17 +108,19 @@ class NodeMDImg(BaseNode):
         # 2、找到1个匹配项即返回
         match = pattern.search(md_content)
         if not match:
+            self.logger.debug(f"文档中未找到图片引用：{image_file}")
             return None  # 没有找到
 
         # 3、截取匹配位置的上文和下文（防止索引越界）
         start, end = match.span()
+        self.logger.debug(f"文档中找到图片 {image_file} 引用：{start}-{end}")
         pre_text = md_content[max(0, start - context_len):start]
         post_text = md_content[end:min(len(md_content), end + context_len)]
 
         # 4、返回上下文元组
         return pre_text, post_text
 
-    def _step_3_generate_summaries(self, doc_stem: str, target_images: List[Tuple[str, str, Tuple[str, str]]]) -> Dict[str, str]:
+    def _step_3_generate_image_captions(self, doc_stem: str, target_images: List[Tuple[str, str, Tuple[str, str]]]) -> Dict[str, str]:
         """
         步骤3：批量为待处理图片生成内容摘要，带API速率限制防止触发大模型限流
         :param doc_stem: 文档文件名（不含后缀），作为大模型prompt上下文
@@ -128,60 +128,20 @@ class NodeMDImg(BaseNode):
         :param requests_per_minute: 每分钟最大API请求数，默认9次（按大模型限制调整）
         :return: 图片摘要字典，键：图片文件名，值：图片内容摘要
         """
-        summaries = {}
+        captions = {}
 
         # 1、外部初始化双端队列，用于API速率限制，跨循环复用
         request_deque = deque()
 
         # 2、循环处理图片
-        for img_file, image_path, context in target_images:
+        for img_file_name, image_file_path, context in target_images:
             # 2.1、速率限制
             apply_api_rate_limit(request_deque, max_requests=10)
 
             # 2.2、调用大模型生成图片摘要
-            summaries[img_file] = self._summarize_image(image_path, root_folder=doc_stem, image_content=context)
-
-        return summaries
+            captions[img_file_name] = generate_image_caption(image_file_path, doc_stem, context)
+        return captions
     
-    def _summarize_image(self, image_path: str, root_folder: str, image_content: Tuple[str, str]) -> str:
-        """
-           调用多模态大模型总结图片内容。
-
-           参数：
-           - image_path: 图片本地路径。
-           - root_folder: 文档所属文件夹名（提供更多上下文）。
-           - image_content: 图片在文档中的上下文 (前文, 后文)。
-        """
-        with open(image_path, "rb") as img_file:
-            base64_image = base64.b64encode(img_file.read()).decode("utf-8")
-
-        try:
-            chat_model: ChatOpenAI = get_llm_client(lm_config.vl_model)
-            messages = [
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "text",
-                            "text": f"""这是"{root_folder}"文件中的一张图片，图片上文部分为"{image_content[0]}"，下文部分为"{image_content[1]}"，请用中文简要总结这张图片的内容，用于 Markdown 图片标题。尽量不要超过20个字"""
-                        },
-                        {
-                            "type": "image_url",
-                            "image_url": {
-                                "url": f"data:image/jpeg;base64,{base64_image}"
-                            }
-                        }
-                    ]
-                }
-            ]
-            response = chat_model.invoke(messages)
-            self.logger.info(json.dumps(response, ensure_ascii=False, indent=2))
-            return response.content.strip().replace("\n", "")
-
-        except Exception as e:
-            self.logger.error(f"图像总结失败：{image_path}, 错误{e}")
-            return "图片描述"
-        
     def _step_4_upload_and_replace(self, doc_stem: str, target_images: List[Tuple[str, str, Tuple[str, str]]],
                                    summaries: Dict[str, str], md_content: str) -> str:
         """
@@ -217,8 +177,7 @@ class NodeMDImg(BaseNode):
         image_info = self._build_image_info(summaries, urls)
 
         # 步骤4：替换MD内容中的本地图片引用为MinIO远程引用
-        md_content = self._replace_img_desc_and_url(md_content, image_info)
-
+        md_content = self._replace_img_alt_and_url(md_content, image_info)
         return md_content
 
     def _upload_images_batch(self, upload_dir: str, target_images: List[Tuple]) -> Dict[str, str]:
@@ -234,6 +193,7 @@ class NodeMDImg(BaseNode):
             object_name = f"{upload_dir}/{img_file}"
             urls[img_file] = upload(local_img_path, object_name)
             self.logger.debug(f"图片 {img_file} 上传成功 {urls[img_file]}")
+        self.logger.info(f"{len(target_images)}张图片上传完成")
         return urls
 
     def _build_image_info(self, summaries: Dict[str, str], urls: Dict[str, str]) -> Dict[str, Tuple[str, str]]:
@@ -249,7 +209,7 @@ class NodeMDImg(BaseNode):
                 image_info[image_file] = (summary, url)
         return image_info
 
-    def _replace_img_desc_and_url(self, md_content: str, image_info: Dict[str, Tuple[str, str]]) -> str:
+    def _replace_img_alt_and_url(self, md_content: str, image_info: Dict[str, Tuple[str, str]]) -> str:
         """
         核心功能：替换MD内容中的本地图片引用为MinIO远程引用
         替换规则：![原描述](本地路径) → ![图片摘要](MinIO访问URL)
@@ -272,7 +232,6 @@ class NodeMDImg(BaseNode):
             md_content = pattern.sub(lambda _: f"![{summary}]({new_url})", md_content)
 
         self.logger.info(f"MD文件图片引用替换完成，共替换{len(image_info)}处图片引用")
-
         return md_content
 
     def _step_5_backup_new_md_file(self, origin_md_path: str, md_content: str) -> str:
@@ -291,11 +250,9 @@ class NodeMDImg(BaseNode):
             f.write(md_content)
 
         self.logger.info(f"处理后MD文件已保存，新文件路径：{new_md_file_name}")
-
         return new_md_file_name
 
-    def process(self, state: ImportGraphState):
-
+    def process(self, state: ImportGraphState) -> ImportGraphState:
         """
         MD文件图片处理核心节点
         核心流程：
@@ -316,16 +273,16 @@ class NodeMDImg(BaseNode):
             return {}
 
         # 步骤2：扫描并筛选MD中引用的图片
-        target_images = self._step_2_scan_images(md_content, images_dir)
-        if not target_images:
+        referenced_images = self._step_2_collect_ref_images(md_content, images_dir)
+        if not referenced_images:
             self.logger.info("未检测到MD中引用了图片，跳过图片处理")
             return {}
 
         # 步骤3：调用多模态大模型生成图片摘要
-        summaries = self._step_3_generate_summaries(md_path_obj.stem, target_images)
+        captions = self._step_3_generate_image_captions(md_path_obj.stem, referenced_images)
 
         # 步骤4：上传图片至MinIO，替换MD图片路径并填充摘要
-        new_md_content = self._step_4_upload_and_replace(md_path_obj.stem, target_images, summaries, md_content)
+        new_md_content = self._step_4_upload_and_replace(md_path_obj.stem, referenced_images, captions, md_content)
 
         # 步骤5：备份并保存新MD文件
         new_md_file_name = self._step_5_backup_new_md_file(state['md_path'], new_md_content)
