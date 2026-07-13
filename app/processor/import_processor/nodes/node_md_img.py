@@ -8,7 +8,6 @@ from collections import deque
 from pathlib import Path
 from typing import Tuple, List, Dict, Deque
 
-from langchain_openai import ChatOpenAI
 from minio import Minio
 from minio.deleteobjects import DeleteObject
 
