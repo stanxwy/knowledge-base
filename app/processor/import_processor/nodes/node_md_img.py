@@ -287,9 +287,9 @@ class NodeMDImg(BaseNode):
         :return: 图片URL字典，键：图片文件名，值：MinIO访问URL
         """
         urls = {}
-        for img_file, img_path, _ in target_images:
+        for img_file, local_img_path, _ in target_images:
             object_name = f"{upload_dir}/{img_file}"
-            urls[img_file] = self._upload_to_minio(minio_client, img_path, object_name)
+            urls[img_file] = self._upload_to_minio(minio_client, local_img_path, object_name)
             self.logger.debug(f"图片 {img_file} 上传成功 {urls[img_file]}")
         return urls
 

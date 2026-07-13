@@ -1,4 +1,5 @@
 from pathlib import Path
+import os
 import shutil
 
 # 创建 Path 对象
@@ -29,3 +30,7 @@ print(new_dir.exists())
 # 删除目录
 shutil.rmtree((path.parent / "a"))
 print(new_dir.exists())
+
+
+for file in os.listdir(Path(".")):
+    print(file)
