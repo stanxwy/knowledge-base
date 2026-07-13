@@ -1,9 +1,9 @@
-from langchain.chat_models import ChatOpenAI
+from langchain_openai import ChatOpenAI
 from app.config.lm_config import lm_config
 
 _llm_client_cache = {}
 
-def get_llm_client(model: str | None = None, json_mode: bool = False):
+def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpenAI:
     m = model or lm_config.llm_model
 
     key = (m, json_mode)
@@ -16,7 +16,7 @@ def get_llm_client(model: str | None = None, json_mode: bool = False):
     if json_mode:
         model_kwargs["response_format"] = {"type": "json_object"}
 
-    llm = ChatOpenAI(
+    llm: ChatOpenAI = ChatOpenAI(
         model=m,
         api_key=lm_config.api_key,
         base_url=lm_config.base_url,

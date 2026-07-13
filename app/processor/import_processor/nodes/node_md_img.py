@@ -8,9 +8,11 @@ from collections import deque
 from pathlib import Path
 from typing import Tuple, List, Dict, Deque
 
+from langchain_openai import ChatOpenAI
 from minio import Minio
 from minio.deleteobjects import DeleteObject
 
+from app.config.lm_config import lm_config
 from app.config.minio_config import minio_config
 from app.processor.import_processor.base import BaseNode, setup_logging
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
@@ -193,7 +195,7 @@ class NodeMDImg(BaseNode):
             base64_image = base64.b64encode(img_file.read()).decode("utf-8")
 
         try:
-            chat_model = get_llm_client()
+            chat_model: ChatOpenAI = get_llm_client(lm_config.vl_model)
             messages = [
                 {
                     "role": "user",
@@ -212,6 +214,7 @@ class NodeMDImg(BaseNode):
                 }
             ]
             response = chat_model.invoke(messages)
+            self.logger.info(json.dumps(response, ensure_ascii=False, indent=2))
             return response.content.strip().replace("\n", "")
 
         except Exception as e:
