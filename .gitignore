@@ -220,5 +220,5 @@ __marimo__/
 .streamlit/secrets.toml
 
 ~*.docx
-/kb/
-/output/
+kb/
+output/

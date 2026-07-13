@@ -12,7 +12,6 @@ from app.processor.import_processor.base import BaseNode, setup_logging
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError, PdfConversionError
 from app.processor.import_processor.state import ImportGraphState
 
-
 class NodePDFToMD(BaseNode):
     """
     PDF 转 Markdown 节点：PDF结构化解析
@@ -238,42 +237,39 @@ if __name__ == "__main__":
     setup_logging()
 
     init_state = {
-        "pdf_path": "./kb/hak180.pdf",
-        "output_file_dir": "./output"
+        "pdf_path": "./test_data/kb/hak180.pdf",
+        "output_file_dir": "./test_data/output"
     }
     node_pdf_to_md = NodePDFToMD()
     result = node_pdf_to_md(init_state)
     logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
-python -m app.processor.import_processor.nodes.node_pdf_to_md
-config loaded True...
+(knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_pdf_to_md                                          
+config loaded True...      
 ImportConfig instance not found...
 creating ImportConfig instance...
-2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 开始 ---
-2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - 开始[获取上传链接]请求，url：https://mineru.net/api/v4/file-urls/batch，参数：{'files': [{'name': 'hak180.pdf'}], 'model_version': 'vlm'}
-2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - [获取上传链接]响应结果：{'code': 0, 'msg': 'ok', 'trace_id': '88411a9b6b7f5417a71fd9169f939f10', 'data': {'batch_id': '192583d0-eeaa-446a-987a-e831f5b7638f', 'file_urls': ['https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-11/192583d0-eeaa-446a-987a-e831f5b7638f/914879f7-eab8-47d4-a4b7-e0cf87a47587.pdf?Expires=1783816152&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=u%2BUxi4kYct7ub%2BbXMWiqsiGWqdk%3D']}}
-2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - [获取上传链接]成功！batch_id：192583d0-eeaa-446a-987a-e831f5b7638f，signed_url：https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-11/192583d0-eeaa-446a-987a-e831f5b7638f/914879f7-eab8-47d4-a4b7-e0cf87a47587.pdf?Expires=1783816152&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=u%2BUxi4kYct7ub%2BbXMWiqsiGWqdk%3D
-2026-07-11 08:29:12 - import.node_pdf_to_md - INFO - 开始[文件上传]请求，signed_url：https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-11/192583d0-eeaa-446a-987a-e831f5b7638f/914879f7-eab8-47d4-a4b7-e0cf87a47587.pdf?Expires=1783816152&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=u%2BUxi4kYct7ub%2BbXMWiqsiGWqdk%3D
-2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - [文件上传]成功！
-2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - 【任务轮询】最大超时：600s，batch_id：192583d0-eeaa-446a-987a-e831f5b7638f
-2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - 开始[任务轮询]，url：https://mineru.net/api/v4/extract-results/batch/192583d0-eeaa-446a-987a-e831f5b7638f
-2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - 【任务轮询】轮询结果：{'code': 0, 'msg': 'ok', 'trace_id': 'e264130df945f652348ec346c6ad75a1', 'data': {'batch_id': '192583d0-eeaa-446a-987a-e831f5b7638f', 'extract_result': [{'file_name': 'hak180.pdf', 'state': 'waiting-file', 'err_msg': ''}]}}
-2026-07-11 08:29:13 - import.node_pdf_to_md - INFO - 【任务轮询】处理中... 已耗时0s，状态：waiting-file， batch_id：192583d0-eeaa-446a-987a-e831f5b7638f
-2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 开始[任务轮询]，url：https://mineru.net/api/v4/extract-results/batch/192583d0-eeaa-446a-987a-e831f5b7638f
-2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 【任务轮询】轮询结果：{'code': 0, 'msg': 'ok', 'trace_id': '3b3f1fbc882bf0b6aca12f1a3c6a55ab', 'data': {'batch_id': '192583d0-eeaa-446a-987a-e831f5b7638f', 'extract_result': [{'file_name': 'hak180.pdf', 'state': 'done', 'err_msg': '', 'full_zip_url': 'https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip'}]}}
-2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 【任务轮询】解析任务完成！总耗时3s，batch_id：192583d0-eeaa-446a-987a-e831f5b7638f
-2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 【任务轮询】返回ZIP包下载链接：https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip，batch_id：192583d0-eeaa-446a-987a-e831f5b7638f
-2026-07-11 08:29:16 - import.node_pdf_to_md - INFO - 【ZIP下载】开始下载ZIP包：https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip ...
-2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【ZIP下载】ZIP包下载成功：保存路径：output\hak180_result.zip
-2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【ZIP解压】已清空旧的解压目录：output\hak180
-2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【ZIP解压】开始解压ZIP包：output ...
-2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【ZIP解压】ZIP解压完成，解压目录：output\hak180
-2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【MD重命名】开始将full.md文件重命名为hak180.md
-2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - 【MD重命名】重命名成功，文件名：hak180.md
-2026-07-11 08:29:17 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 完成 ---
-2026-07-11 08:29:17 - root - INFO - {
-    "md_path": "D:\\output\\hak180\\hak180.md",
+2026-07-13 20:03:59 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 开始 ---
+2026-07-13 20:03:59 - import.node_pdf_to_md - INFO - 开始[获取上传链接]请求，url：https://mineru.net/api/v4/file-urls/batch，参数：{'files': [{'name': 'hak180.pdf'}], 'model_version': 'vlm'}
+2026-07-13 20:03:59 - import.node_pdf_to_md - INFO - [获取上传链接]响应结果：{'code': 0, 'msg': 'ok', 'trace_id': '4c7c3b69e810e2e9fc1ccbcea3f19907', 'data': {'batch_id': '951b5188-36c3-405c-84fa-2201e078f374', 'file_urls': ['https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-13/951b5188-36c3-405c-84fa-2201e078f374/4dd5a4bd-cecb-4011-872e-90d26a5b9d01.pdf?Expires=1784030639&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=N6U283OHfjstDnkua43k1oKXsmo%3D']}}
+2026-07-13 20:03:59 - import.node_pdf_to_md - INFO - [获取上传链接]成功！batch_id：951b5188-36c3-405c-84fa-2201e078f374，signed_url：https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-13/951b5188-36c3-405c-84fa-2201e078f374/4dd5a4bd-cecb-4011-872e-90d26a5b9d01.pdf?Expires=1784030639&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=N6U283OHfjstDnkua43k1oKXsmo%3D
+2026-07-13 20:03:59 - import.node_pdf_to_md - INFO - 开始[文件上传]请求，signed_url：https://mineru.oss-cn-shanghai.aliyuncs.com/api-upload/extract/2026-07-13/951b5188-36c3-405c-84fa-2201e078f374/4dd5a4bd-cecb-4011-872e-90d26a5b9d01.pdf?Expires=1784030639&OSSAccessKeyId=LTAI5t8fSGMgiRhQn4mpp926&Signature=N6U283OHfjstDnkua43k1oKXsmo%3D
+2026-07-13 20:04:00 - import.node_pdf_to_md - INFO - [文件上传]成功！
+2026-07-13 20:04:00 - import.node_pdf_to_md - INFO - 【任务轮询】最大超时：600s，batch_id：951b5188-36c3-405c-84fa-2201e078f374
+2026-07-13 20:04:00 - import.node_pdf_to_md - INFO - 开始[任务轮询]，url：https://mineru.net/api/v4/extract-results/batch/951b5188-36c3-405c-84fa-2201e078f374
+2026-07-13 20:04:00 - import.node_pdf_to_md - INFO - 【任务轮询】轮询结果：{'code': 0, 'msg': 'ok', 'trace_id': '6b163975398a61ee0062e2e3222dff3e', 'data': {'batch_id': '951b5188-36c3-405c-84fa-2201e078f374', 'extract_result': [{'file_name': 'hak180.pdf', 'state': 'done', 'err_msg': '', 'full_zip_url': 'https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip'}]}}
+2026-07-13 20:04:00 - import.node_pdf_to_md - INFO - 【任务轮询】解析任务完成！总耗时0s，batch_id：951b5188-36c3-405c-84fa-2201e078f374
+2026-07-13 20:04:00 - import.node_pdf_to_md - INFO - 【任务轮询】返回ZIP包下载链接：https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip，batch_id：951b5188-36c3-405c-84fa-2201e078f374
+2026-07-13 20:04:00 - import.node_pdf_to_md - INFO - 【ZIP下载】开始下载ZIP包：https://cdn-mineru.openxlab.org.cn/pdf/2026-06-22/c2b3ff46-c6a0-49bf-babd-3b107d5bcb6b.zip ...
+2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - 【ZIP下载】ZIP包下载成功：保存路径：test_data\output\hak180_result.zip
+2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - 【ZIP解压】已清空旧的解压目录：test_data\output\hak180
+2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - 【ZIP解压】开始解压ZIP包：test_data\output ...
+2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - 【ZIP解压】ZIP解压完成，解压目录：test_data\output\hak180
+2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - 【MD重命名】开始将full.md文件重命名为hak180.md
+2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - 【MD重命名】重命名成功，文件名：hak180.md
+2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 完成 ---
+2026-07-13 20:04:01 - root - INFO - {
+     "md_path": "D:\\knowledge-base\\test_data\\output\\hak180\\hak180.md",
     "md_content": "![](images/677a08ee041965bbbdb6b483d6c17d5aaa36a26b6dc96870a2019f0307b8616f.jpg)  \nD01WD7001-00\n\nSCHN\n\n## HAK 180 烫金机...）"
 }
 """

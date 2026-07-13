@@ -14,7 +14,6 @@ class NodeEntry(BaseNode):
     name = "node_entry"
 
     def process(self, state: ImportGraphState):
-
         """
         1.接收状态: 获取 `import_file_path`。
         2.判断类型: 检查文件后缀是 `.pdf` 还是 `.md`。
@@ -58,7 +57,21 @@ class NodeEntry(BaseNode):
 if __name__ == "__main__":
     setup_logging()
     
-    init_state = {"import_file_path": "./kb/hak180.pdf"}
+    init_state = {"import_file_path": "./test_data/kb/hak180.pdf"}
     node_entry = NodeEntry()
     result = node_entry(init_state)
     logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+
+"""
+(knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_entry
+config loaded True...
+ImportConfig instance not found...
+creating ImportConfig instance...
+2026-07-13 19:41:41 - import.node_entry - INFO - --- node_entry 开始 ---
+2026-07-13 19:41:41 - import.node_entry - INFO - --- node_entry 完成 ---
+2026-07-13 19:41:41 - root - INFO - {
+    "is_pdf_read_enabled": true,
+    "pdf_path": "./app/test/kb/hak180.pdf",
+    "file_title": "hak180"
+}
+"""

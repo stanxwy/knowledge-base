@@ -58,7 +58,8 @@ def generate_image_caption(image_path: str, doc_stem: str, image_context: Tuple[
         }]
         logger.debug(f"请求VLM生成图片总结 {image_path}")
         response = chat_model.invoke(messages)
-        logger.debug(json.dumps(response, ensure_ascii=False, indent=2))
+        logger.info(f"VLM生成图片 {image_path} 总结结果: {response.content}")
+        # logger.verbose(json.dumps(response, ensure_ascii=False, indent=2)) # Object of type AIMessage is not JSON serializable
         return response.content.strip().replace("\n", "")
 
     except Exception as e:
