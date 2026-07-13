@@ -1,14 +1,14 @@
 import base64
-import json
 from loguru import logger
 from typing import Tuple
 from langchain_openai import ChatOpenAI
-from app.config.lm_config import lm_config
+from app.config.lm_config import get_lm_config
 
 _llm_client_cache = {}
 
 def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpenAI:
-    m = model or lm_config.llm_model
+    lm_config = get_lm_config()
+    m = model or lm_config.default_model
 
     key = (m, json_mode)
     if key in _llm_client_cache:
@@ -45,7 +45,7 @@ def generate_image_caption(image_path: str, doc_stem: str, image_context: Tuple[
         base64_image = base64.b64encode(img_file.read()).decode("utf-8")
 
     try:
-        chat_model: ChatOpenAI = get_llm_client(lm_config.vl_model)
+        chat_model: ChatOpenAI = get_llm_client(get_lm_config().vl_model)
         messages = [{
             "role": "user",
             "content": [{

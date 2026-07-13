@@ -41,12 +41,12 @@ except Exception as e:
 def get_minio_client():
     return minio_client
 
-def clean_dir(prefix: str) -> None:
+def clean_dir(dir_path: str) -> None:
     """
     :param prefix: MinIO目录前缀（要清理的目录路径）
     """
     try:
-        objects_to_delete = minio_client.list_objects(minio_config.bucket_name, prefix=prefix, recursive=True)
+        objects_to_delete = minio_client.list_objects(minio_config.bucket_name, prefix=dir_path, recursive=True)
         # 构造删除列表
         delete_list = [DeleteObject(obj.object_name) for obj in objects_to_delete]
         if delete_list:

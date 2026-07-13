@@ -4,14 +4,13 @@
 集中管理所有配置项，支持环境变量覆盖
 """
 
+import os
 from dataclasses import dataclass, field
 from typing import Set, Optional
-import os
 from dotenv import load_dotenv
 
 loaded = load_dotenv()
 print(f"config loaded {loaded}...")
-
 
 @dataclass
 class ImportConfig:
@@ -27,23 +26,6 @@ class ImportConfig:
 
     image_extensions: Set[str] = field(
         default_factory=lambda: {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
-    )
-
-    # ==================== LLM 配置 ====================
-    openai_api_base: str = field(
-        default_factory=lambda: os.getenv("OPENAI_API_BASE", "")
-    )
-    openai_api_key: str = field(
-        default_factory=lambda: os.getenv("OPENAI_API_KEY", "")
-    )
-    vl_model: str = field(
-        default_factory=lambda: os.getenv("VL_MODEL", "")
-    )
-    item_model: str = field(
-        default_factory=lambda: os.getenv("ITEM_MODEL", "")
-    )
-    default_model: str = field(
-        default_factory=lambda: os.getenv("MODEL", "")
     )
 
     # ==================== Milvus 配置 ====================

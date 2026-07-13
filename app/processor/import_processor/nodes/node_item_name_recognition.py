@@ -11,7 +11,7 @@ from app.config.milvus_config import milvus_config
 from app.processor.import_processor.base import BaseNode, setup_logging
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
-from app.processor.query_processor.prompt import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
+from app.processor.query_processor.nodes.prompt.item_name_recognition import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
 from app.utils.embedding_utils import generate_embeddings
 from app.utils.milvus_utils import get_milvus_client, escape_milvus_string
 
@@ -371,27 +371,23 @@ class NodeItemNameRecognition(BaseNode):
         # 步骤6：将数据存入Milvus向量数据库
         self._step_6_save_to_milvus(state, file_title, item_name, dense_vector, sparse_vector)
 
-
         # 打印识别结果
         self.logger.info(f"--- 识别完成: {item_name} ---")
-
         return state
 
 
 if __name__ == "__main__":
     setup_logging()
 
-    md_path = r"../output/hak180/chunks.json"
+    md_path = r"../test_data/output/hak180/chunks.json"
     with open(md_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()
-
     chunks = json.loads(chunks_json)
     init_state = {
         "chunks": chunks,
         "file_title": "hak180产品安全手册"
     }
 
-    # 执行核心处理流程
     node_item_name_recognition = NodeItemNameRecognition()
     result = node_item_name_recognition(init_state)
 
