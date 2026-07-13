@@ -3,21 +3,21 @@ import json
 import logging
 import os
 import re
-import time
 from collections import deque
 from pathlib import Path
-from typing import Tuple, List, Dict, Deque
+from typing import Tuple, List, Dict
 
 from langchain_openai import ChatOpenAI
-from minio import Minio
 
 from app.config.lm_config import lm_config
 from app.config.minio_config import minio_config
-from app.utils.minio_utils import clean_dir, upload
 from app.processor.import_processor.base import BaseNode, setup_logging
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
 from app.processor.import_processor.state import ImportGraphState
+from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.llm_utils import get_llm_client
+from app.utils.minio_utils import clean_dir, upload
+
 
 class NodeMDImg(BaseNode):
     """
@@ -120,8 +120,7 @@ class NodeMDImg(BaseNode):
         # 4、返回上下文元组
         return pre_text, post_text
 
-    def _step_3_generate_summaries(self, doc_stem: str, target_images: List[Tuple[str, str, Tuple[str, str]]]) -> Dict[
-        str, str]:
+    def _step_3_generate_summaries(self, doc_stem: str, target_images: List[Tuple[str, str, Tuple[str, str]]]) -> Dict[str, str]:
         """
         步骤3：批量为待处理图片生成内容摘要，带API速率限制防止触发大模型限流
         :param doc_stem: 文档文件名（不含后缀），作为大模型prompt上下文
@@ -137,50 +136,13 @@ class NodeMDImg(BaseNode):
         # 2、循环处理图片
         for img_file, image_path, context in target_images:
             # 2.1、速率限制
-            self._apply_api_rate_limit(request_deque, max_requests=10)
+            apply_api_rate_limit(request_deque, max_requests=10)
 
             # 2.2、调用大模型生成图片摘要
             summaries[img_file] = self._summarize_image(image_path, root_folder=doc_stem, image_content=context)
 
         return summaries
     
-    def _apply_api_rate_limit(
-            self,
-            request_times: Deque[float],
-            max_requests: int,
-            window_seconds: int = 60
-    ) -> None:
-        """
-        通用滑动窗口API速率限制器（抽离为公共工具）
-        核心逻辑：维护请求时间戳双端队列，窗口内请求数超上限则自动等待，防止触发第三方API限流
-        :param request_times: 存储请求时间戳的双端队列，需外部初始化（全局/单例），跨调用复用
-        :param max_requests: 速率限制窗口内的最大允许请求次数
-        :param window_seconds: 速率限制滑动窗口时长，默认60秒（1分钟）
-        :return: None，超出限制时会阻塞等待
-        """
-        current_time = time.time()
-
-        # 1. 清理滑动窗口外的过期请求时间戳，保证队列仅存窗口内的请求
-        while request_times and current_time - request_times[0] >= window_seconds:
-            request_times.popleft()
-
-        # 2. 窗口内请求数达上限，计算并阻塞等待剩余时间
-        if len(request_times) >= max_requests:
-            # 计算需要等待的时长（窗口总时长 - 最早请求已存在的时长）
-            sleep_duration = window_seconds - (current_time - request_times[0])
-            if sleep_duration > 0:
-                logging.getLogger().info(
-                    f"触发API速率限制，窗口{window_seconds}秒内最多{max_requests}次，需等待：{sleep_duration:.2f} 秒")
-                time.sleep(sleep_duration)
-                # 等待后更新当前时间，重新清理过期请求（避免等待期间有请求过期）
-                current_time = time.time()
-                while request_times and current_time - request_times[0] >= window_seconds:
-                    request_times.popleft()
-
-        # 3. 记录当前请求时间戳，加入滑动窗口队列
-        request_times.append(current_time)
-        logging.getLogger().info(f"API请求时间戳已记录，当前{window_seconds}秒窗口内请求数：{len(request_times)}")
-
     def _summarize_image(self, image_path: str, root_folder: str, image_content: Tuple[str, str]) -> str:
         """
            调用多模态大模型总结图片内容。
@@ -201,7 +163,7 @@ class NodeMDImg(BaseNode):
                     "content": [
                         {
                             "type": "text",
-                            "text": f"""这是"{root_folder}"文件中的一张图片，图片上文部分为"{image_content[0]}"，下文部分为"{image_content[1]}"，请用中文简要总结这张图片的内容，用于 Markdown 图片标题。"""
+                            "text": f"""这是"{root_folder}"文件中的一张图片，图片上文部分为"{image_content[0]}"，下文部分为"{image_content[1]}"，请用中文简要总结这张图片的内容，用于 Markdown 图片标题。尽量不要超过20个字"""
                         },
                         {
                             "type": "image_url",
