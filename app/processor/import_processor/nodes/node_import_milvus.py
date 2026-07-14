@@ -20,7 +20,7 @@ class NodeImportMilvus(BaseNode):
 
     name: str = "node_import_milvus"
 
-    def _step_1_check_input(self, state: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
+    def _step_1_validate_input(self, state: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
         """
         步骤1：输入数据有效性校验
         核心校验项：
@@ -152,7 +152,7 @@ class NodeImportMilvus(BaseNode):
             self.logger.error(f"Milvus 数据删除失败: {str(e)}")
             raise MilvusError(f"Milvus 数据删除失败: {str(e)}")
 
-    def _step_4_insert_data(self, client, chunks_json_data):
+    def _step_4_insert_data(self, client, chunks_json_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
         步骤4：批量插入切片数据到Milvus+主键回填
         核心逻辑：
@@ -164,21 +164,28 @@ class NodeImportMilvus(BaseNode):
         返回：
             List[Dict[str, Any]] - 回填了chunk_id的切片列表
         """
-        # 1. 填充part字段
+        # 1. 预处理数据：移除手动chunk_id，避免与Milvus自增主键冲突
+        data_to_insert = []
         for item in chunks_json_data:
-            if "part" not in item:
-                item["part"] = 0
+            item_copy = item.copy()
 
-        # 2. 批量插入数据
-        result = client.insert(
-            collection_name=milvus_config.chunks_collection,
-            data=chunks_json_data
-        )
+            # 补充 part 字段
+            if "part" not in item_copy:
+                item_copy["part"] = 0
 
-        # 3. 回填chunk_id
-        inserted_ids = result.get("ids")
-        for idx, item in enumerate(chunks_json_data):
-            item["chunk_id"] = inserted_ids[idx]
+            # 添加到待插入列表
+            data_to_insert.append(item_copy)
+
+        # 2. 执行批量插入
+        insert_result = client.insert(collection_name=milvus_config.chunks_collection, data=data_to_insert)
+        insert_count = insert_result.get('insert_count', 0)
+        self.logger.info(f"Milvus插入数据条数：{insert_count}")
+     
+        # 3. 主键回填：将Milvus生成的chunk_id回填到原始切片
+        inserted_ids = insert_result.get('ids', [])
+        if inserted_ids:
+            for idx, item in enumerate(chunks_json_data):
+                item['chunk_id'] = str(inserted_ids[idx])
 
         return chunks_json_data
 
@@ -203,7 +210,7 @@ class NodeImportMilvus(BaseNode):
         """
 
         # 步骤1：输入数据有效性校验
-        chunks_json_data, vector_dimension = self._step_1_check_input(state)
+        chunks_json_data, vector_dimension = self._step_1_validate_input(state)
 
         # 步骤2：Milvus客户端连接+集合准备（自动建表）
         client = self._step_2_prepare_collection(vector_dimension)
@@ -225,10 +232,10 @@ if __name__ == "__main__":
     json_path = "./test_data/output/hak180/state_vector.json"
     with open(json_path, "r", encoding="utf-8") as f:
         state_json = f.read()
-    state = json.loads(state_json)
+    chunks = json.loads(state_json)
 
     init_state = {
-        "chunks": state.get("chunks")
+        "chunks": chunks
     }
     node_import_milvus = NodeImportMilvus()
     result = node_import_milvus(init_state)
