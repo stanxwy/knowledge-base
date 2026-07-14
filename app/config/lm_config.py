@@ -7,10 +7,10 @@ load_dotenv()
 
 @dataclass
 class LLMConfig:
-    openai_api_base: str = field(
+    base_url: str = field(
         default_factory=lambda: os.getenv("OPENAI_API_BASE", "")
     )
-    openai_api_key: str = field(
+    api_key: str = field(
         default_factory=lambda: os.getenv("OPENAI_API_KEY", "")
     )
     default_model: str = field(
@@ -36,5 +36,5 @@ _lm_config: Optional[LLMConfig] = None
 def get_lm_config() -> LLMConfig:
     global _lm_config
     if _lm_config is None:
-        _lm_config = _lm_config.from_env()
+        _lm_config = LLMConfig.from_env()
     return _lm_config

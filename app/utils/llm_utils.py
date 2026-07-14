@@ -102,6 +102,7 @@ def identify_main_product(filename: str, context: str) -> str:
         ]
         response = llm.invoke(messages)
         product_name = response.content
+        logger.info(f"商品名称识别结果：{product_name}")
 
         # data cleanup
         product_name = (product_name.replace(" ", "")

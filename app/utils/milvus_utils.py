@@ -1,5 +1,5 @@
 from loguru import logger
-from pymilvus import MilvusClient, AnnSearchRequest, WeightedRanker
+from pymilvus import MilvusClient, DataType, AnnSearchRequest, WeightedRanker
 
 from app.config.milvus_config import milvus_config
 
@@ -25,6 +25,91 @@ def get_milvus_client():
         _milvus_client = MilvusClient(milvus_config.milvus_url)
     return _milvus_client
 
+def create_item_name_collection():
+    # 创建Schema（数据结构定义）
+    # auto_id=True：主键自动生成；enable_dynamic_field=True：支持动态字段（允许插入 Schema 中未定义的字段）
+    milvus_client = get_milvus_client()
+    collection_name = milvus_config.item_name_collection  # 集合名称
+    if milvus_client.has_collection(collection_name):
+        logger.warning(f"Milvus 集合 {collection_name} 已存在，跳过创建")
+        return
+
+    schema = milvus_client.create_schema(auto_id=True, enable_dynamic_field=True)
+    # 添加主键字段（INT64类型，自增）
+    schema.add_field(
+        field_name="pk",
+        datatype=DataType.INT64,
+        is_primary=True,
+        auto_id=True
+    )
+    # 添加文件标题字段（VARCHAR类型，最大长度65535）
+    schema.add_field(
+        field_name="file_title",
+        datatype=DataType.VARCHAR,
+        max_length=100
+    )
+    # 添加商品名称字段（VARCHAR类型，最大长度65535）
+    schema.add_field(
+        field_name="item_name",
+        datatype=DataType.VARCHAR,
+        max_length=100
+    )
+    # 添加稠密向量字段（FLOAT_VECTOR类型，1024维，BGE-M3模型固定维度）
+    schema.add_field(
+        field_name="dense_vector",
+        datatype=DataType.FLOAT_VECTOR,
+        dim=1024
+    )
+    # 添加稀疏向量字段（SPARSE_FLOAT_VECTOR类型，变长，适配BGE-M3的稀疏向量）
+    schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)
+
+    # 3. 构建索引参数（提升向量检索性能）
+    index_params = milvus_client.prepare_index_params()
+    # 为稠密向量创建索引（IVF_FLAT：兼容性好，适合小数据量）
+    # 核心是 “先聚类分桶、再桶内暴力精确检索”。
+    index_params.add_index(
+        field_name="dense_vector",  # 字段名
+        index_name="dense_vector_index",  # 索引名
+        index_type="IVF_FLAT",  # 索引类型（兼容所有Milvus版本）
+        metric_type="COSINE",  # 相似度计算方式（余弦相似度）
+        params={"nlist": 128}  # 聚类数（影响检索精度/速度）
+    )
+
+    # 为稀疏向量创建索引（SPARSE_INVERTED_INDEX：稀疏向量专用索引）
+    index_params.add_index(
+        field_name="sparse_vector",  # 字段名
+        index_name="sparse_vector_index",  # 索引名
+        index_type="SPARSE_INVERTED_INDEX",  # 索引类型
+        metric_type="IP",  # 相似度计算方式（内积）
+        params={
+            "inverted_index_algo": "DAAT_MAXSCORE",
+            # 高效的稀疏检索算法
+
+            "normalize": True,
+            # ↑ L2 归一化，让内积 (IP) 等价于余弦相似度
+
+            "quantization": "none"
+            # ↑ 关闭量化，保持原始精度：模型生成的向量已经压缩的一半的精度了（BGE_FP16=1），这里就不再压缩了
+            # "quantization": "none" → 存储原始向量，不压缩
+            # "quantization": "sq8" → 存储压缩后的向量（8-bit 量化
+        })
+
+    # 4. 创建集合（Schema + 索引）
+    milvus_client.create_collection(
+        collection_name=collection_name,
+        schema=schema,
+        index_params=index_params
+    )
+
+def insert_into_item_name_collection(data):
+    milvus_client = get_milvus_client()
+    result = milvus_client.insert(collection_name=milvus_config.item_name_collection, data=[data])
+    logger.debug("插入结果", result)
+
+def delete_from_item_name_collection(filter_expr: str):
+    milvus_client = get_milvus_client()
+    result = milvus_client.delete(collection_name=milvus_config.item_name_collection, filter=filter_expr)
+    logger.debug("删除结果", result)
 
 def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None, sparse_params=None, expr=None,
                                   limit=5):

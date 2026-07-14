@@ -2,15 +2,13 @@ import json
 import logging
 from typing import Tuple, Dict, List
 
-from pymilvus import DataType
-
-from app.config.milvus_config import milvus_config
 from app.processor.import_processor.base import BaseNode, setup_logging
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 from app.utils.embedding_utils import generate_embeddings
 from app.utils.llm_utils import identify_main_product
-from app.utils.milvus_utils import get_milvus_client, escape_milvus_string
+from app.utils.milvus_utils import escape_milvus_string, \
+    create_item_name_collection, insert_into_item_name_collection, delete_from_item_name_collection
 
 
 class NodeItemNameRecognition(BaseNode):
@@ -69,11 +67,11 @@ class NodeItemNameRecognition(BaseNode):
             chunk_content = chunk.get("content").strip()
 
             # 2. 格式化切片
-            piece = f"【切片{idx}】\n标题{chunk_title}\n内容：{chunk_content}"
-            parts.append(piece)
+            part = f"【切片{idx}】\n标题{chunk_title}\n内容：{chunk_content}"
+            parts.append(part)
 
             # 3. 计算累计的字符数
-            total_chars += len(piece)
+            total_chars += len(part)
 
             # 4. 判断是否需要继续切分
             if total_chars > self.config.item_name_chunk_size:
@@ -85,6 +83,7 @@ class NodeItemNameRecognition(BaseNode):
 
         # 6. 对返回结果进行二次截断
         final_context = context[:self.config.item_name_chunk_size]
+        self.logger.info(f"构造的上下文长度：{len(final_context)}")
         return final_context
 
     def _step_4_update_chunks(self, state: ImportGraphState, chunks: List[Dict[str, str]], item_name: str):
@@ -134,8 +133,7 @@ class NodeItemNameRecognition(BaseNode):
         vectors = generate_embeddings([item_name])
         return vectors["dense"][0], vectors["sparse"][0]
 
-    def _step_6_save_to_milvus(self, state: ImportGraphState, file_title: str, item_name: str, dense_vector,
-                               sparse_vector):
+    def _step_6_save_to_milvus(self, state: ImportGraphState, file_title: str, item_name: str, dense_vector, sparse_vector):
         """
         步骤 6: 将商品名称、文件标题、双向量持久化到 Milvus 向量数据库
         核心逻辑：
@@ -152,28 +150,18 @@ class NodeItemNameRecognition(BaseNode):
             sparse_vector: 步骤 5 生成的稀疏向量（字典格式）
         """
         try:
+            # 1. 创建集合（如果不存在）
+            create_item_name_collection()
 
-            # 1. 获取 Milvus 单例客户端，连接失败则直接返回
-            # milvus_client = MilvusClient(uri=milvus_uri)
-            milvus_client = get_milvus_client()
-            if not milvus_client:
-                self.logger.warning("无法获取 Milvus 客户端（连接失败），跳过数据保存")
-                return
-
-            # 2. 创建集合（如果不存在）
-            collection_name = milvus_config.item_name_collection  # 集合名称
-            if not milvus_client.has_collection(collection_name):
-                self._create_item_name_collection(collection_name, milvus_client)
-
-            # 3. 幂等性处理：删除同名商品数据（避免重复存储）
+            # 2. 幂等性处理：删除同名商品数据（避免重复存储）
             # 转义商品名称（防止特殊字符导致filter解析失败）
             safe_item_name = escape_milvus_string(item_name)
             # 构建过滤表达式：item_name等于目标值
             filter_expr = f'item_name=="{safe_item_name}"'
             # 删除符合条件的数据
-            milvus_client.delete(collection_name=collection_name, filter=filter_expr)
+            delete_from_item_name_collection(filter_expr)
 
-            # 4. 准备插入Milvus的数据
+            # 3. 准备插入Milvus的数据
             data = {
                 "file_title": file_title,  # 文件标题
                 "item_name": item_name  # 商品名称
@@ -185,87 +173,16 @@ class NodeItemNameRecognition(BaseNode):
             if sparse_vector is not None:
                 data["sparse_vector"] = sparse_vector
 
-            # 5. 插入数据（传入列表支持批量插入，这里仅1条）
-            milvus_client.insert(collection_name=collection_name, data=[data])
+            # 4. 插入数据（传入列表支持批量插入，这里仅1条）
+            insert_into_item_name_collection(data)
 
-            # 6. 把商品名称存入state（供下游节点使用）
+            # 5. 把商品名称存入state（供下游节点使用）
             state["item_name"] = item_name
 
         # 捕获所有Milvus操作异常：连接中断、入库失败、索引错误等，不中断主流程
         except Exception as e:
             self.logger.warning(f"数据存入Milvus失败，原因：{str(e)}", exc_info=True)
 
-    def _create_item_name_collection(self, collection_name, milvus_client):
-        # 创建Schema（数据结构定义）
-        # auto_id=True：主键自动生成；enable_dynamic_field=True：支持动态字段（允许插入 Schema 中未定义的字段）
-        schema = milvus_client.create_schema(auto_id=True, enable_dynamic_field=True)
-
-        # 添加主键字段（INT64类型，自增）
-        schema.add_field(
-            field_name="pk",
-            datatype=DataType.INT64,
-            is_primary=True,
-            auto_id=True
-        )
-        # 添加文件标题字段（VARCHAR类型，最大长度65535）
-        schema.add_field(
-            field_name="file_title",
-            datatype=DataType.VARCHAR,
-            max_length=100
-        )
-        # 添加商品名称字段（VARCHAR类型，最大长度65535）
-        schema.add_field(
-            field_name="item_name",
-            datatype=DataType.VARCHAR,
-            max_length=100
-        )
-        # 添加稠密向量字段（FLOAT_VECTOR类型，1024维，BGE-M3模型固定维度）
-        schema.add_field(
-            field_name="dense_vector",
-            datatype=DataType.FLOAT_VECTOR,
-            dim=1024
-        )
-        # 添加稀疏向量字段（SPARSE_FLOAT_VECTOR类型，变长，适配BGE-M3的稀疏向量）
-        schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)
-
-        # 3. 构建索引参数（提升向量检索性能）
-        index_params = milvus_client.prepare_index_params()
-        # 为稠密向量创建索引（IVF_FLAT：兼容性好，适合小数据量）
-        # 核心是 “先聚类分桶、再桶内暴力精确检索”。
-        index_params.add_index(
-            field_name="dense_vector",  # 字段名
-            index_name="dense_vector_index",  # 索引名
-            index_type="IVF_FLAT",  # 索引类型（兼容所有Milvus版本）
-            metric_type="COSINE",  # 相似度计算方式（余弦相似度）
-            params={"nlist": 128}  # 聚类数（影响检索精度/速度）
-        )
-
-        # 为稀疏向量创建索引（SPARSE_INVERTED_INDEX：稀疏向量专用索引）
-        index_params.add_index(
-            field_name="sparse_vector",  # 字段名
-            index_name="sparse_vector_index",  # 索引名
-            index_type="SPARSE_INVERTED_INDEX",  # 索引类型
-            metric_type="IP",  # 相似度计算方式（内积）
-            params={
-                "inverted_index_algo": "DAAT_MAXSCORE",
-                # 高效的稀疏检索算法
-
-                "normalize": True,
-                # ↑ L2 归一化，让内积 (IP) 等价于余弦相似度
-
-                "quantization": "none"
-                # ↑ 关闭量化，保持原始精度：模型生成的向量已经压缩的一半的精度了（BGE_FP16=1），这里就不再压缩了
-                # "quantization": "none" → 存储原始向量，不压缩
-                # "quantization": "sq8" → 存储压缩后的向量（8-bit 量化
-            })
-
-        # 4. 创建集合（Schema + 索引）
-        milvus_client.create_collection(
-            collection_name=collection_name,
-            schema=schema,
-            index_params=index_params
-        )
-    
     def process(self, state: ImportGraphState) -> ImportGraphState:
         """
         LangGraph 核心节点：商品主体名称识别
@@ -310,7 +227,7 @@ class NodeItemNameRecognition(BaseNode):
 if __name__ == "__main__":
     setup_logging()
 
-    md_path = r"../test_data/output/hak180/chunks.json"
+    md_path = r"./test_data/output/hak180/chunks.json"
     with open(md_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()
     chunks = json.loads(chunks_json)
@@ -323,3 +240,23 @@ if __name__ == "__main__":
     result = node_item_name_recognition(init_state)
 
     logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+
+"""
+(knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_item_name_recognition
+config loaded True...
+ImportConfig instance not found...
+creating ImportConfig instance...
+2026-07-14 10:30:51 - import.node_item_name_recognition - INFO - --- node_item_name_recognition 开始 ---
+2026-07-14 10:30:51 - import.node_item_name_recognition - WARNING - 累计字符数2961已超过限制2500，停止切分
+2026-07-14 10:30:51 - import.node_item_name_recognition - INFO - 构造的上下文长度：2500
+2026-07-14 10:30:53 - httpx - INFO - HTTP Request: POST https://ws-xfsvflr5yndg90oh.cn-beijing.maas.aliyuncs.com/compatible-mode/v1/chat/completions "HTTP/1.1 200 OK"
+2026-07-14 10:30:53.273 | INFO     | app.utils.llm_utils:identify_main_product:105 - 商品名称识别结果：HAK 180 烫金机
+2026-07-14 10:30:54,185 [WARNING][__init__]: Using fp16 with CPU can lead to runtime errors such as 'LayerNormKernelImpl', It's recommended to set 'use_fp16 = False' when using cpu.  (bge_m3.py:50)
+Loading weights: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 391/391 [00:00<00:00, 1852.59it/s]
+2026-07-14 10:30:57 - FlagEmbedding.finetune.embedder.encoder_only.m3.runner - INFO - loading existing colbert_linear and sparse_linear---------
+2026-07-14 10:30:58.468 | WARNING  | app.utils.milvus_utils:create_item_name_collection:34 - Milvus 集合 kb_item_names 已存在，跳过创建
+2026-07-14 10:30:58.656 | DEBUG    | app.utils.milvus_utils:delete_from_item_name_collection:112 - 删除结果
+2026-07-14 10:30:58.668 | DEBUG    | app.utils.milvus_utils:insert_into_item_name_collection:107 - 插入结果
+2026-07-14 10:30:58 - import.node_item_name_recognition - INFO - --- 识别完成: HAK180烫金机 ---
+2026-07-14 10:30:58 - import.node_item_name_recognition - INFO - --- node_item_name_recognition 完成 ---
+"""
