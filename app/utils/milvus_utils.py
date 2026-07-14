@@ -2,6 +2,7 @@ from loguru import logger
 from pymilvus import MilvusClient, DataType, AnnSearchRequest, WeightedRanker
 
 from app.config.milvus_config import milvus_config
+from app.processor.import_processor.exceptions import MilvusError
 
 _milvus_client = None
 
@@ -102,14 +103,84 @@ def create_item_name_collection():
     )
 
 def insert_into_item_name_collection(data):
-    milvus_client = get_milvus_client()
-    result = milvus_client.insert(collection_name=milvus_config.item_name_collection, data=[data])
+    result = get_milvus_client().insert(collection_name=milvus_config.item_name_collection, data=[data])
     logger.debug("插入结果", result)
+    return result
 
-def delete_from_item_name_collection(filter_expr: str):
+def delete_from_item_name_collection(item_name: str):
+    try:
+        # 幂等性处理：删除同名商品数据（避免重复存储）
+        # 转义商品名称（防止特殊字符导致filter解析失败）
+        safe_item_name = escape_milvus_string(item_name)
+        # 构建过滤表达式：item_name等于目标值
+        result = get_milvus_client().delete(collection_name=milvus_config.item_name_collection, filter=f'item_name=="{safe_item_name}"')
+        logger.debug("删除结果", result)
+        return result
+    except Exception as e:
+        logger.error(f"Milvus 数据删除失败: {str(e)}")
+        raise MilvusError(f"Milvus 数据删除失败: {str(e)}")
+
+def create_chunks_collection(vector_dimension):
     milvus_client = get_milvus_client()
-    result = milvus_client.delete(collection_name=milvus_config.item_name_collection, filter=filter_expr)
-    logger.debug("删除结果", result)
+    # 集合不存在则创建
+    collection_name = milvus_config.chunks_collection
+    if milvus_client.has_collection(collection_name):
+        logger.warning(f"Milvus 集合 {collection_name} 已存在，跳过创建")
+        return
+    
+    # 1. 创建schema
+    schema = milvus_client.create_schema(auto_id=True, enable_dynamic_field=True)
+    # 2. 创建列
+    schema.add_field(field_name="chunk_id", datatype=DataType.INT64, is_primary=True, auto_id=True)
+    schema.add_field(field_name="content", datatype=DataType.VARCHAR, max_length=65535)  # 切片内容
+    schema.add_field(field_name="title", datatype=DataType.VARCHAR, max_length=100)  # 切片标题
+    schema.add_field(field_name="parent_title", datatype=DataType.VARCHAR, max_length=100)  # 父标题
+    schema.add_field(field_name="part", datatype=DataType.INT8)  # 分片编号
+    schema.add_field(field_name="file_title", datatype=DataType.VARCHAR, max_length=100)  # 源文件标题
+    schema.add_field(field_name="item_name", datatype=DataType.VARCHAR, max_length=100)  # 商品名称（幂等性依据）
+    schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)  # 稀疏向量
+    schema.add_field(field_name="dense_vector", datatype=DataType.FLOAT_VECTOR, dim=vector_dimension)  # 稠密向量
+
+    # 3. 创建索引
+    index_params = milvus_client.prepare_index_params()
+    # 稠密向量索引：AUTOINDEX自动选最优索引类型+余弦相似度（语义检索常用）
+    index_params.add_index(
+        field_name="dense_vector",
+        index_name="dense_vector_index",
+        index_type="AUTOINDEX",
+        metric_type="COSINE"
+    )
+    # 稀疏向量索引：专用SPARSE_INVERTED_INDEX+内积（IP），适配稀疏向量检索
+    index_params.add_index(
+        field_name="sparse_vector",
+        index_name="sparse_inverted_index",
+        index_type="SPARSE_INVERTED_INDEX",
+        metric_type="IP",
+        params={"inverted_index_algo": "DAAT_MAXSCORE", "normalize": True, "quantization": "none"}
+    )
+
+    # 创建集合
+    milvus_client.create_collection(
+        collection_name=collection_name,
+        schema=schema,
+        index_params=index_params
+    )
+
+def delete_from_chunks_collection(file_title: str):
+    try:
+        file_title = escape_milvus_string(file_title)
+        result = get_milvus_client().delete(collection_name=milvus_config.chunks_collection, filter=f"file_title=='{file_title}'")
+        logger.debug("删除结果", result)
+        return result
+    except Exception as e:
+        logger.error(f"Milvus 数据删除失败: {str(e)}")
+        raise MilvusError(f"Milvus 数据删除失败: {str(e)}")
+    
+def insert_into_chunks_collection(data):
+    result = get_milvus_client().insert(collection_name=milvus_config.chunks_collection, data=data)
+    insert_count = result.get('insert_count', 0)
+    logger.info(f"Milvus 插入数据条数：{insert_count}")
+    return result
 
 def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None, sparse_params=None, expr=None,
                                   limit=5):

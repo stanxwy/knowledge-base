@@ -153,13 +153,8 @@ class NodeItemNameRecognition(BaseNode):
             # 1. 创建集合（如果不存在）
             create_item_name_collection()
 
-            # 2. 幂等性处理：删除同名商品数据（避免重复存储）
-            # 转义商品名称（防止特殊字符导致filter解析失败）
-            safe_item_name = escape_milvus_string(item_name)
-            # 构建过滤表达式：item_name等于目标值
-            filter_expr = f'item_name=="{safe_item_name}"'
             # 删除符合条件的数据
-            delete_from_item_name_collection(filter_expr)
+            delete_from_item_name_collection(item_name)
 
             # 3. 准备插入Milvus的数据
             data = {
