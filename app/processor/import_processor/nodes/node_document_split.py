@@ -303,7 +303,7 @@ class NodeDocumentSplit(BaseNode):
         json.dump的核心作用就是：将 Python 原生数据结构（列表、字典、字符串、数字等）直接序列化并写入 JSON 文件，无需手动转换为字符串，
         同时保证数据格式规范、可跨语言 / 跨场景读取，完美适配「Chunk 列表备份」的需求。
         """
-        self.backup_json(sections, "chunks.json")
+        self.backup_json(state, sections, "chunks.json")
 
     def process(self, state: ImportGraphState) -> ImportGraphState:
         """

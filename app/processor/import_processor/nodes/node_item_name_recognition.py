@@ -57,7 +57,6 @@ class NodeItemNameRecognition(BaseNode):
         返回值：
             str: 格式化后的上下文字符串
         """
-
         parts: List[str] = []
         total_chars = 0
         for idx, chunk in enumerate(chunks[:self.config.item_name_chunk_k], start = 1):
@@ -86,7 +85,7 @@ class NodeItemNameRecognition(BaseNode):
         self.logger.info(f"构造的上下文长度：{len(final_context)}")
         return final_context
 
-    def _step_4_update_chunks(self, state: ImportGraphState, chunks: List[Dict[str, str]], item_name: str):
+    def _step_4_update_chunks(self, chunks: List[Dict[str, str]], item_name: str):
         """
         步骤 4: 回填商品名称到流程状态和所有文本切片
         核心作用：
@@ -100,16 +99,10 @@ class NodeItemNameRecognition(BaseNode):
             chunks: 校验后的文本切片列表
             item_name: 步骤3识别并清洗后的商品名称
         """
-
         # 1. 遍历所有切片，为每个切片添加商品名字段，保证数据全链路一致
         for chunk in chunks:
             chunk["item_name"] = item_name
-
-        # 2. 同步更新state中的切片列表，确保修改全局生效
-        state["chunks"] = chunks
-
-        # 3. 将商品名称存入全局状态，供下游节点调用
-        state["item_name"] = item_name
+        return chunks
 
     def _step_5_generate_vectors(self, item_name: str) -> Tuple[List, Dict]:
         """
@@ -124,7 +117,6 @@ class NodeItemNameRecognition(BaseNode):
         返回值：
             Tuple[List, Dict]: (稠密向量列表，稀疏向量字典)
         """
-
         # 1. 商品名称为空 → 直接返回空向量
         if not item_name:
             return None, None
@@ -133,7 +125,7 @@ class NodeItemNameRecognition(BaseNode):
         vectors = generate_embeddings([item_name])
         return vectors["dense"][0], vectors["sparse"][0]
 
-    def _step_6_save_to_milvus(self, state: ImportGraphState, file_title: str, item_name: str, dense_vector, sparse_vector):
+    def _step_6_save_to_milvus(self, file_title: str, item_name: str, dense_vector, sparse_vector):
         """
         步骤 6: 将商品名称、文件标题、双向量持久化到 Milvus 向量数据库
         核心逻辑：
@@ -171,9 +163,6 @@ class NodeItemNameRecognition(BaseNode):
             # 4. 插入数据（传入列表支持批量插入，这里仅1条）
             insert_into_item_name_collection(data)
 
-            # 5. 把商品名称存入state（供下游节点使用）
-            state["item_name"] = item_name
-
         # 捕获所有Milvus操作异常：连接中断、入库失败、索引错误等，不中断主流程
         except Exception as e:
             self.logger.warning(f"数据存入Milvus失败，原因：{str(e)}", exc_info=True)
@@ -206,19 +195,22 @@ class NodeItemNameRecognition(BaseNode):
         item_name = identify_main_product(filename, context)
 
         # 步骤4：回填商品名称到状态和切片
-        self._step_4_update_chunks(state, chunks, item_name)
+        chunks = self._step_4_update_chunks(chunks, item_name)
 
         # 步骤5：为商品名称生成稠密/稀疏向量
         dense_vector, sparse_vector = self._step_5_generate_vectors(item_name)
 
         # 步骤6：将数据存入Milvus向量数据库
-        self._step_6_save_to_milvus(state, filename, item_name, dense_vector, sparse_vector)
+        self._step_6_save_to_milvus(filename, item_name, dense_vector, sparse_vector)
 
         # 打印识别结果
         self.logger.info(f"--- 识别完成: {item_name} ---")
 
         self.backup_json(state, chunks, "chunks.json")
-        return state
+        return {
+            "chunks": chunks,       # 同步更新state中的切片列表，确保修改全局生效
+            "item_name": item_name  # 将商品名称存入全局状态，供下游节点调用
+        }
 
 
 if __name__ == "__main__":

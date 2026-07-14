@@ -68,7 +68,6 @@ class NodeImportMilvus(BaseNode):
         """
         create_chunks_collection(vector_dimension)
 
-
     def _step_3_clean_old_data(self, chunks_json_data):
         """
         幂等清理
@@ -82,7 +81,6 @@ class NodeImportMilvus(BaseNode):
 
         # 2. 执行幂等清理
         delete_from_chunks_collection(file_title)
-
 
     def _step_4_insert_data(self, chunks_json_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -138,7 +136,6 @@ class NodeImportMilvus(BaseNode):
         :param state: 工作流状态对象
         :return: 更新后的状态对象
         """
-
         # 步骤1：输入数据有效性校验
         chunks_json_data, vector_dimension = self._step_1_validate_input(state)
 
@@ -152,9 +149,9 @@ class NodeImportMilvus(BaseNode):
         updated_chunks = self._step_4_insert_data(client, chunks_json_data)
 
         # 步骤5：更新全局状态，将回填后的切片回传下游
-        state["chunks"] = updated_chunks
-
-        return state
+        return {
+            "chunks": updated_chunks
+        }
     
 if __name__ == "__main__":
     setup_logging()
