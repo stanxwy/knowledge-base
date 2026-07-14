@@ -241,6 +241,7 @@ class NodeDocumentSplit(BaseNode):
 
         merged_sections = []  # 最终合并结果
         current_chunk = None  # 迭代累加器：保存当前待合并的Chunk
+        merge_count = 1
 
         for sec in sections:
             # 初始化：第一个Chunk直接作为当前待合并块
@@ -251,6 +252,7 @@ class NodeDocumentSplit(BaseNode):
             # 合并条件：1.当前块长度不足阈值 2.与下一块同父标题（同属一个原章节）
             is_current_short = len(current_chunk["content"]) < self.config.min_content_length
             is_same_parent = current_chunk.get("parent_title") == sec.get("parent_title")
+            self.logger.debug(current_chunk.get("parent_title"), sec.get("parent_title"), "满足合并条件 =", is_same_parent)
 
             if is_current_short and is_same_parent:
                 # 合并前清理：去掉下一块开头重复的父标题，避免内容冗余
@@ -260,14 +262,16 @@ class NodeDocumentSplit(BaseNode):
                     next_content = next_content[len(parent_title):].lstrip()
                 # 合并内容：空行分隔，保证格式整洁
                 current_chunk["content"] += "\n\n" + next_content
+                merge_count += 1
                 # 更新子Chunk序号：保留最新序号，便于溯源
                 if "part" in sec:
                     current_chunk["part"] = sec["part"]
-                self.logger.debug(f"合并短Chunk：{current_chunk.get('parent_title')} → 累计长度{len(current_chunk['content'])}")
+                self.logger.debug(f"合并短Chunk：{current_chunk.get('parent_title') or current_chunk.get('title')} → 累计长度{len(current_chunk['content'])}，合并Chunk {merge_count} 个")
             else:
                 # 不满足合并条件：将当前块加入结果，切换为新的待合并块
                 merged_sections.append(current_chunk)
                 current_chunk = sec
+                merge_count = 1
 
         # 循环结束后，将最后一个待合并块加入结果
         if current_chunk is not None:
@@ -356,7 +360,7 @@ if __name__ == "__main__":
     logging.getLogger().info(json.dumps(result["chunks"], ensure_ascii=False, indent=4))
 
 """
-(knowledge-base) PS D:\code\atguigu\knowledge-base> python -m app.processor.import_processor.nodes.node_document_split
+(knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_document_split
 config loaded True...
 ImportConfig instance not found...
 creating ImportConfig instance...
@@ -431,5 +435,4 @@ creating ImportConfig instance...
         "parent_title": "## 产品中有害物质的名称及含量"
     }
 ]
-(knowledge-base) PS D:\code\atguigu\knowledge-base>
 """

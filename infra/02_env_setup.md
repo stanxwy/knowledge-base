@@ -1,5 +1,7 @@
 ## config VMnet8 adapter on host machine
-![1783471092531](image/02_env_setup/1783471092531.png)
+win + R >  ncpa.cpl  
+![alt text](image/02_env_setup/ncpa.png)  
+![1783471092531](image/02_env_setup/1783471092531.png)  
 
 ## config vm network adaptor (NAT)
 ![1783434137317](image/02_env_setup/1783434137317.png)
@@ -29,6 +31,34 @@ NETMASK=255.255.255.0
 DNS1=192.168.100.2
 DNS2=8.8.8.8
 DNS3=114.114.114.114
+ONBOOT=yes
+BOOTPROTO=static
+```
+
+```bash
+[root@localhost ~]# cd /etc/sysconfig/network-scripts/
+[root@localhost network-scripts]# cat ifcfg-ens33
+IPADDR=192.168.222.8
+GATEWAY=192.168.222.2
+NETMASK=255.255.255.0
+DNS1=192.168.222.2
+DNS2=8.8.8.8
+DNS3=114.114.114.114
+TYPE=Ethernet
+PROXY_METHOD=none
+BROWSER_ONLY=no
+#BOOTPROTO=dhcp
+BOOTPROTO=static
+DEFROUTE=yes
+IPV4_FAILURE_FATAL=no
+IPV6INIT=yes
+IPV6_AUTOCONF=yes
+IPV6_DEFROUTE=yes
+IPV6_FAILURE_FATAL=no
+IPV6_ADDR_GEN_MODE=stable-privacy
+NAME=ens33
+UUID=486a8ac0-8d5a-483b-adc3-c7381492ac63
+DEVICE=ens33
 ONBOOT=yes
 
 ping 8.8.8.8

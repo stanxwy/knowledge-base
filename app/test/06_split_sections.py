@@ -208,6 +208,7 @@ def merge_short_sections(sections: List[Dict[str, str]]) -> List[Dict[str, str]]
 
     merged_sections = []  # 最终合并结果
     current_chunk = None  # 迭代累加器：保存当前待合并的Chunk
+    merge_count = 1
 
     for sec in sections:
         # 初始化：第一个Chunk直接作为当前待合并块
@@ -218,6 +219,7 @@ def merge_short_sections(sections: List[Dict[str, str]]) -> List[Dict[str, str]]
         # 合并条件：1.当前块长度不足阈值 2.与下一块同父标题（同属一个原章节）
         is_current_short = len(current_chunk["content"]) < get_config().min_content_length
         is_same_parent = current_chunk.get("parent_title") == sec.get("parent_title")
+        print(current_chunk.get("parent_title"), sec.get("parent_title"), "满足合并条件 =", is_same_parent)
 
         if is_current_short and is_same_parent:
             # 合并前清理：去掉下一块开头重复的父标题，避免内容冗余
@@ -230,11 +232,13 @@ def merge_short_sections(sections: List[Dict[str, str]]) -> List[Dict[str, str]]
             # 更新子Chunk序号：保留最新序号，便于溯源
             if "part" in sec:
                 current_chunk["part"] = sec["part"]
-            print(f"合并短Chunk：{current_chunk.get('parent_title')} → 累计长度{len(current_chunk['content'])}")
+            merge_count += 1
+            print(f"合并短Chunk：{current_chunk.get('parent_title') or current_chunk.get('title')} → 累计长度{len(current_chunk['content'])}，合并Chunk {merge_count} 个")
         else:
             # 不满足合并条件：将当前块加入结果，切换为新的待合并块
             merged_sections.append(current_chunk)
             current_chunk = sec
+            merge_count = 1
 
     # 循环结束后，将最后一个待合并块加入结果
     if current_chunk is not None:
@@ -244,7 +248,7 @@ def merge_short_sections(sections: List[Dict[str, str]]) -> List[Dict[str, str]]
     return merged_sections
 
 
-with open("./docs/07【掌柜智库】【导入】文档切片.md", "r", encoding="utf-8") as f:
+with open("./test_data/kb/07【掌柜智库】【导入】文档切片.md", "r", encoding="utf-8") as f:
     content = f.read()
 sections, _, _ = split_by_titles_v2(content, "test")
 rprint(sections)
@@ -252,8 +256,10 @@ rprint(sections)
 refined = []
 for sec in sections:
     refined.extend(split_long_section(sec))
+rprint("refined", refined)
 
-merge_short_sections(refined)
+final = merge_short_sections(refined)
+rprint("final", final)
 
 with open("./run_test.bat", "r", encoding="utf-8") as f:
     content = f.read()
