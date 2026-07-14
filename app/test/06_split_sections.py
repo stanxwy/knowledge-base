@@ -265,9 +265,3 @@ with open("./run_test.bat", "r", encoding="utf-8") as f:
     content = f.read()
 # result = split_by_titles_v2(content, "test")
 # print(result)
-
-l1 = [1,2,3]
-l1.extend([4,5])
-print(l1)
-l1.append([6,7])
-print(l1)

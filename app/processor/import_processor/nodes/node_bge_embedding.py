@@ -68,7 +68,7 @@ class NodeBGEEmbedding(BaseNode):
 
             docs_embeddings = generate_embeddings(input_texts)
             for j, doc in enumerate(batch_texts):
-                item = doc.copy()
+                item = doc.copy() # 防御式编程：函数不修改入参，是最优默认策略
                 item["dense_vector"] = docs_embeddings["dense"][j]
                 item["sparse_vector"] = docs_embeddings["sparse"][j]
                 output_data.append(item)
@@ -100,7 +100,7 @@ class NodeBGEEmbedding(BaseNode):
         output_data = self._step_2_generate_embeddings(chunks)
 
         # 步骤3：更新全局状态，将带向量的chunks回传下游
-        self.backup_json(state, chunks, "chunks_with_embeddings.json")
+        self.backup_json(state, chunks, "state_vector.json")
         return {
             "chunks": output_data
         }
