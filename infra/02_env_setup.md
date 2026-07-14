@@ -8,7 +8,7 @@ win + R >  ncpa.cpl
 ![1783472447562](image/02_env_setup/1783472447562.png)
 
 ## no ip address assigned to centos vm yet
-```log
+```bash
 [root@localhost ~]# ip a
 1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
     link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
@@ -61,9 +61,45 @@ UUID=486a8ac0-8d5a-483b-adc3-c7381492ac63
 DEVICE=ens33
 ONBOOT=yes
 
-ping 8.8.8.8
+[root@localhost network-scripts]# ip a
+1: lo: <LOOPBACK,UP,LOWER_UP> mtu 65536 qdisc noqueue state UNKNOWN group default qlen 1000
+    link/loopback 00:00:00:00:00:00 brd 00:00:00:00:00:00
+    inet 127.0.0.1/8 scope host lo
+       valid_lft forever preferred_lft forever
+    inet6 ::1/128 scope host
+       valid_lft forever preferred_lft forever
+2: ens33: <BROADCAST,MULTICAST,UP,LOWER_UP> mtu 1500 qdisc pfifo_fast state UP group default qlen 1000
+    link/ether 00:0c:29:4c:5d:70 brd ff:ff:ff:ff:ff:ff
+    inet 192.168.222.8/24 brd 192.168.222.255 scope global noprefixroute ens33
+       valid_lft forever preferred_lft forever
+    inet6 fe80::7bda:5beb:3f9d:c9ed/64 scope link noprefixroute
+       valid_lft forever preferred_lft forever
 
-ping www.baidu.com
+
+[root@localhost network-scripts]# ping -c 5 8.8.8.8
+PING 8.8.8.8 (8.8.8.8) 56(84) bytes of data.
+64 bytes from 8.8.8.8: icmp_seq=1 ttl=128 time=170 ms
+64 bytes from 8.8.8.8: icmp_seq=2 ttl=128 time=168 ms
+64 bytes from 8.8.8.8: icmp_seq=3 ttl=128 time=166 ms
+64 bytes from 8.8.8.8: icmp_seq=4 ttl=128 time=166 ms
+64 bytes from 8.8.8.8: icmp_seq=5 ttl=128 time=166 ms
+
+--- 8.8.8.8 ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4004ms
+rtt min/avg/max/mdev = 166.242/167.592/170.444/1.588 ms
+
+
+[root@localhost network-scripts]# ping -c 5 www.baidu.com
+PING www.a.shifen.com (183.2.172.177) 56(84) bytes of data.
+64 bytes from 183.2.172.177 (183.2.172.177): icmp_seq=1 ttl=128 time=8.22 ms
+64 bytes from 183.2.172.177 (183.2.172.177): icmp_seq=2 ttl=128 time=8.36 ms
+64 bytes from 183.2.172.177 (183.2.172.177): icmp_seq=3 ttl=128 time=9.16 ms
+64 bytes from 183.2.172.177 (183.2.172.177): icmp_seq=4 ttl=128 time=9.12 ms
+64 bytes from 183.2.172.177 (183.2.172.177): icmp_seq=5 ttl=128 time=8.03 ms
+
+--- www.a.shifen.com ping statistics ---
+5 packets transmitted, 5 received, 0% packet loss, time 4005ms
+rtt min/avg/max/mdev = 8.033/8.584/9.169/0.482 ms
 ```
 
 ## get centos vm ip address
