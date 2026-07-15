@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
@@ -19,3 +20,4 @@ minio_config = MinIOConfig(
     bucket_name=os.getenv("MINIO_BUCKET_NAME"),
     img_dir=os.getenv("MINIO_IMG_DIR", ""),
 )
+logging.getLogger().debug(f"minio_config loaded {minio_config}")

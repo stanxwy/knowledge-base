@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
@@ -16,3 +17,4 @@ milvus_config = MilvusConfig(
     chunks_collection=os.getenv("CHUNKS_COLLECTION"),
     item_name_collection=os.getenv("ITEM_NAME_COLLECTION")
 )
+logging.getLogger().debug(f"milvus_config loaded {milvus_config}")

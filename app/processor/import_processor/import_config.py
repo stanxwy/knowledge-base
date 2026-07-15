@@ -3,14 +3,14 @@
 
 集中管理所有配置项，支持环境变量覆盖
 """
-
+import logging
 import os
 from dataclasses import dataclass, field
 from typing import Set, Optional
 from dotenv import load_dotenv
 
 loaded = load_dotenv()
-print(f"config loaded {loaded}...")
+logging.getLogger().debug(f"env loaded {loaded}...")
 
 @dataclass
 class ImportConfig:
@@ -70,7 +70,7 @@ class ImportConfig:
     @classmethod
     def from_env(cls) -> "ImportConfig":
         """从环境变量加载配置"""
-        print("creating ImportConfig instance...")
+        logging.getLogger().debug("creating ImportConfig instance...")
         return cls()
 
     # http://192.168.200.130:9000/
@@ -87,6 +87,7 @@ def get_config() -> ImportConfig:
     """获取配置单例"""
     global _config
     if _config is None:
-        print("ImportConfig instance not found...")
+        logging.getLogger().debug("ImportConfig instance not found...")
         _config = ImportConfig.from_env()
+    logging.getLogger().debug(f"ImportConfig instance loaded {_config}")
     return _config

@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass, field
 from dotenv import load_dotenv
@@ -37,4 +38,5 @@ def get_lm_config() -> LLMConfig:
     global _lm_config
     if _lm_config is None:
         _lm_config = LLMConfig.from_env()
+    logging.getLogger().debug(f"lm_config loaded {_lm_config}")
     return _lm_config

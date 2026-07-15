@@ -1,5 +1,5 @@
 import base64
-from loguru import logger
+import logging
 from typing import Tuple
 
 from langchain_core.messages import SystemMessage, HumanMessage
@@ -10,6 +10,7 @@ from app.processor.query_processor.nodes.prompt.item_name_recognition import ITE
 _llm_client_cache = {}
 
 def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpenAI:
+    logging.getLogger().debug(f"开始获取 LangChain ChatOpenAI {model} 客户端实例...")
     lm_config = get_lm_config()
     m = model or lm_config.default_model
 
@@ -33,6 +34,7 @@ def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpe
     )
 
     _llm_client_cache[key] = llm
+    logging.getLogger().debug("LangChain ChatOpenAI 客户端实例获取成功...")
     return llm
 
 def generate_image_caption(image_path: str, doc_stem: str, image_context: Tuple[str, str]) -> str:
@@ -59,14 +61,14 @@ def generate_image_caption(image_path: str, doc_stem: str, image_context: Tuple[
                 "image_url": { "url": f"data:image/jpeg;base64,{base64_image}" }
             }]
         }]
-        logger.debug(f"请求VLM生成图片总结 {image_path}")
+        logging.getLogger().debug(f"请求VLM生成图片总结 {image_path}")
         response = chat_model.invoke(messages)
-        logger.info(f"VLM生成图片 {image_path} 总结结果: {response.content}")
+        logging.getLogger().info(f"VLM生成图片 {image_path} 总结结果: {response.content}")
         # logger.verbose(json.dumps(response, ensure_ascii=False, indent=2)) # Object of type AIMessage is not JSON serializable
         return response.content.strip().replace("\n", "")
 
     except Exception as e:
-        logger.error(f"图像总结失败：{image_path}, 错误{e}")
+        logging.getLogger().error(f"图像总结失败：{image_path}, 错误{e}")
         return "图片描述"
     
 def identify_main_product(filename: str, context: str) -> str:
@@ -102,7 +104,7 @@ def identify_main_product(filename: str, context: str) -> str:
         ]
         response = llm.invoke(messages)
         product_name = response.content
-        logger.info(f"商品名称识别结果：{product_name}")
+        logging.getLogger().info(f"商品名称识别结果：{product_name}")
 
         # data cleanup
         product_name = (product_name.replace(" ", "")
@@ -115,7 +117,7 @@ def identify_main_product(filename: str, context: str) -> str:
         return product_name
 
     except Exception as e:
-        logger.error(f"大模型调用异常：{e}")
+        logging.getLogger().error(f"大模型调用异常：{e}")
         return filename
 
 if __name__ == '__main__':

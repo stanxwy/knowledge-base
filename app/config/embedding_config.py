@@ -1,3 +1,4 @@
+import logging
 import os
 from dataclasses import dataclass
 from dotenv import load_dotenv
@@ -18,3 +19,4 @@ embedding_config = EmbeddingConfig(
     # 特殊处理：将.env中的1/0转为布尔值，兼容常见的数字/字符串格式
     bge_fp16=os.getenv("BGE_FP16") in ("1", "True", "true", 1)
 )
+logging.getLogger().debug(f"embedding_config loaded {embedding_config}")

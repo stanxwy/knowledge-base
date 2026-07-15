@@ -252,7 +252,7 @@ class NodeDocumentSplit(BaseNode):
             # 合并条件：1.当前块长度不足阈值 2.与下一块同父标题（同属一个原章节）
             is_current_short = len(current_chunk["content"]) < self.config.min_content_length
             is_same_parent = current_chunk.get("parent_title") == sec.get("parent_title")
-            self.logger.debug(current_chunk.get("parent_title"), sec.get("parent_title"), "满足合并条件 =", is_same_parent)
+            self.logger.debug(f'检查短Chunk合并条件：当前块{current_chunk.get("parent_title")}, {sec.get("parent_title")}, 满足合并条件 = {is_same_parent}')
 
             if is_current_short and is_same_parent:
                 # 合并前清理：去掉下一块开头重复的父标题，避免内容冗余
@@ -344,7 +344,7 @@ class NodeDocumentSplit(BaseNode):
 if __name__ == "__main__":
     setup_logging(level=logging.DEBUG)
 
-    md_path = "./test_data/output/hak180/hak180.md"
+    md_path = "./test_data/output/B3-211H/B3-211H.md"
     with open(md_path, "r", encoding="utf-8") as f:
         md_content = f.read()
 

@@ -17,7 +17,7 @@ class NodePDFToMD(BaseNode):
     PDF 转 Markdown 节点：PDF结构化解析
     """
 
-    name = "node_pdf_to_md"
+    name: str = "node_pdf_to_md"
     
     def _step_1_validate_paths(self, state: ImportGraphState) -> tuple[Path, Path]:
         """
@@ -237,7 +237,8 @@ if __name__ == "__main__":
     setup_logging()
 
     init_state = {
-        "pdf_path": "./test_data/kb/hak180.pdf",
+        # "pdf_path": "./test_data/kb/hak180.pdf",
+        "pdf_path": "./test_data/kb/B3-211H.pdf",
         "output_file_dir": "./test_data/output"
     }
     node_pdf_to_md = NodePDFToMD()

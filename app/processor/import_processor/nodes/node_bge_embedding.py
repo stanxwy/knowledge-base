@@ -13,7 +13,7 @@ class NodeBGEEmbedding(BaseNode):
     混合向量化节点：使用 BGE-M3 模型将文本转换为向量
     """
 
-    name = "node_bge_embedding"
+    name: str = "node_bge_embedding"
 
     def _step_1_validate_input(self, state: ImportGraphState) -> List[Dict]:
         """

@@ -20,7 +20,7 @@ class NodeMDImg(BaseNode):
     MarkDown图片处理节点：多模态图片理解
     """
 
-    name = "node_md_img"
+    name: str = "node_md_img"
 
     def _step_1_get_content(self, state: ImportGraphState) -> Tuple[str, Path, Path]:
         """
@@ -294,9 +294,11 @@ class NodeMDImg(BaseNode):
         }
 
 if __name__ == "__main__":
+    logging.getLogger().debug("starting node_md_img...")
     setup_logging(level=logging.DEBUG)
 
-    md_path = "./test_data/output/hak180/hak180.md"
+    # md_path = "./test_data/output/hak180/hak180.md"
+    md_path = "./test_data/output/B3-211H/B3-211H.md"
     with open(md_path, "r", encoding="utf-8") as f:
         md_content = f.read()
     init_state = {
@@ -304,7 +306,9 @@ if __name__ == "__main__":
         "md_content": md_content
     }
 
+    logging.getLogger().debug("creating node instance...")
     node_md_img = NodeMDImg()
+    logging.getLogger().debug("running node instance...")
     result = node_md_img(init_state)
     logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
 

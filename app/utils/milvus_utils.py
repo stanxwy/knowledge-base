@@ -1,5 +1,6 @@
 from loguru import logger
 from pymilvus import MilvusClient, DataType, AnnSearchRequest, WeightedRanker
+from typing import List, Dict
 
 from app.config.milvus_config import milvus_config
 from app.processor.import_processor.exceptions import MilvusError
@@ -26,6 +27,7 @@ def get_milvus_client():
         _milvus_client = MilvusClient(milvus_config.milvus_url)
     return _milvus_client
 
+# item_name 集合操作
 def create_item_name_collection():
     # 创建Schema（数据结构定义）
     # auto_id=True：主键自动生成；enable_dynamic_field=True：支持动态字段（允许插入 Schema 中未定义的字段）
@@ -102,9 +104,9 @@ def create_item_name_collection():
         index_params=index_params
     )
 
-def insert_into_item_name_collection(data):
+def insert_into_item_name_collection(data: Dict):
     result = get_milvus_client().insert(collection_name=milvus_config.item_name_collection, data=[data])
-    logger.debug("插入结果", result)
+    logger.info(f"Milvus 插入数据条数：{result.get('insert_count', 0)}")
     return result
 
 def delete_from_item_name_collection(item_name: str):
@@ -114,12 +116,13 @@ def delete_from_item_name_collection(item_name: str):
         safe_item_name = escape_milvus_string(item_name)
         # 构建过滤表达式：item_name等于目标值
         result = get_milvus_client().delete(collection_name=milvus_config.item_name_collection, filter=f'item_name=="{safe_item_name}"')
-        logger.debug("删除结果", result)
+        logger.debug("删除结果", result.get('delete_count', 0))
         return result
     except Exception as e:
         logger.error(f"Milvus 数据删除失败: {str(e)}")
         raise MilvusError(f"Milvus 数据删除失败: {str(e)}")
 
+# chunks 集合操作
 def create_chunks_collection(vector_dimension):
     milvus_client = get_milvus_client()
     # 集合不存在则创建
@@ -170,18 +173,18 @@ def delete_from_chunks_collection(file_title: str):
     try:
         file_title = escape_milvus_string(file_title)
         result = get_milvus_client().delete(collection_name=milvus_config.chunks_collection, filter=f"file_title=='{file_title}'")
-        logger.debug("删除结果", result)
+        logger.debug("删除结果", result.get('delete_count', 0))
         return result
     except Exception as e:
         logger.error(f"Milvus 数据删除失败: {str(e)}")
         raise MilvusError(f"Milvus 数据删除失败: {str(e)}")
     
-def insert_into_chunks_collection(data):
+def insert_into_chunks_collection(data: List[Dict]):
     result = get_milvus_client().insert(collection_name=milvus_config.chunks_collection, data=data)
-    insert_count = result.get('insert_count', 0)
-    logger.info(f"Milvus 插入数据条数：{insert_count}")
+    logger.info(f"Milvus 插入数据条数：{result.get('insert_count', 0)}")
     return result
 
+# 搜索操作
 def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None, sparse_params=None, expr=None,
                                   limit=5):
     """

@@ -9,7 +9,7 @@ from typing import TypeVar, Optional
 import logging
 from pathlib import Path
 
-from app.processor.import_processor.config import ImportConfig, get_config
+from app.processor.import_processor.import_config import ImportConfig, get_config
 from app.processor.import_processor.exceptions import ImportProcessError
 from app.utils.backup_utils import backup_json
 # from app.utils.task_util import add_running_task, add_done_task

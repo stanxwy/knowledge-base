@@ -2,7 +2,7 @@ import re
 from rich import print as rprint
 from typing import List, Dict
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-from app.processor.import_processor.config import get_config
+from app.processor.import_processor.import_config import get_config
 
 
 stripped_line = "````123~~~abc```````"

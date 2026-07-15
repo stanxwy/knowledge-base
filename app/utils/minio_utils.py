@@ -1,6 +1,7 @@
+import logging
 import json
 import os
-from loguru import logger
+
 from minio import Minio
 from minio.deleteobjects import DeleteObject
 from rich import print as rprint
@@ -8,6 +9,7 @@ from app.config.minio_config import minio_config
 
 try:
     # 1) 初始化MinIO客户端
+    logging.getLogger().debug("开始初始化MinIO客户端")
     minio_client = Minio(
         endpoint=minio_config.endpoint,
         access_key=minio_config.access_key,
@@ -34,8 +36,9 @@ try:
         ]
     }
     minio_client.set_bucket_policy(minio_config.bucket_name, json.dumps(policy))
+    logging.getLogger().debug("MinIO客户端初始化完成")
 except Exception as e:
-    logger.error(f"Minio init failed:{e}")
+    logging.getLogger().error(f"Minio init failed:{e}")
     minio_client = None
 
 def get_minio_client():
@@ -52,9 +55,9 @@ def clean_dir(dir_path: str) -> None:
         if delete_list:
             errors = minio_client.remove_objects(minio_config.bucket_name, delete_list)
             for error in errors:
-                logger.error(f"删除失败：{error}")
+                logging.getLogger().error(f"删除失败：{error}")
     except Exception as e:
-        logger.error(f"清理minio目录失败：{e}")
+        logging.getLogger().error(f"清理minio目录失败：{e}")
 
 def upload(local_path: str, object_name: str) -> str | None:
     """
@@ -78,7 +81,7 @@ def upload(local_path: str, object_name: str) -> str | None:
         return f"{base_url}/{object_name}"
 
     except Exception as e:
-        logger.error(f"图片上传MinIO失败：{local_path}，错误信息：{str(e)}")
+        logging.getLogger().error(f"图片上传MinIO失败：{local_path}，错误信息：{str(e)}")
 
 if __name__ == "__main__":
     minio_client = get_minio_client()

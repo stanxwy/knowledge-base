@@ -11,7 +11,7 @@ class NodeEntry(BaseNode):
     入口节点：任务分发
     """
 
-    name = "node_entry"
+    name: str = "node_entry"
 
     def process(self, state: ImportGraphState):
         """
@@ -57,7 +57,8 @@ class NodeEntry(BaseNode):
 if __name__ == "__main__":
     setup_logging()
     
-    init_state = {"import_file_path": "./test_data/kb/hak180.pdf"}
+    # init_state = {"import_file_path": "./test_data/kb/hak180.pdf"}
+    init_state = {"import_file_path": "./test_data/kb/B3-211H.pdf"}
     node_entry = NodeEntry()
     result = node_entry(init_state)
     logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))

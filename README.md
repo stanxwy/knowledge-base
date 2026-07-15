@@ -90,7 +90,7 @@
 - MinerU
   - Online API key
   - Local model
-- Visiual Model
+- Visual Model
   - qwen3-vl-flash
 - LLM 
   - qwen-flash 

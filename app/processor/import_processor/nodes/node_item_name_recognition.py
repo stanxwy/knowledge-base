@@ -7,8 +7,7 @@ from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 from app.utils.embedding_utils import generate_embeddings
 from app.utils.llm_utils import identify_main_product
-from app.utils.milvus_utils import escape_milvus_string, \
-    create_item_name_collection, insert_into_item_name_collection, delete_from_item_name_collection
+from app.utils.milvus_utils import create_item_name_collection, insert_into_item_name_collection, delete_from_item_name_collection
 
 
 class NodeItemNameRecognition(BaseNode):
