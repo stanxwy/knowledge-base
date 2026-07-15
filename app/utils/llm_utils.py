@@ -5,7 +5,7 @@ from typing import Tuple
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from app.config.lm_config import get_lm_config
-from app.processor.query_processor.nodes.prompt.item_name_recognition import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
+from app.processor.import_processor.prompt import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
 
 _llm_client_cache = {}
 
