@@ -88,7 +88,7 @@ class NodeDocumentSplit(BaseNode):
             """
             # 1. 计算当前标题的级别（# 的数量）
             current_level = _get_title_level(current_title)
-            if current_level is None:
+            if current_level is None or current_level == 1:
                 return ""  # 如果不是合法标题，返回空
             
             # 2. 从后往前遍历 sections，找到第一个级别比当前标题更低的标题
@@ -189,6 +189,7 @@ class NodeDocumentSplit(BaseNode):
         for sec in sections:
             # 对每个章节执行超长切分，结果平铺加入列表（避免嵌套）
             refined_split.extend(self._split_overlong_chunk(sec))
+        # self.logger.debug(json.dumps(refined_split, ensure_ascii=False, indent=2))
         self.logger.info(f"步骤4-1：超长章节切分完成，共生成{len(refined_split)}个初始子Chunk")
 
         # 阶段2：合并过短章节 → 减少碎片化，提升后续检索/大模型调用效果
@@ -197,10 +198,10 @@ class NodeDocumentSplit(BaseNode):
 
         # 阶段3：父标题兜底 → 适配Milvus向量库schema（parent_title为必填字段）
         # 兜底规则：无parent_title则用自身title，title也无则填空字符串
-        for sec in final_sections:
-            if not sec.get("parent_title"):
-                sec["parent_title"] = sec.get("title") or ""
-        self.logger.debug("步骤4-3：父标题兜底完成，所有Chunk均包含parent_title字段")
+        # for sec in final_sections:
+        #     if not sec.get("parent_title"):
+        #         sec["parent_title"] = sec.get("title") or ""
+        # self.logger.debug("步骤4-3：父标题兜底完成，所有Chunk均包含parent_title字段")
 
         return final_sections
 
@@ -388,14 +389,14 @@ class NodeDocumentSplit(BaseNode):
 if __name__ == "__main__":
     setup_logging(level=logging.DEBUG)
 
-    md_path = "./test_data/output/B3-211H/B3-211H.md"
+    md_path = "./test_data/output/B530/B530.md"
     with open(md_path, "r", encoding="utf-8") as f:
         md_content = f.read()
 
     init_state = {
         "md_path": md_path,
         "md_content": md_content,
-        "file_title": "B3-211H",
+        "file_title": "B530",
         "output_file_dir": "./test_data/output"
     }
     node_document_split = NodeDocumentSplit()

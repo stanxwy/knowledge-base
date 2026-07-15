@@ -1,19 +1,25 @@
+import logging
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+logging.getLogger().info("entering...")
+
 import re
 from rich import print as rprint
 from typing import List, Dict, Optional
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.processor.import_processor.import_config import get_config
 
-
+logging.getLogger().info("starting...")
 stripped_line = "````123~~~abc```````"
-
 # 方法2: 保持原有的 match 方式，但更清晰
 code_block_marker_match = re.match(r'^(`{3,}|~{3,}).*?(`{3,}|~{3,}).*?(`{3,}|~{3,})$', stripped_line)
 if code_block_marker_match:
     marker1 = code_block_marker_match.group(1)
     marker2 = code_block_marker_match.group(2)
     marker3 = code_block_marker_match.group(3)
-    print("\n原有方法结果:")
     print(f"标记1: {marker1}")
     print(f"标记2: {marker2}")
     print(f"标记3: {marker3}")
@@ -101,7 +107,7 @@ def split_by_titles_v2(content: str, file_title: str):
         """
         # 1. 计算当前标题的级别（# 的数量）
         current_level = _get_title_level(current_title)
-        if current_level is None:
+        if current_level is None or current_level == 1:
             return ""  # 如果不是合法标题，返回空
         
         # 2. 从后往前遍历 sections，找到第一个级别比当前标题更低的标题

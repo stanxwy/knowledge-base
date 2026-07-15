@@ -56,6 +56,7 @@ class NodeItemNameRecognition(BaseNode):
         返回值：
             str: 格式化后的上下文字符串
         """
+        chunk_size = self.config.item_name_chunk_size
         parts: List[str] = []
         total_chars = 0
         for idx, chunk in enumerate(chunks[:self.config.item_name_chunk_k], start = 1):
@@ -72,15 +73,15 @@ class NodeItemNameRecognition(BaseNode):
             total_chars += len(part)
 
             # 4. 判断是否需要继续切分
-            if total_chars > self.config.item_name_chunk_size:
-                self.logger.warning(f"累计字符数{total_chars}已超过限制{self.config.item_name_chunk_size}，停止切分")
+            if total_chars > chunk_size:
+                self.logger.warning(f"累计字符数{total_chars}已超过限制{chunk_size}，停止切分")
                 break
 
         # 5. 使用换行符对切分后的片段进行连接
         context = "\n\n".join(parts).strip()
 
         # 6. 对返回结果进行二次截断
-        final_context = context[:self.config.item_name_chunk_size]
+        final_context = context[:chunk_size]
         self.logger.info(f"构造的上下文长度：{len(final_context)}")
         return final_context
 
@@ -215,13 +216,13 @@ class NodeItemNameRecognition(BaseNode):
 if __name__ == "__main__":
     setup_logging()
 
-    md_path = r"./test_data/output/hak180/chunks.json"
+    md_path = r"./test_data/output/B530/chunks.json"
     with open(md_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()
     chunks = json.loads(chunks_json)
     init_state = {
         "chunks": chunks,
-        "file_title": "hak180",
+        "file_title": "B530",
         "output_file_dir": "./test_data/output"
     }
 

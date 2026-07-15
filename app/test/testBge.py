@@ -1,4 +1,4 @@
-from utils.embedding_utils import get_bge_m3_ef
+from app.utils.embedding_utils import get_bge_m3_ef
 
 model = get_bge_m3_ef()
 

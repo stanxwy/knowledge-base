@@ -1,5 +1,5 @@
 # System Prompt
-ITEM_NAME_SYSTEM_PROMPT = "你是一个专业的商品名称识别模型，请根据提供的信息，识别商品名称。"
+ITEM_NAME_SYSTEM_PROMPT = "你是一个专业的商品名称识别模型，请根据提供的信息，识别商品名称。名称最好不要超过20个字"
 
 # User Prompt Template
 ITEM_NAME_USER_PROMPT_TEMPLATE = """
