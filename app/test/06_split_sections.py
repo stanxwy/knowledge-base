@@ -1,6 +1,6 @@
 import re
 from rich import print as rprint
-from typing import List, Dict
+from typing import List, Dict, Optional
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from app.processor.import_processor.import_config import get_config
 
@@ -83,11 +83,55 @@ def split_by_titles_v2(content: str, file_title: str):
         if not current_lines:
             return
         sections.append({
+            "parent_title": _find_parent_title(current_title, sections),
             "title": current_title,
             # 每段时间使用 \n换行区分
             "content": "\n".join(current_lines),
             "file_title": file_title,
         })
+    
+    
+    def _find_parent_title(current_title: str, sections: List[Dict[str, str]]) -> str:
+        """
+        根据当前标题，在已处理的 sections 中查找最近的父标题
+        
+        :param current_title: 当前标题（如 "### 三级"）
+        :param sections: 已切分的章节列表（每个元素包含 title 字段）
+        :return: 父标题文本，如果没有找到则返回空字符串
+        """
+        # 1. 计算当前标题的级别（# 的数量）
+        current_level = _get_title_level(current_title)
+        if current_level is None:
+            return ""  # 如果不是合法标题，返回空
+        
+        # 2. 从后往前遍历 sections，找到第一个级别比当前标题更低的标题
+        #    比如当前是 ###（3级），找 ##（2级）或 #（1级）
+        for section in reversed(sections):
+            parent_title = section.get("title", "")
+            parent_level = _get_title_level(parent_title)
+            
+            if parent_level is not None and parent_level < current_level:
+                # 找到了更高级别（数字更小）的标题
+                return parent_title
+        # 3. 如果没有找到父标题（比如当前是 # 一级标题）
+        return ""
+
+    def _get_title_level(title: str) -> Optional[int]:
+        """
+        提取标题级别（# 的数量）
+        
+        :param title: 标题文本（如 "### 三级"）
+        :return: 级别数字（1-6），如果不是合法标题返回 None
+        """
+        if not title:
+            return None
+        # 匹配开头的 # 号
+        match = re.match(r'^(#{1,6})\s+', title)
+        if not match:
+            return None
+        # 返回 # 的数量（级别）
+        return len(match.group(1))
+
 
     # 4、逐行遍历，识别标题和普通行以及代码快
     for line in lines:
@@ -260,8 +304,3 @@ rprint("refined", refined)
 
 final = merge_short_sections(refined)
 rprint("final", final)
-
-with open("./run_test.bat", "r", encoding="utf-8") as f:
-    content = f.read()
-# result = split_by_titles_v2(content, "test")
-# print(result)
