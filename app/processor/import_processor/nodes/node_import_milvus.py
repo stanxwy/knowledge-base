@@ -140,13 +140,13 @@ class NodeImportMilvus(BaseNode):
         chunks_json_data, vector_dimension = self._step_1_validate_input(state)
 
         # 步骤2：Milvus客户端连接+集合准备（自动建表）
-        client = self._step_2_prepare_collection(vector_dimension)
+        self._step_2_prepare_collection(vector_dimension)
 
         # 步骤3：幂等性处理 - 清理同file_title旧数据
-        self._step_3_clean_old_data(client, chunks_json_data)
+        self._step_3_clean_old_data(chunks_json_data)
 
         # 步骤4：批量插入数据+主键chunk_id回填
-        updated_chunks = self._step_4_insert_data(client, chunks_json_data)
+        updated_chunks = self._step_4_insert_data(chunks_json_data)
 
         # 步骤5：更新全局状态，将回填后的切片回传下游
         return {
@@ -156,7 +156,7 @@ class NodeImportMilvus(BaseNode):
 if __name__ == "__main__":
     setup_logging()
 
-    json_path = "./test_data/output/hak180/chunks_with_embeddings.json"
+    json_path = "./test_data/output/B530/chunks_with_embeddings.json"
     with open(json_path, "r", encoding="utf-8") as f:
         state_json = f.read()
     chunks = json.loads(state_json)
@@ -166,5 +166,4 @@ if __name__ == "__main__":
     }
     node_import_milvus = NodeImportMilvus()
     result = node_import_milvus(init_state)
-
-    logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+    # logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))

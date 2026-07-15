@@ -100,7 +100,7 @@ class NodeBGEEmbedding(BaseNode):
         output_data = self._step_2_generate_embeddings(chunks)
 
         # 步骤3：更新全局状态，将带向量的chunks回传下游
-        self.backup_json(state, chunks, "state_vector.json")
+        self.backup_json(state, output_data, "chunks_with_embeddings.json")
         return {
             "chunks": output_data
         }
@@ -108,19 +108,18 @@ class NodeBGEEmbedding(BaseNode):
 if __name__ == "__main__":
     setup_logging()
 
-    json_path = r"./test_data/output/hak180/chunks.json"
+    json_path = r"./test_data/output/B530/chunks.json"
     with open(json_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()
 
     init_state = {
         "chunks": json.loads(chunks_json),
-        "file_title": "hak180",
+        "file_title": "B530",
         "output_file_dir": "./test_data/output"
     }
     node_bge_embedding = NodeBGEEmbedding()
     result = node_bge_embedding(init_state)
-
-    logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+    # logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_bge_embedding

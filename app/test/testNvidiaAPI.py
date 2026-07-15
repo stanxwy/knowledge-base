@@ -18,7 +18,7 @@ client = OpenAI(
 
 completion = client.chat.completions.create(
   model="z-ai/glm-5.2",
-  messages=[{"role":"user","content":""}],
+  messages=[{"role":"user","content":"hello"}],
   temperature=1,
   top_p=1,
   max_tokens=16384,

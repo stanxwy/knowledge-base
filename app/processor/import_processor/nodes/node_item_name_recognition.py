@@ -125,7 +125,7 @@ class NodeItemNameRecognition(BaseNode):
         vectors = generate_embeddings([item_name])
         return vectors["dense"][0], vectors["sparse"][0]
 
-    def _step_6_save_to_milvus(self, file_title: str, item_name: str, dense_vector, sparse_vector):
+    def _step_6_save_to_vector_db(self, file_title: str, item_name: str, dense_vector, sparse_vector):
         """
         步骤 6: 将商品名称、文件标题、双向量持久化到 Milvus 向量数据库
         核心逻辑：
@@ -201,7 +201,7 @@ class NodeItemNameRecognition(BaseNode):
         dense_vector, sparse_vector = self._step_5_generate_vectors(item_name)
 
         # 步骤6：将数据存入Milvus向量数据库
-        self._step_6_save_to_milvus(filename, item_name, dense_vector, sparse_vector)
+        self._step_6_save_to_vector_db(filename, item_name, dense_vector, sparse_vector)
 
         # 打印识别结果
         self.logger.info(f"--- 识别完成: {item_name} ---")
