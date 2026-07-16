@@ -20,47 +20,80 @@ load_dotenv()
 
 class HistoryMongoTool:
     """
-    初始化mongoclient和集合
+    MongoDB 历史对话记录读写工具类 (基于原生 PyMongo 实现)
+    核心功能：封装MongoDB的连接、集合初始化、索引创建，为上层提供统一的数据库操作入口
+    扩展功能：支持与LangChain消息对象的格式转换（原代码预留能力）
     """
     def __init__(self):
-        self.mongo_url = os.getenv("MONGO_URL")
-        self.db_name = os.getenv("MONGO_DB_NAME")
+        """
+        类初始化方法：完成MongoDB的连接、数据库/集合获取、索引创建
+        初始化失败会抛出异常并记录错误日志，确保程序感知连接问题
+        """
+        try:
+            # 从环境变量读取MongoDB连接地址（敏感配置，不硬编码）
+            self.mongo_url = os.getenv("MONGO_URL")
+            # 从环境变量读取要使用的数据库名称
+            self.db_name = os.getenv("MONGO_DB_NAME")
 
-        # 连接
-        self.client = MongoClient(self.mongo_url)
-        # 索引
-        self.db = self.client[self.db_name]
+            # 创建MongoDB客户端实例，建立与数据库的连接
+            self.client = MongoClient(self.mongo_url)
+            # 获取指定名称的数据库对象
+            self.db = self.client[self.db_name]
+            # 获取对话记录的集合（相当于关系型数据库的表），集合名：chat_message
+            self.chat_message = self.db["chat_message"]
 
-        # 数据
-        self.chat_message = self.db["chat_message"]
-        self.chat_message.create_index([("session_id", 1), "ts", -1])
+            # 为chat_message集合创建复合索引，提升查询性能
+            # 索引规则：session_id升序 + ts降序，适配"按会话查最新记录"的核心查询场景
+            # create_index自带幂等性：索引已存在时不会重复创建，无需额外判断
+            self.chat_message.create_index([("session_id", 1), ("ts", -1)])
 
+            # 记录成功日志，确认数据库连接和初始化完成
+            logging.info(f"Successfully connected to MongoDB: {self.db_name}")
+        except Exception as e:
+            # 捕获所有初始化异常，记录详细错误日志
+            logging.error(f"Failed to connect to MongoDB: {e}")
+            # 重新抛出异常，让调用方感知初始化失败，避免使用未初始化的实例
+            raise
+
+
+# 定义全局变量：存储HistoryMongoTool的单例实例
+# 目的：将数据库连接的初始化提前到模块加载阶段，避免第一次调用接口时才建立连接（提升首次响应速度）
 _history_mongo_tool = HistoryMongoTool()
 
 def get_history_mongo_tool() -> HistoryMongoTool:
     """
-    单例
-    :return:
+    获取HistoryMongoTool的单例实例（懒加载模式）
+    核心逻辑：全局实例为空时创建，不为空时直接返回，保证整个程序只有一个数据库连接实例
+    :return: HistoryMongoTool的单例实例
     """
+    # 声明使用全局变量，避免函数内视为局部变量
     global _history_mongo_tool
+    # 懒加载：仅当全局实例为空时，才创建新的实例
     if _history_mongo_tool is None:
         _history_mongo_tool = HistoryMongoTool()
-
+    # 返回单例实例
     return _history_mongo_tool
 
 def clear_history(session_id: str) -> int:
     """
-    清理数据
-    :param session_id:
-    :return:
+    清空指定会话的所有历史对话记录
+    :param session_id: 会话唯一标识，用于筛选要删除的记录
+    :return: 实际删除的文档数量，删除失败返回0
     """
+    # 获取全局的HistoryMongoTool实例，使用单例模式避免重复创建数据库连接
     mongo_tool = get_history_mongo_tool()
-    # 执行批量删除操作：删除所有session_id匹配的文档
-    result = mongo_tool.chat_message.delete_many({"session_id": session_id})
-    # 记录删除成功日志，包含删除数量和会话ID，便于问题排查
-    logging.info(f"Deleted {result.deleted_count} messages for session {session_id}")
-    # 返回实际删除的数量（delete_many的返回对象包含deleted_count属性）
-    return result.deleted_count
+    try:
+        # 执行批量删除操作：删除所有session_id匹配的文档
+        result = mongo_tool.chat_message.delete_many({"session_id": session_id})
+        # 记录删除成功日志，包含删除数量和会话ID，便于问题排查
+        logging.info(f"Deleted {result.deleted_count} messages for session {session_id}")
+        # 返回实际删除的数量（delete_many的返回对象包含deleted_count属性）
+        return result.deleted_count
+    except Exception as e:
+        # 捕获删除异常，记录错误日志，包含会话ID
+        logging.error(f"Error clearing history for session {session_id}: {e}")
+        # 异常时返回0，标识删除失败
+        return 0
 
 def save_chat_message(
         session_id: str,
