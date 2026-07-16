@@ -293,7 +293,7 @@ class NodeMDImg(BaseNode):
         }
 
 if __name__ == "__main__":
-    from app.config.logging_config import setup_logging
+    from app.utils.logger import setup_logging
     logger = setup_logging()
 
     # md_path = "./test_data/output/hak180/hak180.md"

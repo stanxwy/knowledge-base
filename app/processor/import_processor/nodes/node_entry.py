@@ -54,7 +54,7 @@ class NodeEntry(BaseNode):
     
 # python -m app.processor.import_processor.nodes.node_entry
 if __name__ == "__main__":
-    from app.config.logging_config import setup_logging
+    from app.utils.logger import setup_logging
     logger = setup_logging()
     
     # init_state = {"import_file_path": "./test_data/kb/hak180.pdf"}

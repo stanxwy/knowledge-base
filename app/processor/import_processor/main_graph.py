@@ -1,5 +1,5 @@
 import logging
-from app.config.logging_config import setup_logging
+from app.utils.logger import setup_logging
 setup_logging()
 logging.getLogger().info("KBImportWorkflow start loading...")
 

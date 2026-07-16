@@ -103,7 +103,7 @@ class NodeBGEEmbedding(BaseNode):
         }
 
 if __name__ == "__main__":
-    from app.config.logging_config import setup_logging
+    from app.utils.logger import setup_logging
     setup_logging()
 
     json_path = "./test_data/output/B530/chunks.json"
