@@ -1,6 +1,6 @@
 import logging
 from typing import Dict
-from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import ImportProcessError
 
 # --- 定义测试节点 (继承 BaseNode) ---
@@ -23,6 +23,7 @@ class NodeTest(BaseNode):
 # --- 4. 测试入口 ---
 if __name__ == "__main__":
     # 1. 初始化日志 (显示 INFO 级别)
+    from app.config.logging_config import setup_logging
     setup_logging(logging.INFO)
 
     # 2. 创建节点实例

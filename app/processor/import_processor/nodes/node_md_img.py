@@ -6,7 +6,7 @@ from pathlib import Path
 from typing import Tuple, List, Dict
 
 from app.config.minio_config import minio_config
-from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
 from app.processor.import_processor.state import ImportGraphState
 from app.utils.api_throttle import apply_api_rate_limit

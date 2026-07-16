@@ -4,7 +4,7 @@ from typing import Tuple, List, Dict, Optional
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 
