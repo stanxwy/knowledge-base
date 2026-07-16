@@ -51,4 +51,4 @@ class NodeBase(ABC):
         :param state: 工作流状态对象
         :return: 更新后的状态对象
         """
-        pass
+        ...

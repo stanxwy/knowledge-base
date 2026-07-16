@@ -12,7 +12,7 @@ class NodeBGEEmbedding(BaseNode):
     """
     name: str = "node_bge_embedding"
 
-    def _step_1_validate_input(self, state: ImportGraphState) -> List[Dict]:
+    def _step_1_validate_input_state(self, state: ImportGraphState) -> List[Dict]:
         """
         步骤 1：输入数据有效性校验
         核心作用：
@@ -91,7 +91,7 @@ class NodeBGEEmbedding(BaseNode):
         """
 
         # 步骤1：输入数据校验
-        chunks = self._step_1_validate_input(state)
+        chunks = self._step_1_validate_input_state(state)
 
         # 步骤2：批量生成双向量，为切片绑定向量字段
         output_data = self._step_2_generate_embeddings(chunks)

@@ -23,7 +23,7 @@ class NodeTest(BaseNode):
 # --- 4. 测试入口 ---
 if __name__ == "__main__":
     # 1. 初始化日志 (显示 INFO 级别)
-    from app.config.logging_config import setup_logging
+    from app.utils.logger import setup_logging
     setup_logging(logging.INFO)
 
     # 2. 创建节点实例

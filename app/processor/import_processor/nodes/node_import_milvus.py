@@ -12,7 +12,7 @@ class NodeImportMilvus(BaseNode):
     """
     name: str = "node_import_milvus"
 
-    def _step_1_validate_input(self, state: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
+    def _step_1_validate_input_state(self, state: ImportGraphState) -> tuple[List[Dict[str, Any]], int]:
         """
         步骤1：输入数据有效性校验
         核心校验项：
@@ -134,7 +134,7 @@ class NodeImportMilvus(BaseNode):
         :return: 更新后的状态对象
         """
         # 步骤1：输入数据有效性校验
-        chunks_json_data, vector_dimension = self._step_1_validate_input(state)
+        chunks_json_data, vector_dimension = self._step_1_validate_input_state(state)
 
         # 步骤2：Milvus客户端连接+集合准备（自动建表）
         self._step_2_prepare_collection(vector_dimension)

@@ -97,6 +97,10 @@ class BaseNode(ABC):
             )
 
     @abstractmethod
+    def _step_1_validate_input_state(self, state: T):
+        ...
+
+    @abstractmethod
     def process(self, state: T) -> T:
         """
         节点核心处理逻辑
@@ -109,7 +113,7 @@ class BaseNode(ABC):
         Returns:
             更新后的状态字典
         """
-        pass
+        ...
 
     def log_step(self, step_name: str, message: str = ""):
         """

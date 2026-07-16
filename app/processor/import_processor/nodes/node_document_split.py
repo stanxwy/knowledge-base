@@ -17,7 +17,7 @@ class NodeDocumentSplit(BaseNode):
     # 覆盖基类的 name 属性，标识节点名称
     name: str = "node_document_split"
 
-    def _step_1_validate_and_normalize_inputs(self, state: ImportGraphState) -> Tuple[str, str]:
+    def _step_1_validate_input_state(self, state: ImportGraphState) -> Tuple[str, str]:
         """
         【步骤1】获取并预处理输入数据
         功能：从状态字典中提取MD内容/文件标题/最大长度，做基础标准化
@@ -364,7 +364,7 @@ class NodeDocumentSplit(BaseNode):
         """
 
         # 步骤1：加载并标准化输入数据
-        content, file_title = self._step_1_validate_and_normalize_inputs(state)
+        content, file_title = self._step_1_validate_input_state(state)
 
         # 步骤2：按MD标题进行初次切分
         sections, title_count, lines_count = self._step_2_split_by_headings(content, file_title)

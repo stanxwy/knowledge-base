@@ -18,17 +18,15 @@ class NodeMDImg(BaseNode):
     """
     MarkDown图片处理节点：多模态图片理解
     """
-
     name: str = "node_md_img"
 
-    def _step_1_get_content(self, state: ImportGraphState) -> Tuple[str, Path, Path]:
+    def _step_1_validate_input_state(self, state: ImportGraphState) -> Tuple[str, Path, Path]:
         """
         从全局状态中提取并初始化MD处理所需核心数据
         :param state: 流程全局状态对象
         :return: 元组(MD文件内容, MD文件路径, 图片文件夹路径)
         :raise FileProcessingError: 当状态中无有效MD文件路径时抛出
         """
-
         # 1、参数非空校验
         md_path = state.get("md_path")
         if not md_path:
@@ -266,7 +264,7 @@ class NodeMDImg(BaseNode):
         """
 
         # 步骤1：初始化数据，获取MD核心信息
-        md_content, md_path_obj, images_dir = self._step_1_get_content(state)
+        md_content, md_path_obj, images_dir = self._step_1_validate_input_state(state)
         if not images_dir.exists():
             self.logger.info("无图片文件夹，跳过图片处理")
             return {}

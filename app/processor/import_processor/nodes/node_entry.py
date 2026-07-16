@@ -9,10 +9,9 @@ class NodeEntry(BaseNode):
     """
     入口节点：任务分发
     """
-
     name: str = "node_entry"
 
-    def process(self, state: ImportGraphState):
+    def _step_1_validate_input_state(self, state):
         """
         1.接收状态: 获取 `import_file_path`。
         2.判断类型: 检查文件后缀是 `.pdf` 还是 `.md`。
@@ -21,7 +20,6 @@ class NodeEntry(BaseNode):
         :param state: `import_file_path`
         :return: `is_pdf_read_enabled/pdf_path` 或 `is_md_read_enabled/md_path` 、`file_title`
         """
-
         update_state: ImportGraphState = {}
         # 1. 从state中获取文件
         import_file_path = state.get("import_file_path")
@@ -48,9 +46,11 @@ class NodeEntry(BaseNode):
 
         # 4. 获取上传文件的标题，更新到state中
         update_state["file_title"] = import_file_path_obj.stem
-
         # 5. 返回state
         return update_state
+
+    def process(self, state: ImportGraphState) -> ImportGraphState:
+        return self._step_1_validate_input_state(state)
     
 # python -m app.processor.import_processor.nodes.node_entry
 if __name__ == "__main__":

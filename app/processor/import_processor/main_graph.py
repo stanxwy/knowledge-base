@@ -101,7 +101,7 @@ if __name__ == "__main__":
     
     # 定义初始状态
     init_state = {
-        "import_file_path": "./test_data/kb/W585.pdf",
+        "import_file_path": "./test_data/kb/万用表RS-12的使用.pdf",
         "output_file_dir": "./test_data/output"
     }
     workflow = KBImportWorkflow()

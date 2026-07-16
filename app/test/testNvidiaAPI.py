@@ -4,7 +4,7 @@ import sys
 import dotenv
 
 dotenv.load_dotenv(override=True)
-api_key = os.getenv("OPENAI_API_KEY")
+api_key = os.getenv("NVIDIA_API_KEY")
 print(api_key)
 _USE_COLOR = sys.stdout.isatty() and os.getenv("NO_COLOR") is None
 _REASONING_COLOR = "\033[90m" if _USE_COLOR else ""

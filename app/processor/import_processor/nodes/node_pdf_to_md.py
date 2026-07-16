@@ -16,7 +16,7 @@ class NodePDFToMD(BaseNode):
     """
     name: str = "node_pdf_to_md"
     
-    def _step_1_validate_paths(self, state: ImportGraphState) -> tuple[Path, Path]:
+    def _step_1_validate_input_state(self, state: ImportGraphState) -> tuple[Path, Path]:
         """
         步骤1：校验PDF文件路径和输出目录
         核心职责：参数非空校验 | 路径转换 | PDF文件有效性校验 | 输出目录自动创建
@@ -204,14 +204,14 @@ class NodePDFToMD(BaseNode):
 
         return str(new_md_path.absolute())
 
-    def process(self, state: ImportGraphState):
+    def process(self, state: ImportGraphState) -> ImportGraphState:
         """
         :param state: `pdf_path`、`file_dir`
         :return: `md_path`、`md_content`
         """
 
         # 步骤1：校验PDF路径和输出目录
-        pdf_path_obj, output_dir_obj = self._step_1_validate_paths(state)
+        pdf_path_obj, output_dir_obj = self._step_1_validate_input_state(state)
 
         # 步骤2：上传PDF至MinerU并轮询解析结果
         zip_url = self._step_2_upload_and_poll(pdf_path_obj)

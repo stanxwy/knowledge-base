@@ -1,5 +1,5 @@
 ```log
-(knowledge-base) PS D:\code\atguigu\knowledge-base> python -m app.test.06_split_sections
+(knowledge-base) PS D:\knowledge-base> python -m app.test.06_split_sections
 2026-07-15 14:51:36 - root - INFO - entering...
 2026-07-15 14:51:43 - root - INFO - starting...
 标记1: ````
