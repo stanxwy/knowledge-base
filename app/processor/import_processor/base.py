@@ -132,15 +132,48 @@ class BaseNode(ABC):
         backup_json(file_path, json_data)
 
 # 配置日志格式
-def setup_logging(level: int = logging.INFO):
+def setup_logging(level: int = logging.INFO, log_dir: str = "./logs"):
+    import os
+    from datetime import datetime
     """
-    配置导入流程日志
+    配置日志：同时输出到控制台和指定目录的日志文件
 
     Args:
         level: 日志级别
+        log_dir: 日志文件存储目录（默认 ./logs）
     """
-    logging.basicConfig(
-        level=level,
-        format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    # 1. 创建日志目录（如果不存在）
+    os.makedirs(log_dir, exist_ok=True)
+    
+    # 2. 生成日志文件名（按日期命名，避免单个文件过大）
+    log_filename = f"app_{datetime.now().strftime('%Y%m%d')}.log"
+    log_filepath = os.path.join(log_dir, log_filename)
+    
+    # 3. 创建根 logger
+    logger = logging.getLogger()
+    logger.setLevel(level)
+    
+    # 4. 清除已有的 handler（避免重复添加，影响性能）
+    if logger.hasHandlers():
+        logger.handlers.clear()
+    
+    # 5. 定义统一的日志格式
+    formatter = logging.Formatter(
+        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
+    
+    # 6. 添加文件 handler（写入日志文件）
+    file_handler = logging.FileHandler(log_filepath, encoding='utf-8')
+    file_handler.setLevel(level)
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+    
+    # 7. 添加控制台 handler（输出到终端）
+    console_handler = logging.StreamHandler()
+    console_handler.setLevel(level)
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+    
+    # 8. 打印日志文件位置（方便查看）
+    logger.info(f"日志文件位置: {log_filepath}")

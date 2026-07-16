@@ -1,3 +1,5 @@
+from app.tool.logger import logger
+logger.info("KBImportWorkflow start loading...")
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -12,10 +14,10 @@ from app.processor.import_processor.nodes.node_item_name_recognition import Node
 from app.processor.import_processor.nodes.node_md_img import NodeMDImg
 from app.processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
 from app.processor.import_processor.state import ImportGraphState
+logger.info("KBImportWorkflow loaded...")
 
 class KBImportWorkflow:
     """知识库导入工作流"""
-
     def __init__(self, config=None):
         """
         初始化工作流
@@ -97,7 +99,10 @@ if __name__ == "__main__":
     setup_logging()
     
     # 定义初始状态
-    init_state = {"import_file_path": "./README.md"}
+    init_state = {
+        "import_file_path": "./test_data/kb/CB304n.pdf",
+        "output_file_dir": "./test_data/output"
+    }
     workflow = KBImportWorkflow()
     
     # 方式1：实例化后使用（推荐方式，可复用）
