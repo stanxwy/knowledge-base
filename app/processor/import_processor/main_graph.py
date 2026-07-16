@@ -1,7 +1,7 @@
-import json
-
 from langgraph.constants import END
 from langgraph.graph import StateGraph
+from langgraph.graph.state import CompiledStateGraph
+from typing import Optional
 
 from app.processor.import_processor.base import setup_logging
 from app.processor.import_processor.nodes.node_bge_embedding import NodeBGEEmbedding
@@ -20,21 +20,22 @@ class KBImportWorkflow:
         """
         初始化工作流
         """
-        self.__compiled_graph = None
+        self.__graph = StateGraph(ImportGraphState)
+        self._register_nodes()
+        self._setup_routes()
+        # 懒加载，首次执行时编译
+        self.__compiled_graph: Optional[CompiledStateGraph] = None
+        
+    def _register_nodes(self):
+        self.__graph.add_node("node_entry", NodeEntry())
+        self.__graph.add_node("node_pdf_to_md", NodePDFToMD())
+        self.__graph.add_node("node_md_img", NodeMDImg())
+        self.__graph.add_node("node_document_split", NodeDocumentSplit())
+        self.__graph.add_node("node_item_name_recognition", NodeItemNameRecognition())
+        self.__graph.add_node("node_bge_embedding", NodeBGEEmbedding())
+        self.__graph.add_node("node_import_milvus", NodeImportMilvus())
 
-    @property
-    def graph(self):
-        """
-        懒加载：只在第一次使用时编译图
-        这个写法是“延迟初始化 + 缓存”的范式，核心目的是把“编译图”这个高成本操作推迟到必须执行时才做。
-        这不仅提升了对象实例化的速度，也避免了无效的资源浪费，是 LangGraph 项目中的最佳实践。
-        """
-        if self.__compiled_graph is None:
-            self.__compiled_graph = self.build_graph()
-        return self.__compiled_graph
-
-    @staticmethod
-    def route_after_entry(state: ImportGraphState) -> str:
+    def route_after_entry(self, state: ImportGraphState) -> str:
         """
         入口节点后的条件路由函数
         :param state: 当前状态
@@ -46,29 +47,10 @@ class KBImportWorkflow:
             return "node_md_img"
         else:
             return END
-
-    def build_graph(self):
-        """
-        创建图结构
-        :return: 编译后的图
-        """
-        # 1. 初始化LangGraph状态图
-        graph = StateGraph(ImportGraphState)
-
-        # 2. 注册节点到工作流
-        graph.add_node("node_entry", NodeEntry())
-        graph.add_node("node_pdf_to_md", NodePDFToMD())
-        graph.add_node("node_md_img", NodeMDImg())
-        graph.add_node("node_document_split", NodeDocumentSplit())
-        graph.add_node("node_item_name_recognition", NodeItemNameRecognition())
-        graph.add_node("node_bge_embedding", NodeBGEEmbedding())
-        graph.add_node("node_import_milvus", NodeImportMilvus())
-
-        # 3. 设置入口节点
-        graph.set_entry_point("node_entry")
-
-        # 4. 注册条件边
-        graph.add_conditional_edges(
+        
+    def _setup_routes(self):
+        self.__graph.set_entry_point("node_entry")
+        self.__graph.add_conditional_edges(
             "node_entry",
             self.route_after_entry,
             {
@@ -78,17 +60,23 @@ class KBImportWorkflow:
                 END: END
             }
         )
+        self.__graph.add_edge("node_pdf_to_md", "node_md_img")
+        self.__graph.add_edge("node_md_img", "node_document_split")
+        self.__graph.add_edge("node_document_split", "node_item_name_recognition")
+        self.__graph.add_edge("node_item_name_recognition", "node_bge_embedding")
+        self.__graph.add_edge("node_bge_embedding", "node_import_milvus")
+        self.__graph.add_edge("node_import_milvus", END)
 
-        # 5. 注册顺序边
-        graph.add_edge("node_pdf_to_md", "node_md_img")
-        graph.add_edge("node_md_img", "node_document_split")
-        graph.add_edge("node_document_split", "node_item_name_recognition")
-        graph.add_edge("node_item_name_recognition", "node_bge_embedding")
-        graph.add_edge("node_bge_embedding", "node_import_milvus")
-        graph.add_edge("node_import_milvus", END)
-
-        # 6. 编译工作流
-        return graph.compile()
+    @property
+    def graph(self):
+        """
+        懒加载：只在第一次使用时编译图
+        这个写法是“延迟初始化 + 缓存”的范式，核心目的是把“编译图”这个高成本操作推迟到必须执行时才做。
+        这不仅提升了对象实例化的速度，也避免了无效的资源浪费，是 LangGraph 项目中的最佳实践。
+        """
+        if self.__compiled_graph is None:
+            self.__compiled_graph = self.__graph.compile()
+        return self.__compiled_graph
 
     def run(self, state: ImportGraphState, stream: bool = False):
         """
@@ -118,9 +106,9 @@ if __name__ == "__main__":
         print(f"state: {event}")
 
     # 方式2：非流式执行
-    print("\n=== 方式2：非流式执行 ===")
-    final_state = workflow.run(init_state, stream=False)
-    print(json.dumps(final_state, ensure_ascii=False, indent=4))
+    # print("\n=== 方式2：非流式执行 ===")
+    # final_state = workflow.run(init_state, stream=False)
+    # print(json.dumps(final_state, ensure_ascii=False, indent=4))
     
     # 打印编译后的图结构
     # workflow.graph.get_graph().print_ascii()
