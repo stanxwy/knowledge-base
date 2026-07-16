@@ -3,14 +3,15 @@
 
 定义统一的节点接口规范，提供通用功能
 """
+import logging
 from abc import ABC, abstractmethod
 from typing import TypeVar, Optional
-import logging
 from pathlib import Path
 
 from app.processor.import_processor.import_config import ImportConfig, get_config
 from app.processor.import_processor.exceptions import ImportProcessError
 from app.utils.backup_utils import backup_json
+from app.utils.logger import setup_logging
 # from app.utils.task_util import add_running_task, add_done_task
 
 T = TypeVar("T")  # 泛型状态类型
@@ -114,19 +115,6 @@ class BaseNode(ABC):
             更新后的状态字典
         """
         ...
-
-    def log_step(self, step_name: str, message: str = ""):
-        """
-        记录步骤日志
-
-        Args:
-            step_name: 步骤名称
-            message: 附加信息
-        """
-        log_msg = f"[{step_name}]"
-        if message:
-            log_msg += f" {message}"
-        self.logger.info(log_msg)
 
     def backup_json(self, state: T, json_data: dict | list, file_name: str):
         file_path = Path(state.get("output_file_dir")) / state.get("file_title") / file_name 

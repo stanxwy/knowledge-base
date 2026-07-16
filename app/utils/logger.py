@@ -32,7 +32,6 @@ def setup_logging(level: int = logging.INFO, log_dir: str = "./logs"):
         fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S'
     )
-    
     # 按天轮转，保留30天
     file_handler = TimedRotatingFileHandler(
         log_filepath,
@@ -46,6 +45,7 @@ def setup_logging(level: int = logging.INFO, log_dir: str = "./logs"):
     file_handler.setFormatter(file_formatter)
     logger.addHandler(file_handler)
     
+    # 控制台输出（开发环境保留，生产环境可以去掉）
     console_formatter = colorlog.ColoredFormatter(
         '%(log_color)s%(asctime)s - %(name)s - %(levelname)s - %(message)s',
         datefmt='%Y-%m-%d %H:%M:%S',
@@ -57,7 +57,6 @@ def setup_logging(level: int = logging.INFO, log_dir: str = "./logs"):
             'CRITICAL': 'bold_red',
         }
     )
-    # 控制台输出（开发环境保留，生产环境可以去掉）
     console_handler = logging.StreamHandler()
     console_handler.setLevel(level)
     console_handler.setFormatter(console_formatter)

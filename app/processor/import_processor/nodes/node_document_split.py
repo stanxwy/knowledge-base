@@ -1,7 +1,6 @@
 import json
 import re
 from typing import Tuple, List, Dict, Optional
-
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.processor.import_processor.base import BaseNode
@@ -13,7 +12,6 @@ class NodeDocumentSplit(BaseNode):
     节点: 文档切分 (node_document_split)
     将长文档切分成小的 Chunks (切片) 以便检索。
     """
-
     # 覆盖基类的 name 属性，标识节点名称
     name: str = "node_document_split"
 
@@ -75,7 +73,6 @@ class NodeDocumentSplit(BaseNode):
                 "content": "\n".join(current_lines),
                 "file_title": file_title,
             })
-        
         
         def _find_parent_title(current_title: str, sections: List[Dict[str, str]]) -> str:
             """
@@ -201,7 +198,6 @@ class NodeDocumentSplit(BaseNode):
         #     if not sec.get("parent_title"):
         #         sec["parent_title"] = sec.get("title") or ""
         # self.logger.debug("步骤4-3：父标题兜底完成，所有Chunk均包含parent_title字段")
-
         return final_sections
 
     def _split_overlong_chunk(self, section: Dict[str, str]) -> List[Dict[str, str]]:

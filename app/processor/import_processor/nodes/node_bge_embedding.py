@@ -25,7 +25,6 @@ class NodeBGEEmbedding(BaseNode):
         异常：
             若chunks非列表/为空，抛出ValueError，终止当前向量化流程
         """
-
         chunks = state.get("chunks")
 
         if not chunks:

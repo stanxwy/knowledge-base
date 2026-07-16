@@ -294,7 +294,6 @@ if __name__ == "__main__":
     from app.utils.logger import setup_logging
     logger = setup_logging()
 
-    # md_path = "./test_data/output/hak180/hak180.md"
     md_path = "./test_data/output/B3-211H/B3-211H.md"
     with open(md_path, "r", encoding="utf-8") as f:
         md_content = f.read()

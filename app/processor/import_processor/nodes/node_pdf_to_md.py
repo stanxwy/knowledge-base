@@ -64,9 +64,7 @@ class NodePDFToMD(BaseNode):
             "Authorization": f"Bearer {token}"
         }
         data = {
-            "files": [
-                {"name": pdf_path_obj.name}
-            ],
+            "files": [ { "name": pdf_path_obj.name } ],
             "model_version": "vlm"
         }
 
@@ -164,7 +162,6 @@ class NodePDFToMD(BaseNode):
        返回：最终MD文件的字符串格式绝对路径
        异常：RuntimeError(下载失败)
        """
-
         # 1、下载ZIP包
         self.logger.info(f"【ZIP下载】开始下载ZIP包：{zip_url} ...")
         response = requests.get(zip_url, timeout=10)
@@ -178,7 +175,6 @@ class NodePDFToMD(BaseNode):
         with open(zip_save_path, "wb") as f:
             f.write(response.content)
         self.logger.info(f"【ZIP下载】ZIP包下载成功：保存路径：{zip_save_path}")
-
 
         # 2. 如果目标文件夹已存在，先删除（确保环境干净）
         extract_target_dir = output_dir_obj / pdf_stem
@@ -235,7 +231,6 @@ if __name__ == "__main__":
     logger = setup_logging()
 
     init_state = {
-        # "pdf_path": "./test_data/kb/hak180.pdf",
         "pdf_path": "./test_data/kb/B3-211H.pdf",
         "output_file_dir": "./test_data/output"
     }
@@ -268,7 +263,7 @@ creating ImportConfig instance...
 2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - 【MD重命名】重命名成功，文件名：hak180.md
 2026-07-13 20:04:01 - import.node_pdf_to_md - INFO - --- node_pdf_to_md 完成 ---
 2026-07-13 20:04:01 - root - INFO - {
-     "md_path": "D:\\knowledge-base\\test_data\\output\\hak180\\hak180.md",
+    "md_path": "D:\\knowledge-base\\test_data\\output\\hak180\\hak180.md",
     "md_content": "![](images/677a08ee041965bbbdb6b483d6c17d5aaa36a26b6dc96870a2019f0307b8616f.jpg)  \nD01WD7001-00\n\nSCHN\n\n## HAK 180 烫金机...）"
 }
 """

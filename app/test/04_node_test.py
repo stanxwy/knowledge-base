@@ -16,7 +16,7 @@ class NodeTest(BaseNode):
         state["processed_by"] = self.name
 
         # 使用基类提供的 log_step 方法
-        self.log_step("数据清洗", "移除空值完成")
+        # self.log_step("数据清洗", "移除空值完成")
 
         return state
 

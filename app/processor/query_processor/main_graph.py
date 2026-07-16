@@ -12,7 +12,7 @@ from app.processor.query_processor.nodes.node_search_embedding import NodeSearch
 from app.processor.query_processor.nodes.node_search_embedding_hyde import NodeSearchEmbeddingHyde
 from app.processor.query_processor.nodes.node_web_search_mcp import NodeWebSearchMcp
 from app.processor.query_processor.state import QueryGraphState
-from app.tool.logger import logger
+from app.utils.logger import setup_logging
 
 # 初始化环境变量（类加载前执行，保证全局生效）
 load_dotenv()
@@ -24,6 +24,7 @@ class KBQueryWorkflowV2:
     """
     def __init__(self):
         """初始化工作流：创建状态图、注册节点、定义路由规则"""
+        setup_logging()
         # 1. 初始化LangGraph状态图
         self.__workflow = StateGraph(QueryGraphState)
         # 2. 初始化所有业务节点（实例属性，支持多实例隔离）
@@ -127,6 +128,7 @@ class KBQueryWorkflowV2:
 
 # ===================== 用法示例 =====================
 if __name__ == "__main__":
+    logger = setup_logging()
     init_state = { "original_query": "如何使用万用表测量电压？"}
 
     workflow = KBQueryWorkflowV2()

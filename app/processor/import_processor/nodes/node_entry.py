@@ -23,7 +23,7 @@ class NodeEntry(BaseNode):
         update_state: ImportGraphState = {}
         # 1. 从state中获取文件
         import_file_path = state.get("import_file_path")
-        # import_file_path = state["import_file_path"] #这样写的话字段不存在直接报错
+        # import_file_path = state["import_file_path"] # 这样写的话字段不存在直接报错
         # 判断路径是否为空
         if not import_file_path:
             raise StateFieldError(field_name='import_file_path', expected_type=str)
@@ -52,7 +52,7 @@ class NodeEntry(BaseNode):
     def process(self, state: ImportGraphState) -> ImportGraphState:
         return self._step_1_validate_input_state(state)
     
-# python -m app.processor.import_processor.nodes.node_entry
+
 if __name__ == "__main__":
     from app.utils.logger import setup_logging
     logger = setup_logging()

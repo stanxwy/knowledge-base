@@ -1,8 +1,3 @@
-import logging
-from app.utils.logger import setup_logging
-setup_logging()
-logging.getLogger().info("KBImportWorkflow start loading...")
-
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -16,7 +11,7 @@ from app.processor.import_processor.nodes.node_item_name_recognition import Node
 from app.processor.import_processor.nodes.node_md_img import NodeMDImg
 from app.processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
 from app.processor.import_processor.state import ImportGraphState
-logging.getLogger().info("KBImportWorkflow loaded...")
+from app.utils.logger import setup_logging
 
 class KBImportWorkflow:
     """知识库导入工作流"""
@@ -24,6 +19,7 @@ class KBImportWorkflow:
         """
         初始化工作流
         """
+        setup_logging()
         self.__graph = StateGraph(ImportGraphState)
         self._register_nodes()
         self._setup_routes()
