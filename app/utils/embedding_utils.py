@@ -1,9 +1,6 @@
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
-
 from app.config.embedding_config import embedding_config
-from app.processor.import_processor.base import setup_logging
 
-setup_logging()
 _bge_m3_ef = None
 
 def get_bge_m3_ef():

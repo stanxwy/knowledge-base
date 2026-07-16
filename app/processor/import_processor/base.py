@@ -3,7 +3,6 @@
 
 定义统一的节点接口规范，提供通用功能
 """
-
 from abc import ABC, abstractmethod
 from typing import TypeVar, Optional
 import logging
@@ -29,7 +28,6 @@ T = TypeVar("T")  # 泛型状态类型
 8、未来可以在父类的process()中实现任务追踪
 9、封装了统一日志处理，使用logging、colorlog
     注意：使用日志记录器记录日志时一定要先激活日志setup_logging(logging.INFO)，并指定日志级别
-    
 """
 
 class BaseNode(ABC):
@@ -51,7 +49,6 @@ class BaseNode(ABC):
         node = MyNode()
         workflow.add_node("my_node", node)
     """
-
     name: str = "base_node"  # 节点名称，子类应覆盖
 
     def __init__(self, config: Optional[ImportConfig] = None):
@@ -130,50 +127,3 @@ class BaseNode(ABC):
     def backup_json(self, state: T, json_data: dict | list, file_name: str):
         file_path = Path(state.get("output_file_dir")) / state.get("file_title") / file_name 
         backup_json(file_path, json_data)
-
-# 配置日志格式
-def setup_logging(level: int = logging.INFO, log_dir: str = "./logs"):
-    import os
-    from datetime import datetime
-    """
-    配置日志：同时输出到控制台和指定目录的日志文件
-
-    Args:
-        level: 日志级别
-        log_dir: 日志文件存储目录（默认 ./logs）
-    """
-    # 1. 创建日志目录（如果不存在）
-    os.makedirs(log_dir, exist_ok=True)
-    
-    # 2. 生成日志文件名（按日期命名，避免单个文件过大）
-    log_filename = f"app_{datetime.now().strftime('%Y%m%d')}.log"
-    log_filepath = os.path.join(log_dir, log_filename)
-    
-    # 3. 创建根 logger
-    logger = logging.getLogger()
-    logger.setLevel(level)
-    
-    # 4. 清除已有的 handler（避免重复添加，影响性能）
-    if logger.hasHandlers():
-        logger.handlers.clear()
-    
-    # 5. 定义统一的日志格式
-    formatter = logging.Formatter(
-        fmt='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
-        datefmt='%Y-%m-%d %H:%M:%S'
-    )
-    
-    # 6. 添加文件 handler（写入日志文件）
-    file_handler = logging.FileHandler(log_filepath, encoding='utf-8')
-    file_handler.setLevel(level)
-    file_handler.setFormatter(formatter)
-    logger.addHandler(file_handler)
-    
-    # 7. 添加控制台 handler（输出到终端）
-    console_handler = logging.StreamHandler()
-    console_handler.setLevel(level)
-    console_handler.setFormatter(formatter)
-    logger.addHandler(console_handler)
-    
-    # 8. 打印日志文件位置（方便查看）
-    logger.info(f"日志文件位置: {log_filepath}")

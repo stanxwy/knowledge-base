@@ -1,5 +1,4 @@
 import json
-import logging
 import os
 import re
 from collections import deque
@@ -294,8 +293,8 @@ class NodeMDImg(BaseNode):
         }
 
 if __name__ == "__main__":
-    logging.getLogger().debug("starting node_md_img...")
-    setup_logging(level=logging.DEBUG)
+    from app.config.logging_config import setup_logging
+    logger = setup_logging()
 
     # md_path = "./test_data/output/hak180/hak180.md"
     md_path = "./test_data/output/B3-211H/B3-211H.md"
@@ -306,11 +305,9 @@ if __name__ == "__main__":
         "md_content": md_content
     }
 
-    logging.getLogger().debug("creating node instance...")
     node_md_img = NodeMDImg()
-    logging.getLogger().debug("running node instance...")
     result = node_md_img(init_state)
-    logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+    logger.info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_md_img

@@ -1,11 +1,13 @@
-from app.tool.logger import logger
-logger.info("KBImportWorkflow start loading...")
+import logging
+from app.config.logging_config import setup_logging
+setup_logging()
+logging.getLogger().info("KBImportWorkflow start loading...")
+
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 from typing import Optional
 
-from app.processor.import_processor.base import setup_logging
 from app.processor.import_processor.nodes.node_bge_embedding import NodeBGEEmbedding
 from app.processor.import_processor.nodes.node_document_split import NodeDocumentSplit
 from app.processor.import_processor.nodes.node_entry import NodeEntry
@@ -14,7 +16,7 @@ from app.processor.import_processor.nodes.node_item_name_recognition import Node
 from app.processor.import_processor.nodes.node_md_img import NodeMDImg
 from app.processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
 from app.processor.import_processor.state import ImportGraphState
-logger.info("KBImportWorkflow loaded...")
+logging.getLogger().info("KBImportWorkflow loaded...")
 
 class KBImportWorkflow:
     """知识库导入工作流"""
@@ -94,7 +96,6 @@ class KBImportWorkflow:
 
 
 if __name__ == "__main__":
-    
     #启用日志
     setup_logging()
     

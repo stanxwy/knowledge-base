@@ -1,8 +1,7 @@
 import json
-import logging
 from typing import Tuple, Dict, List
 
-from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 from app.utils.embedding_utils import generate_embeddings
@@ -214,7 +213,8 @@ class NodeItemNameRecognition(BaseNode):
 
 
 if __name__ == "__main__":
-    setup_logging()
+    from app.config.logging_config import setup_logging
+    logger = setup_logging()
 
     md_path = r"./test_data/output/B530/chunks.json"
     with open(md_path, "r", encoding="utf-8") as f:
@@ -229,7 +229,7 @@ if __name__ == "__main__":
     node_item_name_recognition = NodeItemNameRecognition()
     result = node_item_name_recognition(init_state)
 
-    logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+    logger.info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_item_name_recognition

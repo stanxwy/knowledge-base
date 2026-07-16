@@ -1,14 +1,12 @@
 import json
-import logging
+import requests
 import shutil
 import time
 import zipfile
 from pathlib import Path
 
-import requests
-
 from app.config.mineru_config import mineru_config
-from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError, PdfConversionError
 from app.processor.import_processor.state import ImportGraphState
 
@@ -16,7 +14,6 @@ class NodePDFToMD(BaseNode):
     """
     PDF 转 Markdown 节点：PDF结构化解析
     """
-
     name: str = "node_pdf_to_md"
     
     def _step_1_validate_paths(self, state: ImportGraphState) -> tuple[Path, Path]:
@@ -234,7 +231,8 @@ class NodePDFToMD(BaseNode):
 
     
 if __name__ == "__main__":
-    setup_logging()
+    from app.config.logging_config import setup_logging
+    logger = setup_logging()
 
     init_state = {
         # "pdf_path": "./test_data/kb/hak180.pdf",
@@ -243,7 +241,7 @@ if __name__ == "__main__":
     }
     node_pdf_to_md = NodePDFToMD()
     result = node_pdf_to_md(init_state)
-    logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+    logger.info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_pdf_to_md                                          

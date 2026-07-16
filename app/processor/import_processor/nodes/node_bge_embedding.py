@@ -1,18 +1,15 @@
 import json
-import logging
 from typing import List, Dict
 
-from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 from app.utils.embedding_utils import generate_embeddings
-
 
 class NodeBGEEmbedding(BaseNode):
     """
     混合向量化节点：使用 BGE-M3 模型将文本转换为向量
     """
-
     name: str = "node_bge_embedding"
 
     def _step_1_validate_input(self, state: ImportGraphState) -> List[Dict]:
@@ -106,9 +103,10 @@ class NodeBGEEmbedding(BaseNode):
         }
 
 if __name__ == "__main__":
+    from app.config.logging_config import setup_logging
     setup_logging()
 
-    json_path = r"./test_data/output/B530/chunks.json"
+    json_path = "./test_data/output/B530/chunks.json"
     with open(json_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()
 
@@ -119,7 +117,6 @@ if __name__ == "__main__":
     }
     node_bge_embedding = NodeBGEEmbedding()
     result = node_bge_embedding(init_state)
-    # logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_bge_embedding

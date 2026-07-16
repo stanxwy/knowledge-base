@@ -1,8 +1,7 @@
 import json
-import logging
 from pathlib import Path
 
-from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import ValidationError, StateFieldError, FileProcessingError
 from app.processor.import_processor.state import ImportGraphState
 
@@ -55,13 +54,14 @@ class NodeEntry(BaseNode):
     
 # python -m app.processor.import_processor.nodes.node_entry
 if __name__ == "__main__":
-    setup_logging()
+    from app.config.logging_config import setup_logging
+    logger = setup_logging()
     
     # init_state = {"import_file_path": "./test_data/kb/hak180.pdf"}
     init_state = {"import_file_path": "./test_data/kb/B3-211H.pdf"}
     node_entry = NodeEntry()
     result = node_entry(init_state)
-    logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
+    logger.info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_entry

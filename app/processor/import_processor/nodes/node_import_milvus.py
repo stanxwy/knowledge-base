@@ -1,18 +1,15 @@
 import json
-import logging
 from typing import Dict, Any, List
 
-from app.processor.import_processor.base import BaseNode, setup_logging
+from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 from app.utils.milvus_utils import create_chunks_collection, delete_from_chunks_collection, insert_into_chunks_collection
-
 
 class NodeImportMilvus(BaseNode):
     """
     导入向量库节点：数据持久化
     """
-
     name: str = "node_import_milvus"
 
     def _step_1_validate_input(self, state: Dict[str, Any]) -> tuple[List[Dict[str, Any]], int]:
@@ -154,6 +151,7 @@ class NodeImportMilvus(BaseNode):
         }
     
 if __name__ == "__main__":
+    from app.config.logging_config import setup_logging
     setup_logging()
 
     json_path = "./test_data/output/B530/chunks_with_embeddings.json"
@@ -166,4 +164,3 @@ if __name__ == "__main__":
     }
     node_import_milvus = NodeImportMilvus()
     result = node_import_milvus(init_state)
-    # logging.getLogger().info(json.dumps(result, ensure_ascii=False, indent=4))
