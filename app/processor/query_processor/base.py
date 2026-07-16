@@ -3,6 +3,7 @@
 
 定义统一的节点接口规范，提供通用功能
 """
+import logging
 from abc import abstractmethod, ABC
 from typing import TypeVar
 from app.tool.logger import logger
@@ -12,6 +13,15 @@ T = TypeVar("T")  # 泛型状态类型
 class NodeBase(ABC):
 
     name: str = "base_node"  # 节点名称，子类应覆盖
+
+    def __init__(self):
+        """
+        初始化节点
+
+        Args:
+            config: 配置对象，默认使用全局配置
+        """
+        self.logger = logging.getLogger(f"import.{self.name}")
 
     def __call__(self, state: T) -> T:
         """
