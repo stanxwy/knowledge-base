@@ -291,9 +291,6 @@ class NodeMDImg(BaseNode):
         }
 
 if __name__ == "__main__":
-    from app.utils.logger import setup_logging
-    logger = setup_logging()
-
     md_path = "./test_data/output/B3-211H/B3-211H.md"
     with open(md_path, "r", encoding="utf-8") as f:
         md_content = f.read()
@@ -304,7 +301,7 @@ if __name__ == "__main__":
 
     node_md_img = NodeMDImg()
     result = node_md_img(init_state)
-    logger.info(json.dumps(result, ensure_ascii=False, indent=4))
+    print(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_md_img

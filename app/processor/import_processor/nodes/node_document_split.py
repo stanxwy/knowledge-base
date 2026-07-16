@@ -382,9 +382,6 @@ class NodeDocumentSplit(BaseNode):
 
 
 if __name__ == "__main__":
-    from app.utils.logger import setup_logging
-    logger = setup_logging()
-
     md_path = "./test_data/output/B530/B530.md"
     with open(md_path, "r", encoding="utf-8") as f:
         md_content = f.read()
@@ -398,7 +395,7 @@ if __name__ == "__main__":
     node_document_split = NodeDocumentSplit()
     result = node_document_split(init_state)
 
-    logger.info(json.dumps(result["chunks"], ensure_ascii=False, indent=4))
+    print(json.dumps(result["chunks"], ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_document_split

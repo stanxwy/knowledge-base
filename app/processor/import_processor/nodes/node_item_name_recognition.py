@@ -213,9 +213,6 @@ class NodeItemNameRecognition(BaseNode):
 
 
 if __name__ == "__main__":
-    from app.utils.logger import setup_logging
-    logger = setup_logging()
-
     md_path = r"./test_data/output/B530/chunks.json"
     with open(md_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()
@@ -229,7 +226,7 @@ if __name__ == "__main__":
     node_item_name_recognition = NodeItemNameRecognition()
     result = node_item_name_recognition(init_state)
 
-    logger.info(json.dumps(result, ensure_ascii=False, indent=4))
+    print(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_item_name_recognition

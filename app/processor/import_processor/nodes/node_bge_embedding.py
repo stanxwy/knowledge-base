@@ -102,9 +102,6 @@ class NodeBGEEmbedding(BaseNode):
         }
 
 if __name__ == "__main__":
-    from app.utils.logger import setup_logging
-    setup_logging()
-
     json_path = "./test_data/output/B530/chunks.json"
     with open(json_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()

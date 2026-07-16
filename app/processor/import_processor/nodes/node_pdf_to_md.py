@@ -227,16 +227,13 @@ class NodePDFToMD(BaseNode):
 
     
 if __name__ == "__main__":
-    from app.utils.logger import setup_logging
-    logger = setup_logging()
-
     init_state = {
         "pdf_path": "./test_data/kb/B3-211H.pdf",
         "output_file_dir": "./test_data/output"
     }
     node_pdf_to_md = NodePDFToMD()
     result = node_pdf_to_md(init_state)
-    logger.info(json.dumps(result, ensure_ascii=False, indent=4))
+    print(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_pdf_to_md                                          
