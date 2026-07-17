@@ -279,16 +279,16 @@ class NodeItemNameConfirm(NodeBase):
         session_id, original_query = self._step_1_validate_input_state(state)
         self.logger.info("步骤1：参数校验通过")
 
-        # 步骤3：用户初始消息保存
+        # 步骤2：用户初始消息保存
         message_id = save_chat_message(session_id, "user", original_query)
-        self.logger.info(f"步骤3：用户消息已初始保存, ID: {message_id}")
+        self.logger.info(f"步骤2：用户消息已初始保存, ID: {message_id}")
 
-        # 步骤2：获取历史记录
+        # 步骤3：获取历史记录
         history = get_recent_messages(session_id)
-        self.logger.info(f"步骤2：获取到 {len(history)} 条历史消息")
+        self.logger.info(f"步骤3：获取到 {len(history)} 条历史消息")
 
         # 步骤4：提取信息
-        item_names, rewritten_query = resolve_item_name_and_rewrite_query(original_query, reversed(history))
+        item_names, rewritten_query = resolve_item_name_and_rewrite_query(original_query, history)
 
         # 5. & 6. 如果有提取到商品名，进行搜索和对齐
         align_result = {}

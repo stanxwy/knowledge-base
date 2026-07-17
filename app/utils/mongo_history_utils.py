@@ -197,7 +197,7 @@ def get_recent_messages(session_id: str = None, limit: int = 10) -> List[Dict[st
         # limit(limit)：限制返回的最大条数
         cursor = mongo_tool.chat_message.find(query).sort("ts", DESCENDING).limit(limit)
         # 将游标转为列表，触发实际数据库查询，获取所有符合条件的文档
-        messages = list(cursor)
+        messages = reversed(list(cursor))
         # 返回查询结果列表
         for m in messages:
             logging.info(f'{datetime.fromtimestamp(m["ts"]).strftime("%Y-%m-%d %H:%M:%S")} - {m["role"]}: {m["text"]}')
