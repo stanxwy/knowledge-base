@@ -135,17 +135,14 @@ def resolve_item_name_and_rewrite_query(query: str, history: List[Dict[str, Any]
                 }
     """
     try:
-        # 1. 获取llm客户端
-        chat_model = get_llm_client(model=get_lm_config().item_model, json_mode=True)
-
-        # 2. 构造历史对话文本，拼接为"角色: 内容"的格式，供LLM做上下文理解
+        # 1. 构造历史对话文本，拼接为"角色: 内容"的格式，供LLM做上下文理解
         history_text = ""
         for msg in history:
             role = msg.get("role")
             content = msg.get("text")
             history_text += f"{role}: {content}\n"
 
-        # 3. 处理和动态拼接提示词
+        # 2. 处理和动态拼接提示词
         # 为了把大括号当作 “普通字符” 保留下来，用双大括号 {{ 表示普通的左大括号 {，双大括号 }} 表示普通的右大括号 }。
         user_prompt = ITEM_NAME_EXTRACT_TEMPLATE.format(
             history_text=history_text,
@@ -153,35 +150,36 @@ def resolve_item_name_and_rewrite_query(query: str, history: List[Dict[str, Any]
         )
         logging.getLogger().info(f"商品名称识别用户提示词：{user_prompt}")
 
-        # 4. 构造LLM调用的消息列表，包含系统角色（定义助手身份）和用户角色（传入提示词）
+        # 3. 构造LLM调用的消息列表，包含系统角色（定义助手身份）和用户角色（传入提示词）
         messages = [
             SystemMessage(content=ITEM_NAME_EXTRACT_SYSTEM_PROMPT),
             HumanMessage(content=user_prompt)
         ]
 
-        # 5. 调用LLM客户端，发起请求获取结果
+        # 4. 调用LLM客户端，发起请求获取结果
+        chat_model = get_llm_client(model=get_lm_config().item_model, json_mode=True)
         response = chat_model.invoke(messages)
         content = response.content
         logging.getLogger().info(f"商品名称识别结果：{content}")
 
-        # 6. 数据清洗：处理LLM可能返回的代码块格式（如```json ... ```），去除包裹符
+        # 5. 数据清洗：处理LLM可能返回的代码块格式（如```json ... ```），去除包裹符
         if content.startswith("```json"):
             content = content.replace("```json", "").replace("```", "")
 
-        # 7. 数据解析：将JSON字符串转为字典
+        # 6. 数据解析：将JSON字符串转为字典
         result = json.loads(content)
 
-        # 8. 健壮性处理：确保字段存在
+        # 7. 健壮性处理：确保字段存在
         # 确保返回结果包含item_names字段，无则设为空列表
         item_names = result.get("item_names", [])
         rewritten_query = result.get("rewritten_query", query)
 
-        # 9. 给item_names 去除空格
+        # 8. 给item_names 去除空格
         item_names = [
             name.replace(" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
             for name in item_names
         ]
-        # 10、返回解析后的提取结果
+        # 9、返回解析后的提取结果
         return item_names, rewritten_query
 
     except Exception as e:

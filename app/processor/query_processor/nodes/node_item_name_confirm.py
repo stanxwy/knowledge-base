@@ -1,3 +1,4 @@
+import json
 from typing import Dict, List, Tuple
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
@@ -31,6 +32,27 @@ class NodeItemNameConfirm(NodeBase):
         """
            把分析出的item_names逐个向量化（BGEM3模型），并在Milvus向量数据库(kb_item_names)中执行混合搜索，获取匹配评分
            :param item_names: 列表[字符串] - 步骤4中 提取的商品名列表（如["苹果15", "华为P60"]）
+            item_names: ["苹果15", "华为P60"]
+            search_res:
+                [
+                    [
+                        {
+                            "pk": 467684978484127359,
+                            "distance": 0.7222466468811035,
+                            "entity": {
+                                "item_name": "华为B530台式计算机"
+                            }
+                        },
+                        {
+                            "pk": 467684978484127415,
+                            "distance": 0.6882514953613281,
+                            "entity": {
+                                "item_name": "华为W585台式机"
+                            }
+                        },
+                        ...
+                    ]
+                ]
            :return: 列表[字典] - 格式：
                 [
                     {
@@ -86,6 +108,7 @@ class NodeItemNameConfirm(NodeBase):
                     norm_score=True,  # 开启评分归一化，统一评分量级为0-1
                     output_fields=["item_name"]  # 指定返回Milvus中存储的商品名字段（业务字段）
                 )
+                logger.info(f"关键字[{item_names[i]}]搜索结果：{json.dumps(search_res, ensure_ascii=False, indent=4)}")
 
                 # 初始化当前商品名的匹配结果列表，存储匹配到的商品名+对应相似度评分
                 matches = []
@@ -113,7 +136,7 @@ class NodeItemNameConfirm(NodeBase):
                 self.logger.error(f"查询商品名 '{item_names[i]}' 时出错: {e}")
 
         # 返回所有商品名的向量化+搜索结果列表
-        self.logger.info(f"搜索结果：{format_json(results)}")
+        self.logger.info(f"{item_names} 搜索结果：{format_json(results)}")
         return results
     
     def _step_6_align_item_names(self, query_results) -> dict:
@@ -152,6 +175,7 @@ class NodeItemNameConfirm(NodeBase):
 
             # 优化 ab 所有评分高于0.85的都可以直接确认
             if len(high) > 0:
+                self.logger.info(f"LLM商品识别“{extracted_name}”检索到 {len(high)} 个高置信度的结果，{high}")
                 for m in high:
                     confirmed_item_names.append(m.get("item_name"))
                 continue
@@ -182,18 +206,16 @@ class NodeItemNameConfirm(NodeBase):
             # 规则c: 无0.85分以上结果，取≥0.6分的最高前3个作为候选
             # 注：高置信度列表high为空时才会走到此处（规则a/b均不满足）
             if len(mid) > 0:
+                self.logger.info(f"LLM商品识别“{extracted_name}”检索到 {len(mid)} 个中置信度的结果，{mid}")
                 # 取中置信度结果的前5个，加入候选列表
                 for m in mid[:3]:
                     options.append(m.get("item_name"))
 
             # 规则d: 无0.6分及以上结果 → 不做任何操作，确认+候选列表均为空
         # 返回最终对齐结果：确认列表和候选列表均做去重处理（list(set())）
-        return {
-            "confirmed_item_names": list(set(confirmed_item_names)),  # 去重，避免重复确认
-            "options": list(set(options))  # 去重，避免重复候选
-        }
+        return list(set(confirmed_item_names)), list(set(options))  # 去重，避免重复候选
     
-    def _step_7_check_confirmation(self, align_result, history):
+    def _step_7_check_confirmation(self, confirmed, options, history):
         """
         7 检查step6对齐后的商品名状态，分3种分支更新state，并同步更新历史消息的商品名关联
         :param state: 字典 - 原始会话状态，包含session_id/original_query等核心字段
@@ -201,10 +223,6 @@ class NodeItemNameConfirm(NodeBase):
         :param history: 列表[字典] - 近期会话历史
         :return: 字典 - 更新后的会话状态，包含item_names/answer
         """
-        # 从对齐结果中提取确认商品名列表，无则空列表
-        confirmed = align_result.get("confirmed_item_names", [])
-        # 从对齐结果中提取候选商品名列表，无则空列表
-        options = align_result.get("options", [])
 
         # 分支A：有确认的商品名（高置信度，无需用户确认）
         if confirmed:
@@ -291,16 +309,18 @@ class NodeItemNameConfirm(NodeBase):
         item_names, rewritten_query = resolve_item_name_and_rewrite_query(original_query, history)
 
         # 5. & 6. 如果有提取到商品名，进行搜索和对齐
-        align_result = {}
+        confirmed_item_names = []
+        options = []
         if len(item_names) > 0:
+            # 把LLM推测的商品名转换成向量，在向量库中检索匹配
             query_results = self._step_5_vectorize_and_query(item_names)
-            align_result = self._step_6_align_item_names(query_results)
-            self.logger.info(f"对齐结果：{format_json(align_result)}")
+            # 把向量检索结果转换成高置信度，中置信度列表
+            confirmed_item_names, options = self._step_6_align_item_names(query_results)
         else:
             self.logger.info("Node: 未提取到商品名，跳过向量检索")
 
         # 7. 检查确认状态
-        item_names, answer = self._step_7_check_confirmation(align_result, history)
+        item_names, answer = self._step_7_check_confirmation(confirmed_item_names, options, history)
 
         # 8. 写入最终历史
         self._step_8_write_history(answer, item_names, session_id, original_query, rewritten_query, message_id)    

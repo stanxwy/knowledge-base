@@ -139,11 +139,13 @@ def save_chat_message(
             {"_id": ObjectId(message_id)},  # 更新条件：主键匹配（需将字符串转为ObjectId类型）
             {"$set": document}  # 更新操作：$set表示只更新指定字段，保留其他字段
         )
+        logging.info(f"更新会话记录: {document}")
         # 更新操作返回传入的message_id作为标识
         return message_id
     else:
         # 无message_id：执行新增操作
         result = mongo_tool.chat_message.insert_one(document)
+        logging.info(f"新增会话记录: {document}")
         # 新增操作返回插入的ObjectId并转为字符串，便于上层使用（避免直接返回ObjectId对象）
         return str(result.inserted_id)
 

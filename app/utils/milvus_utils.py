@@ -1,4 +1,3 @@
-import json
 from loguru import logger
 from pymilvus import MilvusClient, DataType, AnnSearchRequest, WeightedRanker
 from typing import List, Dict
@@ -257,7 +256,6 @@ def hybrid_search(collection_name, reqs, ranker_weights=(0.5, 0.5), norm_score=F
             search_params=search_params
         )
         logger.info(f"Milvus混合搜索完成，集合[{collection_name}]共检索到{len(res[0])}条结果")
-        logger.info(f"{json.dumps(search_res, ensure_ascii=False, indent=4)}")
         return res
     except Exception as e:
         logger.error(f"Milvus混合搜索执行失败，集合[{collection_name}]：{str(e)}", exc_info=True)
@@ -265,7 +263,7 @@ def hybrid_search(collection_name, reqs, ranker_weights=(0.5, 0.5), norm_score=F
 
 if __name__ == '__main__':
     from app.utils.embedding_utils import generate_embeddings
-    item_names = ["烫金机"]
+    item_names = ["烫金机", "电脑"]
     embeddings = generate_embeddings(item_names)
 
     # 6、遍历每个商品名称，逐个执行向量搜索（保证结果与原始商品名一一对应）
@@ -293,7 +291,6 @@ if __name__ == '__main__':
             norm_score=True,  # 开启评分归一化，统一评分量级为0-1
             output_fields=["item_name"]  # 指定返回Milvus中存储的商品名字段（业务字段）
         )
-        print(json.dumps(search_res, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.utils.milvus_utils
