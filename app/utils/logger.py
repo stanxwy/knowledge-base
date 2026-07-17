@@ -51,7 +51,7 @@ def setup_logging(level: int = logging.INFO, log_dir: str = "./logs"):
         datefmt='%Y-%m-%d %H:%M:%S',
         log_colors={
             'DEBUG': 'cyan',
-            'INFO': 'green',  # INFO 显示为绿色
+            # 'INFO': 'green',  # INFO 显示为绿色
             'WARNING': 'yellow',
             'ERROR': 'red',
             'CRITICAL': 'bold_red',

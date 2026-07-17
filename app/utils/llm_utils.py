@@ -1,11 +1,13 @@
 import base64
+import json
 import logging
-from typing import Tuple
+from typing import Any, Dict, List, Tuple
 
 from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from app.config.lm_config import get_lm_config
 from app.processor.import_processor.prompt import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
+from app.processor.query_processor.prompt import ITEM_NAME_EXTRACT_SYSTEM_PROMPT, ITEM_NAME_EXTRACT_TEMPLATE
 
 _llm_client_cache = {}
 
@@ -89,7 +91,6 @@ def identify_main_product(filename: str, context: str) -> str:
     返回值：
         str: 清洗后的商品名称（异常/空值时返回原始filename）
     """
-
     if not context:
         return filename
 
@@ -119,6 +120,75 @@ def identify_main_product(filename: str, context: str) -> str:
     except Exception as e:
         logging.getLogger().error(f"大模型调用异常：{e}")
         return filename
+    
+def resolve_item_name_and_rewrite_query(query: str, history: List[Dict[str, Any]]) -> Tuple[List[str], str]:
+    """
+    利用LLM从当前问题以及历史会话中提取出主要询问的商品名称item_names（可多个，JSON列表形式）
+    若商品名不够明确则返回空列表，同时根据上下文重新改写问题，保证问题独立完整
+    :param query: 字符串 - 用户当前原始查询问题（如："这个多少钱？"）
+    :param history: 列表[字典] - 近期会话历史，每条消息含role/text等字段，
+                    格式：[{"role": "user/assistant", "text": "消息内容", "_id": "消息ID"}, ...]
+    :return: 字典 - 提取结果，固定包含2个字段，格式：
+                {
+                    "item_names": ["商品名1", "商品名2", ...],  # 提取的商品名列表，无则空列表
+                    "rewritten_query": "改写后的完整问题"       # 包含商品名的独立问题，无则返回原始query
+                }
+    """
+    try:
+        # 1. 获取llm客户端
+        chat_model = get_llm_client(model=get_lm_config().item_model, json_mode=True)
+
+        # 2. 构造历史对话文本，拼接为"角色: 内容"的格式，供LLM做上下文理解
+        history_text = ""
+        for msg in history:
+            role = msg.get("role")
+            content = msg.get("text")
+            history_text += f"{role}: {content}\n"
+
+        # 3. 处理和动态拼接提示词
+        # 为了把大括号当作 “普通字符” 保留下来，用双大括号 {{ 表示普通的左大括号 {，双大括号 }} 表示普通的右大括号 }。
+        user_prompt = ITEM_NAME_EXTRACT_TEMPLATE.format(
+            history_text=history_text,
+            query=query
+        )
+        logging.getLogger().info(f"商品名称识别用户提示词：{user_prompt}")
+
+        # 4. 构造LLM调用的消息列表，包含系统角色（定义助手身份）和用户角色（传入提示词）
+        messages = [
+            SystemMessage(content=ITEM_NAME_EXTRACT_SYSTEM_PROMPT),
+            HumanMessage(content=user_prompt)
+        ]
+
+        # 5. 调用LLM客户端，发起请求获取结果
+        response = chat_model.invoke(messages)
+        content = response.content
+        logging.getLogger().info(f"商品名称识别结果：{content}")
+
+        # 6. 数据清洗：处理LLM可能返回的代码块格式（如```json ... ```），去除包裹符
+        if content.startswith("```json"):
+            content = content.replace("```json", "").replace("```", "")
+
+        # 7. 数据解析：将JSON字符串转为字典
+        result = json.loads(content)
+
+        # 8. 健壮性处理：确保字段存在
+        # 确保返回结果包含item_names字段，无则设为空列表
+        item_names = result.get("item_names", [])
+        rewritten_query = result.get("rewritten_query", query)
+
+        # 9. 给item_names 去除空格
+        item_names = [
+            name.replace(" ", "").replace("\n", "").replace("\t", "").replace("\r", "")
+            for name in item_names
+        ]
+        # 10、返回解析后的提取结果
+        return item_names, rewritten_query
+
+    except Exception as e:
+        # 捕获所有异常（如LLM调用失败、JSON解析失败等），记录错误日志
+        logging.getLogger().error(f"大模型调用异常：{e}")
+        # 异常时返回默认结果：空商品名列表+原始查询
+        return [], query
 
 if __name__ == '__main__':
     llm = get_llm_client()

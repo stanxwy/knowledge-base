@@ -82,6 +82,7 @@ class NodeItemNameRecognition(BaseNode):
         # 6. 对返回结果进行二次截断
         final_context = context[:chunk_size]
         self.logger.info(f"构造的上下文长度：{len(final_context)}")
+        self.logger.info(f"构造的上下文内容：{final_context}")
         return final_context
 
     def _step_4_update_chunks(self, chunks: List[Dict[str, str]], item_name: str):

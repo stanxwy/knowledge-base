@@ -200,7 +200,7 @@ def get_recent_messages(session_id: str = None, limit: int = 10) -> List[Dict[st
         messages = list(cursor)
         # 返回查询结果列表
         for m in messages:
-            logging.info(f'{m["role"]}: {m["text"]}')
+            logging.info(f'{datetime.fromtimestamp(m["ts"]).strftime("%Y-%m-%d %H:%M:%S")} - {m["role"]}: {m["text"]}')
         return messages
     except Exception as e:
         # 捕获查询异常，记录错误日志
