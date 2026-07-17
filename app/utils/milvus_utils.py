@@ -1,3 +1,4 @@
+import json
 from loguru import logger
 from pymilvus import MilvusClient, DataType, AnnSearchRequest, WeightedRanker
 from typing import List, Dict
@@ -185,8 +186,7 @@ def insert_into_chunks_collection(data: List[Dict]):
     return result
 
 # 搜索操作
-def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None, sparse_params=None, expr=None,
-                                  limit=5):
+def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None, sparse_params=None, expr=None, limit=5):
     """
     构建Milvus混合搜索请求对象
     分别创建稠密/稀疏向量的搜索请求，用于后续混合搜索融合
@@ -213,7 +213,6 @@ def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None
         expr=expr,
         limit=limit
     )
-
     # 构建稀疏向量搜索请求，关联Milvus的sparse_vector字段
     sparse_req = AnnSearchRequest(
         data=[sparse_vector],
@@ -222,11 +221,9 @@ def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None
         expr=expr,
         limit=limit
     )
-
     return [dense_req, sparse_req]
 
-
-def hybrid_search(client, collection_name, reqs, ranker_weights=(0.5, 0.5), norm_score=False, limit=5,
+def hybrid_search(collection_name, reqs, ranker_weights=(0.5, 0.5), norm_score=False, limit=5,
                   output_fields=None, search_params=None):
     """
     执行Milvus稠密+稀疏向量混合搜索
@@ -251,7 +248,7 @@ def hybrid_search(client, collection_name, reqs, ranker_weights=(0.5, 0.5), norm
             output_fields = ["item_name"]
 
         # 执行混合搜索：融合稠密+稀疏向量结果，按权重重新排序
-        res = client.hybrid_search(
+        res = get_milvus_client().hybrid_search(
             collection_name=collection_name,
             reqs=reqs,
             ranker=rerank,
@@ -259,9 +256,87 @@ def hybrid_search(client, collection_name, reqs, ranker_weights=(0.5, 0.5), norm
             output_fields=output_fields,
             search_params=search_params
         )
-
         logger.info(f"Milvus混合搜索完成，集合[{collection_name}]共检索到{len(res[0])}条结果")
+        logger.info(f"{json.dumps(search_res, ensure_ascii=False, indent=4)}")
         return res
     except Exception as e:
         logger.error(f"Milvus混合搜索执行失败，集合[{collection_name}]：{str(e)}", exc_info=True)
         return None
+
+if __name__ == '__main__':
+    from app.utils.embedding_utils import generate_embeddings
+    item_names = ["烫金机"]
+    embeddings = generate_embeddings(item_names)
+
+    # 6、遍历每个商品名称，逐个执行向量搜索（保证结果与原始商品名一一对应）
+    for i in range(len(item_names)):
+        # 从批量生成的向量结果中，取出当前商品名对应的稠密向量（高维连续值，如[0.12, 0.35,...]）
+        dense_vector = embeddings.get("dense")[i]
+        # 从批量生成的向量结果中，取出当前商品名对应的稀疏向量（键值对，如{100:0.747, 205:0.664}）
+        sparse_vector = embeddings.get("sparse")[i]
+
+        # 构造Milvus混合搜索请求对象，传入稠/稀疏向量，指定返回Top5匹配结果
+        # reqs返回格式：[稠密向量搜索请求, 稀疏向量搜索请求]
+        reqs = create_hybrid_search_requests(
+            dense_vector=dense_vector,
+            sparse_vector=sparse_vector,
+            limit=5
+        )
+
+        # 执行BGEM3混合向量搜索，获取数据库中的匹配结果和评分
+        # 默认配置：稠/稀疏向量权重各0.8/0.2，开启评分归一化（将距离值转为0-1相似度评分）
+        search_res = hybrid_search(
+            collection_name=milvus_config.item_name_collection,  # 目标向量集合名（存储商品向量的表）
+            reqs=reqs,  # 混合搜索请求对象列表
+            ranker_weights=(0.8, 0.2),  # 稠/稀疏向量评分权重配比（和为1最佳）
+            limit=5,  # 最终返回Top5匹配结果
+            norm_score=True,  # 开启评分归一化，统一评分量级为0-1
+            output_fields=["item_name"]  # 指定返回Milvus中存储的商品名字段（业务字段）
+        )
+        print(json.dumps(search_res, ensure_ascii=False, indent=4))
+
+"""
+(knowledge-base) PS D:\knowledge-base> python -m app.utils.milvus_utils
+2026-07-17 11:23:58,727 [WARNING][__init__]: Using fp16 with CPU can lead to runtime errors such as 'LayerNormKernelImpl', It's recommended to set 'use_fp16 = False' when using cpu.  (bge_m3.py:50)
+Loading weights: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 391/391 [00:00<00:00, 1204.39it/s]
+2026-07-17 11:24:03.134 | INFO     | __main__:hybrid_search:260 - Milvus混合搜索完成，集合[kb_item_names]共检索到5条结果
+[
+    [
+        {
+            "pk": 467662309254248226,
+            "distance": 0.8375090956687927,
+            "entity": {
+                "item_name": "HAK180烫金机"
+            }
+        },
+        {
+            "pk": 467684978484127359,
+            "distance": 0.6518365740776062,
+            "entity": {
+                "item_name": "华为B530台式计算机"
+            }
+        },
+        {
+            "pk": 467684978484127436,
+            "distance": 0.6430261135101318,
+            "entity": {
+                "item_name": "万用表RS-12"
+            }
+        },
+        {
+            "pk": 467684978484127344,
+            "distance": 0.5528860092163086,
+            "entity": {
+                "item_name": "苏伯尓B3-211H显示器"
+            }
+        },
+        {
+            "pk": 467684978484127378,
+            "distance": 0.5373769402503967,
+            "entity": {
+                "item_name": "AolynkCB304n网桥"
+            }
+        }
+    ]
+]
+"""
