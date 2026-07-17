@@ -117,5 +117,15 @@ class BaseNode(ABC):
         ...
 
     def backup_json(self, state: T, json_data: dict | list, file_name: str):
+        """
+        【步骤6】Chunk结果本地JSON备份（便于调试/问题排查，保留处理结果）
+        :param state: 项目状态字典，需包含md_dir（备份目录）
+        :param sections: 最终处理后的Chunk列表
+
+        sections是Python 嵌套数据结构（List[Dict[str, str]]，列表里装字典，字典里可能嵌套字符串 / 数字等），而普通文件写入
+        （如f.write(sections)）仅支持写入字符串，直接写 Python 数据结构会报错。
+        json.dump的核心作用就是：将 Python 原生数据结构（列表、字典、字符串、数字等）直接序列化并写入 JSON 文件，无需手动转换为字符串，
+        同时保证数据格式规范、可跨语言 / 跨场景读取，完美适配「Chunk 列表备份」的需求。
+        """
         file_path = Path(state.get("output_file_dir")) / state.get("file_title") / file_name 
         backup_json(file_path, json_data)

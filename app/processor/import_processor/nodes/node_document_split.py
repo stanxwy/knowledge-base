@@ -320,31 +320,6 @@ class NodeDocumentSplit(BaseNode):
         self.logger.debug(f"短Chunk合并完成：原{len(sections)}个 → 合并后{len(merged_sections)}个")
         return merged_sections
 
-    def _step_5_print_stats(self, lines_count: int, sections: List[Dict[str, str]]) -> None:
-        """
-        【步骤5】输出文档切分统计信息（日志记录，便于监控/调试）
-        :param lines_count: MD原始文本总行数
-        :param sections: 最终处理后的Chunk列表
-        """
-        chunk_num = len(sections)
-        # 输出核心统计信息：原始行数/最终Chunk数/首个Chunk预览
-        self.logger.info("-" * 50 + " 文档切分统计信息 " + "-" * 50)
-        self.logger.info(f"MD原始文本总行数：{lines_count}")
-        self.logger.info(f"最终生成Chunk数量：{chunk_num}")
-    
-    def _step_6_backup_chunks_json(self, state: ImportGraphState, sections: List[Dict[str, str]]) -> None:
-        """
-        【步骤6】Chunk结果本地JSON备份（便于调试/问题排查，保留处理结果）
-        :param state: 项目状态字典，需包含md_dir（备份目录）
-        :param sections: 最终处理后的Chunk列表
-
-        sections是Python 嵌套数据结构（List[Dict[str, str]]，列表里装字典，字典里可能嵌套字符串 / 数字等），而普通文件写入
-        （如f.write(sections)）仅支持写入字符串，直接写 Python 数据结构会报错。
-        json.dump的核心作用就是：将 Python 原生数据结构（列表、字典、字符串、数字等）直接序列化并写入 JSON 文件，无需手动转换为字符串，
-        同时保证数据格式规范、可跨语言 / 跨场景读取，完美适配「Chunk 列表备份」的需求。
-        """
-        self.backup_json(state, sections, "chunks.json")
-
     def process(self, state: ImportGraphState) -> ImportGraphState:
         """
         节点：文档切分（node_document_split）
@@ -372,10 +347,12 @@ class NodeDocumentSplit(BaseNode):
         sections = self._step_4_finalize_chunks(sections)
 
         # 步骤5：输出文档切分统计信息
-        self._step_5_print_stats(lines_count, sections)
+        self.logger.info("-" * 50 + " 文档切分统计信息 " + "-" * 50)
+        self.logger.info(f"MD原始文本总行数：{lines_count}")
+        self.logger.info(f"最终生成Chunk数量：{len(sections)}")
 
         # 步骤6：Chunk结果本地JSON备份
-        self._step_6_backup_chunks_json(state, sections)
+        self.backup_json(state, sections, "chunks.json")
 
         # 写入状态字典
         return { "chunks": sections }

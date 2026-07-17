@@ -55,21 +55,25 @@ class NodeBGEEmbedding(BaseNode):
 
         # 按批次遍历文本切片：range(起始, 终止, 步长) → 0,5,10... 分批处理
         for i in range(0, len(chunks), batch_size):
-            batch_texts = chunks[i:i + batch_size]
-            input_texts = []
-            for doc in batch_texts:
-                item_name = doc["item_name"]
-                content = doc["content"]
-                input_texts.append(f"{item_name}\n{content}" if item_name else content)
+            batch_chunks = chunks[i:i + batch_size]
+            # 将每个批次中的chunk对象的item_name和content字段拼接成文本：对象 -> 文本
+            flattened_chunks = []
+            for chunk in batch_chunks:
+                item_name = chunk["item_name"]
+                content = chunk["content"]
+                flattened_chunks.append(f"{item_name}\n{content}" if item_name else content)
 
-            docs_embeddings = generate_embeddings(input_texts)
-            for j, doc in enumerate(batch_texts):
-                item = doc.copy() # 防御式编程：函数不修改入参，是最优默认策略
-                item["dense_vector"] = docs_embeddings["dense"][j]
-                item["sparse_vector"] = docs_embeddings["sparse"][j]
-                output_data.append(item)
+            # 对批次内的文本数组进行向量化
+            docs_embeddings = generate_embeddings(flattened_chunks)
+            for j, chunk in enumerate(batch_chunks):
+                # 将生成的向量数据，重新回填到chunk对象中
+                copied_chunk = chunk.copy() # 防御式编程：函数不修改入参，是最优默认策略
+                copied_chunk["dense_vector"] = docs_embeddings["dense"][j]
+                copied_chunk["sparse_vector"] = docs_embeddings["sparse"][j]
+                # 将带向量的chunk对象添加到总输出列表
+                output_data.append(copied_chunk)
 
-            self.logger.info(f"成功获取第 {i + 1}-{min(i + len(batch_texts), len(chunks))} 项的嵌入。")
+            self.logger.info(f"成功获取第 {i + 1}-{min(i + len(batch_chunks), len(chunks))} 项的嵌入。")
 
         # 返回带向量的文本切片列表（供后续存入Milvus）
         return output_data

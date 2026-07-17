@@ -136,8 +136,6 @@ class NodeItemNameConfirm(NodeBase):
         # 2、初始化候选商品名列表（低置信度，需用户确认的商品名）
         options: List[str] = []
 
-        self.logger.info(f"步骤6：获得待处理的数据源：{query_results}")
-
         for res in query_results:
             # 提取原始的数据，商品名和匹配结果
             extracted_name = (res.get("extracted_name", "") or  "").strip()
