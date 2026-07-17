@@ -8,7 +8,7 @@ from typing import List, Dict, Any, Optional
 from datetime import datetime
 # 导入pymongo核心模块：MongoDB原生Python驱动，实现数据库连接和操作
 # ASCENDING：表示升序排序，用于MongoDB索引和查询排序
-from pymongo import MongoClient, ASCENDING
+from pymongo import MongoClient, DESCENDING
 # 导入bson的ObjectId：MongoDB默认的主键类型，用于唯一标识文档
 from bson import ObjectId
 # 导入dotenv模块：用于从.env文件加载环境变量，避免硬编码敏感配置（如MongoDB连接地址）
@@ -147,7 +147,6 @@ def save_chat_message(
         # 新增操作返回插入的ObjectId并转为字符串，便于上层使用（避免直接返回ObjectId对象）
         return str(result.inserted_id)
 
-
 def update_message_item_names(ids: List[str], item_names: List[str]) -> int:
     """
     批量更新历史会话记录的关联商品名称
@@ -178,8 +177,7 @@ def update_message_item_names(ids: List[str], item_names: List[str]) -> int:
         # 异常时返回0，标识更新失败
         return 0
 
-
-def get_recent_messages(session_id: str, limit: int = 10) -> List[Dict[str, Any]]:
+def get_recent_messages(session_id: str = None, limit: int = 10) -> List[Dict[str, Any]]:
     """
     查询指定会话的最近N条对话记录，返回原始字典格式
     结果按时间正序排列，可直接喂给LLM作为上下文
@@ -191,16 +189,18 @@ def get_recent_messages(session_id: str, limit: int = 10) -> List[Dict[str, Any]
     mongo_tool = get_history_mongo_tool()
     try:
         # 构造查询条件：仅查询指定session_id的记录
-        query = {"session_id": session_id}
+        query = {"session_id": session_id} if session_id else {}
 
         # 执行查询：按时间戳升序排序，限制返回条数
         # find(query)：获取符合条件的游标（惰性加载，不立即查询）
         # sort("ts", ASCENDING)：按ts字段升序（从旧到新），适配LLM上下文顺序
         # limit(limit)：限制返回的最大条数
-        cursor = mongo_tool.chat_message.find(query).sort("ts", ASCENDING).limit(limit)
+        cursor = mongo_tool.chat_message.find(query).sort("ts", DESCENDING).limit(limit)
         # 将游标转为列表，触发实际数据库查询，获取所有符合条件的文档
         messages = list(cursor)
         # 返回查询结果列表
+        for m in messages:
+            logging.info(f'{m["role"]}: {m["text"]}')
         return messages
     except Exception as e:
         # 捕获查询异常，记录错误日志
@@ -209,57 +209,46 @@ def get_recent_messages(session_id: str, limit: int = 10) -> List[Dict[str, Any]
         return []
 
 
-# 主程序入口：仅当直接运行该脚本时执行，用于简单的功能测试
-# if __name__ == "__main__":
-#     # 简单测试代码：验证数据库的写入和查询功能是否正常
-#     # 测试会话ID，用于标识测试的对话记录
-#     sid = "000015_hybrid"
-#     # 1. 写入用户消息
-#     save_chat_message(sid, "user", "你好 (Hybrid)")
-#     # 2. 写入助手回复
-#     save_chat_message(sid, "assistant", "你好！我是基于原生 Mongo + LangChain 对象的助手。")
-#     # 3. 写入带关联商品的用户消息
-#     save_chat_message(sid, "user", "这个万用表怎么换电池？", item_names=["混合万用表"])
-#
-#     # 4. 查询指定会话的最近5条记录，验证查询功能
-#     print("--- 查询 LangChain 对象记录 ---")
-#     messages = get_recent_messages(sid, limit=5)
-#     # 打印查询到的记录数量
-#     print(f"查询到的记录数: {len(messages)}")
-#     # 遍历打印每条记录的详细内容
-#     for m in messages:
-#         print(f" {m}  ")
-
 if __name__ == "__main__":
-    # 测试会话，用于确认商品名称是否能正确的提取
-    sid = "test_session_002"
-    # 1. 写入用户消息
-    save_chat_message(sid, "user", "你好，有烫金机吗？")
-    # 2. 写入助手回复
-    save_chat_message(sid, "assistant", "你好！请问你想询问哪个型号？")
-    # 3. 写入带关联商品的用户消息
-    save_chat_message(sid, "user", "brother的HAK180烫金机")
-    save_chat_message(sid, "assistant", "有的")
+    # 简单测试代码：验证数据库的写入和查询功能是否正常
+    # 测试会话ID，用于标识测试的对话记录
+    sid = "000015_hybrid"
+    # # 1. 写入用户消息
+    # save_chat_message(sid, "user", "你好 (Hybrid)")
+    # # 2. 写入助手回复
+    # save_chat_message(sid, "assistant", "你好！我是基于原生 Mongo + LangChain 对象的助手。")
+    # # 3. 写入带关联商品的用户消息
+    # save_chat_message(sid, "user", "这个万用表怎么换电池？", item_names=["混合万用表"])
 
-# if __name__ == "__main__":
-#     # 测试会话，用于确认商品名称是否能正确的提取
-#     sid = "test_session_003"
-#     # 1. 写入用户消息
-#     save_chat_message(sid, "user", "你好，有万用表吗？")
-#     # 2. 写入助手回复
-#     save_chat_message(sid, "assistant", "你好！请问你想询问哪个型号？")
-#     # 3. 写入带关联商品的用户消息
-#     save_chat_message(sid, "user", "RS12万用表")
-#     save_chat_message(sid, "assistant", "有的")
 
-# 主程序入口：仅当直接运行该脚本时执行，用于简单的功能测试
-# if __name__ == "__main__":
-#     # 测试会话，用于确认商品名称是否能正确的提取
-#     sid = "test_session_004"
-#     # 1. 写入用户消息
-#     save_chat_message(sid, "user", "你好，请问有烫金机吗")
-#     # 2. 写入助手回复
-#     save_chat_message(sid, "assistant", "你好！请问你想询问哪个型号？")
-#     # 3. 写入带关联商品的用户消息
-#     save_chat_message(sid, "user", "HAK180和HAK181都可以")
-#     save_chat_message(sid, "assistant", "有的")
+    # sid = "test_session_002"
+    # save_chat_message(sid, "user", "你好，有烫金机吗？")
+    # save_chat_message(sid, "assistant", "你好！请问你想询问哪个型号？")
+    # save_chat_message(sid, "user", "brother的HAK180烫金机")
+    # save_chat_message(sid, "assistant", "有的")
+
+    # sid = "test_session_003"
+    # save_chat_message(sid, "user", "你好，有万用表吗？")
+    # save_chat_message(sid, "assistant", "你好！请问你想询问哪个型号？")
+    # save_chat_message(sid, "user", "RS12万用表")
+    # save_chat_message(sid, "assistant", "有的")
+
+    # sid = "test_session_004"
+    # save_chat_message(sid, "user", "你好，请问有烫金机吗")
+    # save_chat_message(sid, "assistant", "你好！请问你想询问哪个型号？")
+    # save_chat_message(sid, "user", "HAK180和HAK181都可以")
+    # save_chat_message(sid, "assistant", "有的")
+
+    # 4. 查询指定会话的最近5条记录，验证查询功能
+    print("--- 查询 LangChain 对象记录 ---")
+    messages = get_recent_messages(sid, limit=5)
+    # 打印查询到的记录数量
+    print(f"查询到的记录数: {len(messages)}")
+    # 遍历打印每条记录的详细内容
+    # for m in messages:
+    #     print(f" {m}  ")
+
+    print(f"查询到的总记录数: {len(messages)}")
+    messages = get_recent_messages()
+    for m in messages:
+        print(f" {m}  ")
