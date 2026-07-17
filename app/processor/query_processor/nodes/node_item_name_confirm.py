@@ -108,7 +108,7 @@ class NodeItemNameConfirm(NodeBase):
                     norm_score=True,  # 开启评分归一化，统一评分量级为0-1
                     output_fields=["item_name"]  # 指定返回Milvus中存储的商品名字段（业务字段）
                 )
-                logger.info(f"关键字[{item_names[i]}]搜索结果：{json.dumps(search_res, ensure_ascii=False, indent=4)}")
+                logger.info(f"关键字[{item_names[i]}]在向量数据库中的检索结果：\n{json.dumps(search_res, ensure_ascii=False, indent=4)}")
 
                 # 初始化当前商品名的匹配结果列表，存储匹配到的商品名+对应相似度评分
                 matches = []
@@ -136,7 +136,7 @@ class NodeItemNameConfirm(NodeBase):
                 self.logger.error(f"查询商品名 '{item_names[i]}' 时出错: {e}")
 
         # 返回所有商品名的向量化+搜索结果列表
-        self.logger.info(f"{item_names} 搜索结果：{format_json(results)}")
+        self.logger.info(f"{item_names} 搜索结果格式化：\n{format_json(results)}")
         return results
     
     def _step_6_align_item_names(self, query_results) -> dict:
@@ -335,8 +335,8 @@ if __name__ == "__main__":
     logger = setup_logging()
     # 初始化图状态
     init_state = {
-        "session_id": "abc",
-        "original_query": "万用表怎么开机"
+        "session_id": "abc123",
+        "original_query": "M272Q"
     }
     # 创建节点对象
     node_item_name_confirm = NodeItemNameConfirm()

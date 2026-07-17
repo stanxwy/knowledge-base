@@ -137,7 +137,7 @@ def resolve_item_name_and_rewrite_query(query: str, history: List[Dict[str, Any]
     try:
         # 1. 构造历史对话文本，拼接为"角色: 内容"的格式，供LLM做上下文理解
         history_text = ""
-        for msg in history:
+        for msg in reversed(history):
             role = msg.get("role")
             content = msg.get("text")
             history_text += f"{role}: {content}\n"
@@ -160,7 +160,7 @@ def resolve_item_name_and_rewrite_query(query: str, history: List[Dict[str, Any]
         chat_model = get_llm_client(model=get_lm_config().item_model, json_mode=True)
         response = chat_model.invoke(messages)
         content = response.content
-        logging.getLogger().info(f"商品名称识别结果：{content}")
+        logging.getLogger().info(f"LLM商品名称识别结果：{content}")
 
         # 5. 数据清洗：处理LLM可能返回的代码块格式（如```json ... ```），去除包裹符
         if content.startswith("```json"):
