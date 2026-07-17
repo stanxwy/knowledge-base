@@ -7,7 +7,7 @@ from langchain_core.messages import SystemMessage, HumanMessage
 from langchain_openai import ChatOpenAI
 from app.config.lm_config import get_lm_config
 from app.processor.import_processor.prompt import ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
-from app.processor.query_processor.prompt import ITEM_NAME_EXTRACT_SYSTEM_PROMPT, ITEM_NAME_EXTRACT_TEMPLATE
+from app.processor.query_processor.prompt import ITEM_NAME_EXTRACT_SYSTEM_PROMPT, ITEM_NAME_EXTRACT_TEMPLATE, HYDE_PROMPT
 
 _llm_client_cache = {}
 
@@ -188,6 +188,24 @@ def resolve_item_name_and_rewrite_query(query: str, history: List[Dict[str, Any]
         # 异常时返回默认结果：空商品名列表+原始查询
         return [], query
 
+def generate_hyde_doc(rewritten_query: str) -> str:
+    """
+    阶段1：利用大模型根据用户查询生成假设性文档（Hypothetical Document）。
+    HyDE的核心在于：利用LLM生成一个“虚构但相关”的文档，用该文档的向量去检索真实的文档，
+    从而缓解短查询（Query）与长文档（Document）在语义空间不匹配的问题。
+
+    :param rewritten_query: 用户改写后的查询语句
+    :return: LLM生成的假设性文档内容
+    """
+    try:
+        llm = get_llm_client()
+        hyde_prompt = HYDE_PROMPT.format(rewritten_query=rewritten_query)
+        hyde_doc = llm.invoke(hyde_prompt).content
+        return hyde_doc
+
+    except Exception as e:
+        logging.getLogger().exception(f"生成假设文档失败: {e}")
+        raise e
 if __name__ == '__main__':
     llm = get_llm_client()
     print(llm.invoke("你是谁"))
