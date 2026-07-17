@@ -36,7 +36,7 @@ def get_llm_client(model: str | None = None, json_mode: bool = False) -> ChatOpe
     )
 
     _llm_client_cache[key] = llm
-    logging.getLogger().debug("LangChain ChatOpenAI 客户端实例获取成功...")
+    logging.getLogger().info(f"LangChain ChatOpenAI {key} 客户端实例获取成功...")
     return llm
 
 def generate_image_caption(image_path: str, doc_stem: str, image_context: Tuple[str, str]) -> str:
@@ -160,7 +160,7 @@ def resolve_item_name_and_rewrite_query(query: str, history: List[Dict[str, Any]
         chat_model = get_llm_client(model=get_lm_config().item_model, json_mode=True)
         response = chat_model.invoke(messages)
         content = response.content
-        logging.getLogger().info(f"LLM商品名称识别结果：{content}")
+        logging.getLogger().info(f"LLM商品名称识别响应：{response}")
 
         # 5. 数据清洗：处理LLM可能返回的代码块格式（如```json ... ```），去除包裹符
         if content.startswith("```json"):
