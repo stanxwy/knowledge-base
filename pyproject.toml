@@ -17,6 +17,7 @@ dependencies = [
     "minio>=7.2.20",
     "modelscope>=1.38.1",
     "numpy>=2.4.6",
+    "openai-agents>=0.18.3",
     "pymilvus[model]>=3.0.0",
     "pymongo>=4.17.0",
     "python-dotenv>=1.2.2",
