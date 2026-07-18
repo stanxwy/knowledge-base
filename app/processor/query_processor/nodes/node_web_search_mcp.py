@@ -48,10 +48,10 @@ class NodeWebSearchMcp(NodeBase):
                 # 统一输出结构化结果，供后续 rerank/引用使用
                 # 每条：{title, url, snippet}
 
-                for item in pages:
-                    snippet = (item.get("snippet") or "").strip()
-                    url = (item.get("url") or "").strip()
-                    title = (item.get("title") or "").strip()
+                for page in pages:
+                    snippet = (page.get("snippet") or "").strip()
+                    url = (page.get("url") or "").strip()
+                    title = (page.get("title") or "").strip()
                     if not snippet:
                         continue
                     docs.append({"title": title, "url": url, "snippet": snippet})
