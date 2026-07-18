@@ -200,12 +200,13 @@ def generate_hyde_doc(rewritten_query: str) -> str:
     try:
         llm = get_llm_client()
         hyde_prompt = HYDE_PROMPT.format(rewritten_query=rewritten_query)
-        hyde_doc = llm.invoke(hyde_prompt).content
-        return hyde_doc
-
+        response = llm.invoke(hyde_prompt)
+        logging.getLogger().info(f"生成假设文档响应：{response}")
+        return response.content
     except Exception as e:
         logging.getLogger().exception(f"生成假设文档失败: {e}")
         raise e
+
 if __name__ == '__main__':
     llm = get_llm_client()
     print(llm.invoke("你是谁"))

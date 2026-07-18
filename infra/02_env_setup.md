@@ -1840,6 +1840,19 @@ fb91fe84cac1   minio/minio:RELEASE.2023-03-20T20-16-18Z           "/usr/bin/dock
 e91ffda50ff2   quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z   "/usr/bin/docker-ent…"   3 hours ago     Up 3 hours               0.0.0.0:9000-9001->9000-9001/tcp, :::9000-9001->9000-9001/tcp                              minio
 ```
 
+```bash
+[root@localhost mongo]# docker run -d --name mongo --restart unless-stopped -p 27017:27017 -v /root/volumes/mongo:/data/db mongo
+91980c4771cb2deba6fb27ebcfb82dff73bdc7c1b2aecc2f281e283906f039cc
+[root@localhost mongo]# docker ps
+CONTAINER ID   IMAGE                                              COMMAND                  CREATED         STATUS                    PORTS                                                                                      NAMES
+91980c4771cb   mongo                                              "docker-entrypoint.s…"   5 seconds ago   Up 4 seconds              0.0.0.0:27017->27017/tcp, :::27017->27017/tcp                                              mongo
+772b2e24080e   zilliz/attu:v2.5.10                                "docker-entrypoint.s…"   10 days ago     Up 13 minutes             3000/tcp, 0.0.0.0:7000->7000/tcp, :::7000->7000/tcp                                        milvus-attu
+87321615cc8b   milvusdb/milvus:v2.5.5                             "/tini -- milvus run…"   10 days ago     Up 13 minutes (healthy)   0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp   milvus-standalone
+156b13f5a1ed   minio/minio:RELEASE.2023-03-20T20-16-18Z           "/usr/bin/docker-ent…"   10 days ago     Up 13 minutes (healthy)   0.0.0.0:9002->9000/tcp, :::9002->9000/tcp, 0.0.0.0:9003->9001/tcp, :::9003->9001/tcp       milvus-minio
+9bd4f9b2fff8   quay.io/coreos/etcd:v3.5.18                        "etcd -advertise-cli…"   10 days ago     Up 13 minutes (healthy)   2379-2380/tcp                                                                              milvus-etcd
+e91ffda50ff2   quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z   "/usr/bin/docker-ent…"   10 days ago     Up 13 minutes             0.0.0.0:9000-9001->9000-9001/tcp, :::9000-9001->9000-9001/tcp                              minio
+```
+
 ## connect to mongodb docker container, make sure mongodb is ready
 ```log
 [root@localhost ~]# docker exec -it mongo mongosh
