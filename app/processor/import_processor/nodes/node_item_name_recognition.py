@@ -146,7 +146,7 @@ class NodeItemNameRecognition(BaseNode):
             create_item_name_collection()
 
             # 删除符合条件的数据
-            delete_from_item_name_collection(item_name)
+            delete_from_item_name_collection(file_title)
 
             # 3. 准备插入Milvus的数据
             data = {
