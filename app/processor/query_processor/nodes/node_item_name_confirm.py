@@ -1,20 +1,15 @@
-import json
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-from app.config.milvus_config import milvus_config
-from app.utils.embedding_utils import generate_embeddings
 from app.utils.json_format_utils import format_json
 from app.utils.llm_utils import resolve_item_name_and_rewrite_query
-from app.utils.milvus_utils import create_hybrid_search_requests, hybrid_search
+from app.utils.milvus_utils import hybrid_search_item_name
 from app.utils.mongo_history_utils import get_recent_messages, save_chat_message, update_message_item_names
-
 
 class NodeItemNameConfirm(NodeBase):
     """
     节点功能：确认用户问题中的核心商品名称。
     """
-    # 覆盖基类的 name 属性，标识节点名称
     name: str = "node_item_name_confirm"
 
     def _step_1_validate_input_state(self, state: QueryGraphState) -> Tuple[str, str]:
@@ -27,117 +22,6 @@ class NodeItemNameConfirm(NodeBase):
             raise ValueError("核心参数original_query缺失")
 
         return session_id, original_query
-    
-    def _step_5_vectorize_and_query(self, item_names) -> List[Dict]:
-        """
-           把分析出的item_names逐个向量化（BGEM3模型），并在Milvus向量数据库(kb_item_names)中执行混合搜索，获取匹配评分
-           :param item_names: 列表[字符串] - 步骤4中 提取的商品名列表（如["苹果15", "华为P60"]）
-            item_names: ["苹果15", "华为P60"]
-            search_res:
-                [
-                    [
-                        {
-                            "pk": 467684978484127359,
-                            "distance": 0.7222466468811035,
-                            "entity": {
-                                "item_name": "华为B530台式计算机"
-                            }
-                        },
-                        {
-                            "pk": 467684978484127415,
-                            "distance": 0.6882514953613281,
-                            "entity": {
-                                "item_name": "华为W585台式机"
-                            }
-                        },
-                        ...
-                    ]
-                ]
-           :return: 列表[字典] - 格式：
-                [
-                    {
-                        "extracted_name": "提取的原始商品名",  # 如"苹果15"
-                        "matches": [                          # 该商品名的TopN匹配结果，无则空列表
-                            {
-                                "item_name": "数据库中的商品名",  # Milvus中存储的标准化商品名
-                                "score": 0.98                  # 混合搜索的相似度评分（0-1，越高越相似）
-                            },
-                            ...
-                        ]
-                    },
-                    ...
-                ]
-        """
-        # 1、初始化最终返回结果列表，存储每个商品名的向量化查询结果
-        results = []
-
-        # 2、获取Milvus向量数据库的客户端连接对象
-
-        # 3、校验Milvus客户端连接是否成功，失败则记录错误日志并返回空结果
-      
-        # 4、从环境变量中获取Milvus中存储商品名称向量的集合名（表名）
-        collection_name = milvus_config.item_name_collection  # kb_item_names
-
-        # 5、对所有商品名称批量生成BGEM3向量（稠密+稀疏），相比逐个生成提升处理效率
-        # embeddings格式：{"dense": [向量1, 向量2,...], "sparse": [向量1, 向量2,...]}
-        embeddings = generate_embeddings(item_names)
-
-        # 6、遍历每个商品名称，逐个执行向量搜索（保证结果与原始商品名一一对应）
-        for i in range(len(item_names)):
-            try:
-                # 从批量生成的向量结果中，取出当前商品名对应的稠密向量（高维连续值，如[0.12, 0.35,...]）
-                dense_vector = embeddings.get("dense")[i]
-                # 从批量生成的向量结果中，取出当前商品名对应的稀疏向量（键值对，如{100:0.747, 205:0.664}）
-                sparse_vector = embeddings.get("sparse")[i]
-
-                # 构造Milvus混合搜索请求对象，传入稠/稀疏向量，指定返回Top5匹配结果
-                # reqs返回格式：[稠密向量搜索请求, 稀疏向量搜索请求]
-                reqs = create_hybrid_search_requests(
-                    dense_vector=dense_vector,
-                    sparse_vector=sparse_vector,
-                    limit=5
-                )
-
-                # 执行BGEM3混合向量搜索，获取数据库中的匹配结果和评分
-                # 默认配置：稠/稀疏向量权重各0.8/0.2，开启评分归一化（将距离值转为0-1相似度评分）
-                search_res = hybrid_search(
-                    collection_name=collection_name,  # 目标向量集合名（存储商品向量的表）
-                    reqs=reqs,  # 混合搜索请求对象列表
-                    ranker_weights=(0.8, 0.2),  # 稠/稀疏向量评分权重配比（和为1最佳）
-                    limit=5,  # 最终返回Top5匹配结果
-                    norm_score=True,  # 开启评分归一化，统一评分量级为0-1
-                    output_fields=["item_name"]  # 指定返回Milvus中存储的商品名字段（业务字段）
-                )
-                logger.info(f"关键字[{item_names[i]}]在向量数据库中的检索结果：\n{json.dumps(search_res, ensure_ascii=False, indent=4)}")
-
-                # 初始化当前商品名的匹配结果列表，存储匹配到的商品名+对应相似度评分
-                matches = []
-                # 校验搜索结果是否有效（非空且包含数据，适配Milvus批量搜索格式）
-                if search_res and len(search_res) > 0:
-                    # 遍历当前商品名的Top5匹配结果（search_res[0]为该商品的独立搜索结果集）
-                    for hit in search_res[0]:
-                        # 提取匹配结果中的商品名和评分，做防KeyError处理（设置默认空字典）
-                        # hit格式：{"id": 数据库ID, "distance": 相似度评分, "entity": {"item_name": "标准化商品名"}}
-                        matches.append(
-                            {
-                                "item_name": hit.get("entity", {}).get("item_name"),  # 数据库标准化商品名
-                                "score": hit.get("distance"),  # 0-1相似度评分
-                            }
-                        )
-
-                # 将当前商品名的原始名称+匹配结果，封装后加入最终结果列表
-                results.append({
-                    "extracted_name": item_names[i],  # step4提取的原始商品名称
-                    "matches": matches  # 该商品名的Top5匹配结果（含评分）
-                })
-
-            # 捕获单个商品名处理的异常（不中断其他商品名执行），仅记录错误日志
-            except Exception as e:
-                self.logger.error(f"查询商品名 '{item_names[i]}' 时出错: {e}")
-
-        # 返回所有商品名的向量化+搜索结果列表
-        self.logger.info(f"{item_names} 搜索结果格式化：\n{format_json(results)}")
-        return results
     
     def _step_6_align_item_names(self, query_results) -> dict:
         """
@@ -313,9 +197,9 @@ class NodeItemNameConfirm(NodeBase):
         options = []
         if len(item_names) > 0:
             # 把LLM推测的商品名转换成向量，在向量库中检索匹配
-            query_results = self._step_5_vectorize_and_query(item_names)
+            search_results = hybrid_search_item_name(item_names)
             # 把向量检索结果转换成高置信度，中置信度列表
-            confirmed_item_names, options = self._step_6_align_item_names(query_results)
+            confirmed_item_names, options = self._step_6_align_item_names(search_results)
         else:
             self.logger.info("Node: 未提取到商品名，跳过向量检索")
 
