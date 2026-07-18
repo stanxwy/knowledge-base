@@ -1852,6 +1852,58 @@ CONTAINER ID   IMAGE                                              COMMAND       
 9bd4f9b2fff8   quay.io/coreos/etcd:v3.5.18                        "etcd -advertise-cli…"   10 days ago     Up 13 minutes (healthy)   2379-2380/tcp                                                                              milvus-etcd
 e91ffda50ff2   quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z   "/usr/bin/docker-ent…"   10 days ago     Up 13 minutes             0.0.0.0:9000-9001->9000-9001/tcp, :::9000-9001->9000-9001/tcp                              minio
 ```
+## docker-compose to run mongodb with mongo-express
+```yml
+services:
+  mongodb:
+    image: mongo
+    container_name: mongo
+    restart: unless-stopped
+    ports:
+      - 27017:27017
+    #environment:
+      #MONGO_INITDB_ROOT_USERNAME: admin
+      #MONGO_INITDB_ROOT_PASSWORD: password
+    volumes:
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/mongo:/data/db
+
+  mongo-express:
+    image: mongo-express:1.0.2-20-alpine3.19
+    container_name: mongo-express
+    restart: unless-stopped
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_URL: mongodb://mongodb:27017/
+      ME_CONFIG_BASICAUTH_USERNAME: admin
+      ME_CONFIG_BASICAUTH_PASSWORD: password
+    depends_on:
+      - mongodb
+```
+
+## start mongodb docker-compose
+```bash
+[root@localhost mongo]# docker compose up -d
+[+] Running 3/3
+ ✔ Network mongo_default    Created                                                                                                                                                                         0.1s
+ ✔ Container mongo          Started                                                                                                                                                                         0.4s
+ ✔ Container mongo-express  Started                                                                                                                                                                         0.8s
+
+[root@localhost mongo]# docker compose ps
+NAME            IMAGE                               COMMAND                  SERVICE         CREATED         STATUS         PORTS
+mongo           mongo                               "docker-entrypoint.s…"   mongodb         7 minutes ago   Up 7 minutes   0.0.0.0:27017->27017/tcp, :::27017->27017/tcp
+mongo-express   mongo-express:1.0.2-20-alpine3.19   "/sbin/tini -- /dock…"   mongo-express   7 minutes ago   Up 7 minutes   0.0.0.0:8081->8081/tcp, :::8081->8081/tcp
+
+[root@localhost mongo]# docker ps -a
+CONTAINER ID   IMAGE                                              COMMAND                  CREATED         STATUS                    PORTS                                                                                      NAMES
+7a696e282d93   mongo-express:1.0.2-20-alpine3.19                  "/sbin/tini -- /dock…"   7 minutes ago   Up 7 minutes              0.0.0.0:8081->8081/tcp, :::8081->8081/tcp                                                  mongo-express
+9975aca5a7b0   mongo                                              "docker-entrypoint.s…"   7 minutes ago   Up 7 minutes              0.0.0.0:27017->27017/tcp, :::27017->27017/tcp                                              mongo
+772b2e24080e   zilliz/attu:v2.5.10                                "docker-entrypoint.s…"   11 days ago     Up 18 minutes             3000/tcp, 0.0.0.0:7000->7000/tcp, :::7000->7000/tcp                                        milvus-attu
+87321615cc8b   milvusdb/milvus:v2.5.5                             "/tini -- milvus run…"   11 days ago     Up 18 minutes (healthy)   0.0.0.0:9091->9091/tcp, :::9091->9091/tcp, 0.0.0.0:19530->19530/tcp, :::19530->19530/tcp   milvus-standalone
+156b13f5a1ed   minio/minio:RELEASE.2023-03-20T20-16-18Z           "/usr/bin/docker-ent…"   11 days ago     Up 18 minutes (healthy)   0.0.0.0:9002->9000/tcp, :::9002->9000/tcp, 0.0.0.0:9003->9001/tcp, :::9003->9001/tcp       milvus-minio
+9bd4f9b2fff8   quay.io/coreos/etcd:v3.5.18                        "etcd -advertise-cli…"   11 days ago     Up 18 minutes (healthy)   2379-2380/tcp                                                                              milvus-etcd
+e91ffda50ff2   quay.io/minio/minio:RELEASE.2024-12-18T13-15-44Z   "/usr/bin/docker-ent…"   11 days ago     Up 18 minutes             0.0.0.0:9000-9001->9000-9001/tcp, :::9000-9001->9000-9001/tcp                              minio
+```
 
 ## connect to mongodb docker container, make sure mongodb is ready
 ```log
@@ -1889,6 +1941,9 @@ admin> exit
 
 ## connect to mongodb using mongodb compass
 ![1783426786147](image/02_env_setup/1783426786147.png)
+
+## connect to mongodb using mongo-express
+![mongo-express](image/02_env_setup/mongo-express.png)
 
 ## config restart policy for all containers
 ```log

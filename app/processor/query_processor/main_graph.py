@@ -1,5 +1,5 @@
 from dotenv import load_dotenv
-from typing import Optional
+from typing import List, Optional
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
@@ -24,7 +24,6 @@ class KBQueryWorkflowV2:
     """
     def __init__(self):
         """初始化工作流：创建状态图、注册节点、定义路由规则"""
-        setup_logging()
         # 1. 初始化LangGraph状态图
         self.__workflow = StateGraph(QueryGraphState)
         # 2. 初始化所有业务节点（实例属性，支持多实例隔离）
@@ -57,7 +56,7 @@ class KBQueryWorkflowV2:
         self.__workflow.add_node("node_rerank", self.node_rerank) # 重排
         self.__workflow.add_node("node_answer_output", self.node_answer_output) # 生成
 
-    def _route_after_item_name_confirm(self, state: QueryGraphState) -> str:
+    def _route_after_item_name_confirm(self, state: QueryGraphState) -> str | List[str]:
         """主体名称确认后的条件路由函数"""
         if state.get("answer"):
             """
@@ -77,7 +76,6 @@ class KBQueryWorkflowV2:
 
         # 否则继续搜索流程
         return ["node_search_embedding", "node_search_embedding_hyde", "node_web_search_mcp"]
-
 
     def _setup_routes(self):
         """设置工作流路由规则"""
@@ -120,7 +118,6 @@ class KBQueryWorkflowV2:
         :param stream: 是否是流式输出
         :return: 执行完成后的状态对象
         """
-        """"""
         if stream:
             return self.graph.stream(initial_state)
         else:
@@ -130,12 +127,11 @@ class KBQueryWorkflowV2:
 if __name__ == "__main__":
     logger = setup_logging()
     init_state = { "original_query": "如何使用万用表测量电压？"}
-
     workflow = KBQueryWorkflowV2()
     # 流式输出
     for chunk in workflow.run(init_state, stream=True):
         logger.warning(chunk)
-    
+        
     workflow.graph.get_graph().print_ascii()
 
 """

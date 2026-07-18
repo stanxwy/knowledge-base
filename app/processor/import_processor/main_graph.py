@@ -19,7 +19,6 @@ class KBImportWorkflow:
         """
         初始化工作流
         """
-        setup_logging()
         self.__graph = StateGraph(ImportGraphState)
         self._register_nodes()
         self._setup_routes()
@@ -92,10 +91,8 @@ class KBImportWorkflow:
 
 
 if __name__ == "__main__":
-    #启用日志
     setup_logging()
     
-    # 定义初始状态
     init_state = {
         "import_file_path": "./test_data/kb/M272Q用户指南.pdf",
         "output_file_dir": "./test_data/output"

@@ -366,7 +366,7 @@ if __name__ == '__main__':
     hybrid_search_item_name(item_names)
 
 """
-(knowledge-base) PS D:\code\atguigu\knowledge-base> python -m app.utils.milvus_utils
+(knowledge-base) PS D:\knowledge-base> python -m app.utils.milvus_utils
 2026-07-18 14:40:00,771 [WARNING][__init__]: Using fp16 with CPU can lead to runtime errors such as 'LayerNormKernelImpl', It's recommended to set 'use_fp16 = False' when using cpu.  (bge_m3.py:50)
 Loading weights: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 391/391 [00:00<00:00, 1751.66it/s]
 2026-07-18 14:40:05.311 | INFO     | __main__:hybrid_search:360 - Milvus混合搜索完成，集合[kb_item_names]共检索到5条结果
