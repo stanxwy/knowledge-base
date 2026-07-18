@@ -184,6 +184,47 @@ def insert_into_chunks_collection(data: List[Dict]):
     logger.info(f"Milvus 插入数据条数：{result.get('insert_count', 0)}")
     return result
 
+def hybrid_search_chunks(input_text: str, item_names: List[str]) -> List[Dict]:
+    try:
+        # 1、生成向量 (Dense + Sparse)
+        embeddings = generate_embeddings([input_text])
+        dense_vec = embeddings.get("dense")[0]
+        sparse_vec = embeddings.get("sparse")[0]
+
+        # 2、处理 item_names 中的引号，防止注入或语法错误
+        expr = None
+        if item_names:
+            #quoted = ", ".join(f'"{v}"' for v in item_names)
+            #expr = f"item_name in [{quoted}]"
+            # 'item_name in ["BrotherHAK-180烫金机","BrotherHAK180烫金机"]'
+            expr = f'item_name in {item_names}'
+            logger.info(f"过滤条件: {expr}")
+        else:
+            logger.info("未指定商品名过滤，将全库检索")
+
+        # 3、构造Milvus混合搜索请求对象
+        reqs = create_hybrid_search_requests(
+            dense_vector=dense_vec,
+            sparse_vector=sparse_vec,
+            expr=expr,
+            limit=10  # 底层检索返回数量（后续会再过滤为5，预留更多结果做重排序）
+        )
+
+        # 4、执行混合向量检索
+        logger.info("开始执行 Milvus 混合检索...")
+        res = hybrid_search(
+            collection_name=milvus_config.chunks_collection,    # 检索的目标集合名（文本片段向量集合）
+            reqs=reqs,                                          # 构造好的混合搜索请求对象（稠密+稀疏）
+            ranker_weights=(0.8, 0.2),                          # 稠/稀疏向量评分权重配比，各占50%（可按业务调优）
+            output_fields=["chunk_id", "content", "item_name"]  # 指定返回的业务字段
+        )
+
+        # 5、构造并返回结果：若检索结果非空，取res[0]，否则返回空列表
+        return res[0] if res else []
+    except Exception as e:
+        logger.exception(f"向量搜索失败: {e}")
+        return []
+
 # 搜索操作
 def create_hybrid_search_requests(dense_vector, sparse_vector, dense_params=None, sparse_params=None, expr=None, limit=5):
     """
