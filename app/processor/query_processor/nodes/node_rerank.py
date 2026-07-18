@@ -113,10 +113,11 @@ class NodeRerank(NodeBase):
 
             # 触发断崖截断条件：绝对差距≥绝对阈值 OR 相对差距≥相对阈值
             # 满足任一条件，说明下一条文档相关性骤降，截断在当前位置
+            self.logger.info(f"断崖检测: 当前位置 {idx}, abs_gap={abs_gap:.4f}, rel_gap={rel_gap:.4f}")
             if abs_gap >= RERANK_GAP_ABS or rel_gap >= RERANK_GAP_RATIO:
                 # 最终取前i+1条（索引转实际数量，如i=2 → 取前3条）
                 cutoff_pos = idx + 1
-                self.logger.info(f"断崖检测: 位置 {idx + 1}, abs_gap={abs_gap:.4f}, rel_gap={rel_gap:.4f}")
+                self.logger.info(f"断崖判定: 位置 {idx + 1}, abs_gap={abs_gap:.4f}, rel_gap={rel_gap:.4f}")
                 break
         return ranked_docs[:cutoff_pos]
 
@@ -139,7 +140,6 @@ class NodeRerank(NodeBase):
         cutoff_docs = self._step_3_cliff_cutoff(reranked_docs)
 
         # 4. 更新state
-        # 5. 返回state
         return {
             "reranked_docs": cutoff_docs
         }

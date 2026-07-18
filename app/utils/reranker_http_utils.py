@@ -34,4 +34,3 @@ def rerank_documents(query: str, documents: list[str]) -> list[float]:
         score = item.get("relevance_score")
         scores[int(index)] = float(score)
     return scores
-
