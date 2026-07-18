@@ -5,15 +5,13 @@ from app.config.reranker_config import reranker_config
 
 load_dotenv()
 
-def rerank_documents(query:str,documents:list[str])->list[float]:
-
+def rerank_documents(query: str, documents: list[str]) -> list[float]:
     """
     重排序工具方法
     :param query:
     :param documents:
     :return:
     """
-
     dashscope.api_key = reranker_config.text_rerank_api_key
     response = dashscope.TextReRank.call(
         model = reranker_config.text_rerank_model,
