@@ -23,12 +23,7 @@ class NodeImportMilvus(BaseNode):
             state: Dict[str, Any] - 流程状态对象，包含上游传入的chunks数据
         返回：
             tuple - (校验通过的切片列表, 稠密向量维度)
-        异常：
-            任一校验项不通过，抛出ValueError终止入库流程，避免脏数据处理
-
         """
-
-        # 校验1：chunks非空
         chunks = state.get("chunks")
 
         if not chunks:
@@ -37,16 +32,13 @@ class NodeImportMilvus(BaseNode):
         if not isinstance(chunks, list):
             raise StateFieldError(field_name="chunks", message="chunks数据类型不正确", expected_type=list)
 
-        # 校验2：切片包含dense_vector字段
         first_chunk = chunks[0]
         if 'dense_vector' not in first_chunk:
             raise StateFieldError(field_name="chunks", message="错误: 数据中缺失dense_vector字段")
 
-        # 校验3：切片包含 sparse_vector 字段
         if 'sparse_vector' not in first_chunk:
             raise StateFieldError(field_name="chunks", message="错误: 数据中缺失sparse_vector字段")
 
-        # 提取向量维度
         vector_dimension = len(first_chunk['dense_vector'])
         return chunks, vector_dimension
     
@@ -56,12 +48,6 @@ class NodeImportMilvus(BaseNode):
         核心逻辑：
             1. 获取Milvus单例客户端，验证连接有效性
             2. 集合不存在则自动创建（Schema+索引），存在则直接复用
-        参数：
-            vector_dimension: int - 稠密向量维度（步骤1提取）
-        返回：
-            MilvusClient - 已连接、集合准备完成的客户端实例
-        异常：
-            客户端获取失败/集合名称未配置，抛出异常终止流程
         """
         create_chunks_collection(vector_dimension)
 
@@ -69,9 +55,6 @@ class NodeImportMilvus(BaseNode):
         """
         幂等清理
         基于每个片段的file_title进行旧数据的清理
-        :param client: milvus客户端
-        :param chunks_json_data: chunks数据
-        :return:
         """
         # 1. 获取查询条件
         file_title = chunks_json_data[0].get("file_title")
@@ -93,15 +76,11 @@ class NodeImportMilvus(BaseNode):
         """
         # 1. 预处理数据：移除手动chunk_id，避免与Milvus自增主键冲突
         data_to_insert = []
-        for item in chunks_json_data:
-            item_copy = item.copy()
-
-            # 补充 part 字段
-            if "part" not in item_copy:
-                item_copy["part"] = 0
-
-            # 添加到待插入列表
-            data_to_insert.append(item_copy)
+        for chunk in chunks_json_data:
+            chunk_copy = chunk.copy()
+            if "part" not in chunk_copy:
+                chunk_copy["part"] = 0
+            data_to_insert.append(chunk_copy)
 
         # 2. 执行批量插入
         insert_result = insert_into_chunks_collection(data_to_insert)
@@ -109,8 +88,8 @@ class NodeImportMilvus(BaseNode):
         # 3. 主键回填：将Milvus生成的chunk_id回填到原始切片
         inserted_ids = insert_result.get('ids', [])
         if inserted_ids:
-            for idx, item in enumerate(chunks_json_data):
-                item['chunk_id'] = str(inserted_ids[idx])
+            for idx, chunk in enumerate(chunks_json_data):
+                chunk['chunk_id'] = str(inserted_ids[idx])
 
         return chunks_json_data
 
@@ -144,6 +123,7 @@ class NodeImportMilvus(BaseNode):
 
         # 步骤4：批量插入数据+主键chunk_id回填
         updated_chunks = self._step_4_insert_data(chunks_json_data)
+        self.backup_json(state, updated_chunks, "chunks_with_id.json")
 
         # 步骤5：更新全局状态，将回填后的切片回传下游
         return {
