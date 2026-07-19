@@ -1,3 +1,5 @@
+import json
+import logging
 import dashscope
 from dotenv import load_dotenv
 
@@ -6,12 +8,6 @@ from app.config.reranker_config import reranker_config
 load_dotenv()
 
 def rerank_documents(query: str, documents: list[str]) -> list[float]:
-    """
-    重排序工具方法
-    :param query:
-    :param documents:
-    :return:
-    """
     dashscope.api_key = reranker_config.text_rerank_api_key
     response = dashscope.TextReRank.call(
         model = reranker_config.text_rerank_model,
@@ -21,6 +17,7 @@ def rerank_documents(query: str, documents: list[str]) -> list[float]:
         return_documents = False,
         instruct=reranker_config.text_rerank_instruct,
     )
+    logging.getLogger().info(f"DashScope rerank response: \n{json.dumps(response, ensure_ascii=False, indent=2)}")
 
     status_code = response.get("status_code")
     if status_code != 200:

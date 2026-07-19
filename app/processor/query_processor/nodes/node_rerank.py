@@ -1,8 +1,7 @@
-# processor/query_processor/nodes/node_rerank.py
 from typing import Dict, Any, List, Tuple
 
-from processor.query_processor.base import NodeBase
-from processor.query_processor.state import QueryGraphState
+from app.processor.query_processor.base import NodeBase
+from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
 from app.utils.reranker_http_utils import rerank_documents
 
@@ -81,7 +80,6 @@ class NodeRerank(NodeBase):
                 key=lambda doc: doc["score"],
                 reverse=True
             )
-            self.logger.info(f"sorted_score_docs: \n{format_json(sorted_score_docs)}")
             return sorted_score_docs
         except Exception as e:
             self.logger.error(f"Rerank 重排序失败: {str(e)}")
@@ -132,12 +130,15 @@ class NodeRerank(NodeBase):
 
         # 1. 合并多源文档
         merged_multi_docs: List[Dict[str, Any]] = self._step_1_merge_multi_source_docs(rrf_chunks, web_search_docs)
+        self.logger.info(f"merged_multi_docs: \n{format_json(merged_multi_docs)}")
 
         # 2. Rerank 精排(精排打分)
         reranked_docs: List[Dict[str, Any]] = self._step_2_rerank_merged_docs(rewritten_query, merged_multi_docs)
+        self.logger.info(f"reranked_docs: \n{format_json(reranked_docs)}")
 
         # 3. 动态 Top_K 截取(断崖检测)
         cutoff_docs = self._step_3_cliff_cutoff(reranked_docs)
+        self.logger.info(f"cutoff_docs: \n{format_json(cutoff_docs)}")
 
         # 4. 更新state
         return {
@@ -145,6 +146,8 @@ class NodeRerank(NodeBase):
         }
 
 if __name__ == "__main__":
+    from app.utils.logger import setup_logging
+    logger = setup_logging()
     mock_state = {
         "rewritten_query": "怎么测这块主板的短路问题？",
         "rrf_chunks": [
@@ -174,3 +177,155 @@ if __name__ == "__main__":
     }
     node_rerank = NodeRerank()
     result = node_rerank(mock_state)
+
+"""
+(knowledge-base) PS D:\knowledge-base> python -m app.processor.query_processor.nodes.node_rerank
+2026-07-19 09:25:34 - root - INFO - 日志系统初始化完成，日志文件: ./logs\knowledge_base.log
+2026-07-19 09:25:34 - import.node_rerank - INFO - --- node_rerank 开始啦 ---
+2026-07-19 09:25:34 - import.node_rerank - INFO - merged_multi_docs:
+[
+    {
+        "content": "主板短路通常表现为通电后风扇转一下就停，可以使用万用表的蜂鸣档测量。",
+        "title": "主板维修手册",
+        "chunk_id": "local_1",
+        "url": null,
+        "source": "local"
+    },
+    {
+        "content": "今天中午去吃猪脚饭吧，这块主板外观很漂亮。",
+        "title": "闲聊",
+        "chunk_id": "local_2",
+        "url": null,
+        "source": "local"
+    },
+    {
+        "content": "主板通电前先打各主供电电感对地阻值，阻值偏低就是短路。",
+        "title": "短路查修指南",
+        "chunk_id": null,
+        "url": "https://example.com/repair",
+        "source": "web"
+    },
+    {
+        "content": "苹果发布新款手机，A系列芯片性能提升20%。",
+        "title": "科技新闻",
+        "chunk_id": null,
+        "url": "https://example.com/news",
+        "source": "web"
+    }
+]
+2026-07-19 09:25:35 - root - INFO - DashScope rerank response:
+{
+  "status_code": 200,
+  "request_id": "a398c4c1-b581-9ff6-bc6c-b98cbd2cd2b0",
+  "code": "",
+  "message": "",
+  "output": {
+    "results": [
+      {
+        "index": 0,
+        "relevance_score": 0.9244506623675683,
+        "document": null
+      },
+      {
+        "index": 2,
+        "relevance_score": 0.9008794977295259,
+        "document": null
+      },
+      {
+        "index": 1,
+        "relevance_score": 0.430502272123862,
+        "document": null
+      },
+      {
+        "index": 3,
+        "relevance_score": 0.18357113032525535,
+        "document": null
+      }
+    ]
+  },
+  "usage": {
+    "total_tokens": 189
+  },
+  "headers": {
+    "vary": "Origin,Access-Control-Request-Method,Access-Control-Request-Headers, Accept-Encoding",
+    "content-type": "application/json;charset=utf-8",
+    "x-request-id": "a398c4c1-b581-9ff6-bc6c-b98cbd2cd2b0",
+    "x-dashscope-call-gateway": "true",
+    "x-dashscope-finished": "true",
+    "x-dashscope-timeout": "3600",
+    "req-cost-time": "150",
+    "req-arrive-time": "1784424333760",
+    "resp-start-time": "1784424333910",
+    "x-envoy-upstream-service-time": "138",
+    "content-encoding": "gzip",
+    "date": "Sun, 19 Jul 2026 01:25:33 GMT",
+    "server": "istio-envoy",
+    "transfer-encoding": "chunked"
+  }
+}
+2026-07-19 09:25:35 - import.node_rerank - INFO - reranked_docs:
+[
+    {
+        "content": "主板短路通常表现为通电后风扇转一下就停，可以使用万用表的蜂鸣档测量。",
+        "title": "主板维修手册",
+        "chunk_id": "local_1",
+        "url": null,
+        "source": "local",
+        "score": 0.9244506623675683
+    },
+    {
+        "content": "主板通电前先打各主供电电感对地阻值，阻值偏低就是短路。",
+        "title": "短路查修指南",
+        "chunk_id": null,
+        "url": "https://example.com/repair",
+        "source": "web",
+        "score": 0.9008794977295259
+    },
+    {
+        "content": "今天中午去吃猪脚饭吧，这块主板外观很漂亮。",
+        "title": "闲聊",
+        "chunk_id": "local_2",
+        "url": null,
+        "source": "local",
+        "score": 0.430502272123862
+    },
+    {
+        "content": "苹果发布新款手机，A系列芯片性能提升20%。",
+        "title": "科技新闻",
+        "chunk_id": null,
+        "url": "https://example.com/news",
+        "source": "web",
+        "score": 0.18357113032525535
+    }
+]
+2026-07-19 09:25:35 - import.node_rerank - INFO - 断崖检测: 当前位置 2, abs_gap=0.2469, rel_gap=0.5736
+2026-07-19 09:25:35 - import.node_rerank - INFO - 断崖判定: 位置 3, abs_gap=0.2469, rel_gap=0.5736
+2026-07-19 09:25:35 - import.node_rerank - INFO - cutoff_docs:
+[
+    {
+        "content": "主板短路通常表现为通电后风扇转一下就停，可以使用万用表的蜂鸣档测量。",
+        "title": "主板维修手册",
+        "chunk_id": "local_1",
+        "url": null,
+        "source": "local",
+        "score": 0.9244506623675683
+    },
+    {
+        "content": "主板通电前先打各主供电电感对地阻值，阻值偏低就是短路。",
+        "title": "短路查修指南",
+        "chunk_id": null,
+        "url": "https://example.com/repair",
+        "source": "web",
+        "score": 0.9008794977295259
+    },
+    {
+        "content": "今天中午去吃猪脚饭吧，这块主板外观很漂亮。",
+        "title": "闲聊",
+        "chunk_id": "local_2",
+        "url": null,
+        "source": "local",
+        "score": 0.430502272123862
+    }
+]
+2026-07-19 09:25:35 - import.node_rerank - INFO - --- node_rerank 完成啦 ---
+"""
