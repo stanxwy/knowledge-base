@@ -1,9 +1,17 @@
 from pydantic import BaseModel, Field, ValidationError
 
 class Student(BaseModel):
-    name: str = Field(..., description="姓名")  # 必填
+    name: str = Field(..., description="姓名")
+    #           │       │         │
+    #           │       │         └── description: 字段描述（生成API文档用）
+    #           │       └── ... : 表示该字段必填，没有默认值
+    #           └── Field(): Pydantic 提供的字段配置函数
+
+    score: float = Field(default=0.0, description="成绩")
+    #                    │
+    #                    └── default=0.0 : 选填字段，不传时默认为 0.0
+    
     age: int = Field(..., description="年龄")  # 必填
-    score: float = Field(default=0.0, description="成绩")  # 选填，默认0.0
     email: str = Field(description="邮箱")  # 选填
 
 

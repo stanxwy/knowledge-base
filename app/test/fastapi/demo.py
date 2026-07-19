@@ -1,3 +1,4 @@
+import time
 import uvicorn
 from fastapi import FastAPI
 from loguru import logger
@@ -5,9 +6,9 @@ from pydantic import BaseModel
 
 """
 可以通过2种方式运行：
-uv run uvicorn app.test.fastapi_demo:app --reload
+uv run uvicorn app.test.fastapi.demo:app --reload
 
-python -m app.test.fastapi_demo
+python -m app.test.fastapi.demo
 """
 
 # 创建一个 FastAPI 应用实例
@@ -43,7 +44,112 @@ class Item(BaseModel):
 async def create_item(item: Item):
     # item 已经是验证过的 Item 对象
     # 如果客户端传来的 price 是字符串 "abc"，FastAPI 会自动报错
-    return {"name": item.name, "price": item.price, "is_offer": item.is_offer}
+    time.sleep(5)
+    return {"name": item.name, "price": item.price, "is_offer": item.is_offer, "success": True}
+
+
+# 1、路由处理函数返回一个 Pydantic 模型实例，FastAPI 将自动将其转换为 JSON 格式，并作为响应发送给客户端：
+@app.post("/items/return", summary="返回 Pydantic 模型实例")
+async def create_and_return_item(item: Item):
+    return item
+
+
+#2、使用 HTTPException 抛出异常，返回自定义的状态码和详细信息。
+#以下实例在 item_id 为 42 会返回 404 状态码：
+@app.delete("/items/{item_id}", summary="抛出异常")
+async def read_item_exception(item_id: int):
+    from fastapi import HTTPException
+    if item_id == 42:
+        raise HTTPException(status_code=404, detail="Item 找不到")
+    return {"item_id": item_id}
+
+
+
+@app.get("/api/user")
+async def get_user():
+    from fastapi.responses import JSONResponse
+    # 等价于直接 return {"name": "张三", "age": 20}（FastAPI 自动转 JSONResponse）
+    return JSONResponse(
+        content={"name": "张三", "age": 20},
+        status_code=200,  # 可选，默认 200
+        headers={"X-Custom-Header": "custom-value"}  # 可选，自定义响应头
+    )
+
+
+
+@app.get("/download/pdf")
+async def download_pdf():
+    from fastapi.responses import FileResponse
+    pdf_path = "./test_data/kb/B530.pdf"
+    # 返回文件并指定下载文件名
+    return FileResponse(
+        path=pdf_path,
+        filename="file.pdf",
+        #media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        media_type="application/pdf"
+    )
+
+
+
+@app.get("/hello")
+async def hello(name: str = "游客"):
+    from fastapi.responses import HTMLResponse
+    html_content = f"""
+    <html>
+        <body>
+            <h1>你好，{name}！</h1>
+        </body>
+    </html>
+    """
+    return HTMLResponse(content=html_content, status_code=200)
+
+
+
+@app.get("/text")
+async def get_text():
+    from fastapi.responses import PlainTextResponse
+    return PlainTextResponse(content="这是纯文本响应", status_code=200)
+
+
+
+
+@app.get("/old-path")
+async def redirect_old_path():
+    from fastapi.responses import RedirectResponse
+    # 重定向到 /new-path，状态码 307 表示临时重定向
+    return RedirectResponse(url="/new-path", status_code=307)
+
+@app.get("/new-path")
+async def new_path():
+    return {"message": "这是新接口"}
+
+
+
+async def generate_stream():
+    import asyncio
+    # 模拟流式输出（逐字返回）
+    words = ["你", "好", "，", "这", "是", "流", "式", "响", "应"]
+    for word in words:
+        await asyncio.sleep(0.5)
+        yield word.encode("utf-8")  # 流式输出需返回字节流
+
+@app.get("/stream")
+async def stream_response():
+    from fastapi.responses import StreamingResponse
+    return StreamingResponse(generate_stream(), media_type="text/event-stream")
+
+
+
+@app.get("/custom")
+async def custom_response():
+    from fastapi.responses import Response
+    # 返回二进制数据，指定自定义 MIME 类型
+    return Response(
+        content="<h1>纯文本</h1>",
+        # media_type="text/text",
+        media_type="text/html",
+        status_code=200)
+
 
 if __name__ == "__main__":
     """服务启动入口：本地开发环境直接运行"""
@@ -56,7 +162,7 @@ if __name__ == "__main__":
     )
 
 """
-(knowledge-base) PS D:\knowledge-base> uv run uvicorn app.test.fastapi_demo:app --reload
+(knowledge-base) PS D:\knowledge-base> uv run uvicorn app.test.fastapi.demo:app --reload
 INFO:     Will watch for changes in these directories: ['D:\\knowledge-base']
 INFO:     Uvicorn running on http://127.0.0.1:8000 (Press CTRL+C to quit)
 INFO:     Started reloader process [23396] using WatchFiles
@@ -73,7 +179,7 @@ INFO:     Stopping reloader process [23396]
 """
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.test.fastapi_demo
+(knowledge-base) PS D:\knowledge-base> python -m app.test.fastapi.demo
 2026-07-19 12:42:53.657 | INFO     | __main__:<module>:27 - File Import Service 服务启动中...
 INFO:     Started server process [14364]
 INFO:     Waiting for application startup.
