@@ -85,7 +85,8 @@ class KBImportWorkflow:
         :return: 执行结果
         """
         if stream:
-            return self.graph.stream(state, stream_mode="values")
+            # return self.graph.stream(state, stream_mode="values")
+            return self.graph.stream(state)
         else:
             return self.graph.invoke(state)
 
