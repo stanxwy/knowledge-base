@@ -3,8 +3,12 @@ import logging
 from FlagEmbedding import FlagReranker
 from dotenv import load_dotenv
 
+from app.config.reranker_config import reranker_config
+
 load_dotenv(override=True)
 logger = logging.getLogger(__name__)
+# from app.utils.logger import setup_logging
+# setup_logging()
 
 __reranker_model = None
 
@@ -20,7 +24,9 @@ def get_reranker_model() -> FlagReranker:
             __reranker_model = FlagReranker(
                 model_name_or_path=model_path,
                 devices=device,
-                use_fp16=False
+                use_fp16=False,
+                normalize=True,
+                # query_instruction_for_rerank=reranker_config.text_rerank_instruct,
             )
             print(type(__reranker_model.tokenizer))
             logger.info("Reranker 模型初始化成功！")
@@ -30,6 +36,9 @@ def get_reranker_model() -> FlagReranker:
         logger.error(f"初始化 Reranker 模型失败: {e}", exc_info=True)
         return None
 
+def rerank_documents(query: str, documents: list[str]) -> list[float]:
+    pairs = [(query, doc) for doc in documents]
+    return get_reranker_model().compute_score(pairs)
 
 if __name__ == '__main__':
     query = "1956年发生了哪一事件标志着人工智能这一学科的正式诞生？"
@@ -39,10 +48,7 @@ if __name__ == '__main__':
         "1951 年，英国数学家兼计算机科学家艾伦·图灵也开发出了首个用于下棋的程序，这展示了人工智能在游戏策略方面的一个早期应用实例.",
         "1955 年，艾伦·纽厄尔、赫伯特·A·西蒙和克利夫·肖共同发明的“逻辑理论家”程序标志着首个真正的人工智能程序的诞生，该程序能够解决逻辑问题，类似于证明数学定理。."
     ]
-    pairs = [(query, doc) for doc in documents]
-
-    reranker = get_reranker_model()
-    scores = reranker.compute_score(pairs)
+    scores = rerank_documents(query, documents)
     print(scores)
 
 """
@@ -66,8 +72,17 @@ Installed 2 packages in 1.39s
  - transformers==5.13.1
  + transformers==4.57.6
 
- (knowledge-base) PS D:\knowledge-base> python -m app.utils.bge_rerank_utils
+(knowledge-base) PS D:\knowledge-base> python -m app.utils.bge_rerank_utils
 <class 'transformers.models.xlm_roberta.tokenization_xlm_roberta_fast.XLMRobertaTokenizerFast'>
 You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
-[-3.558014154434204, 6.2559494972229, -3.1299989223480225, 0.025800909847021103]
+[0.0277058673878419, 0.9980846725164658, 0.041886650306271686, 0.50644986966622]
+
+# with query_instruction_for_rerank
+(knowledge-base) PS D:\code\atguigu\knowledge-base> python -m app.utils.bge_rerank_utils
+2026-07-20 13:09:02 - root - INFO - 日志系统初始化完成，日志文件: ./logs\knowledge_base.log
+2026-07-20 13:09:02 - __main__ - INFO - 正在初始化 Reranker 模型，路径: D:\ai_models\modelscope_cache\models\BAAI--bge-reranker-large\snapshots\master, 设备: cpu, fp16: False
+<class 'transformers.models.xlm_roberta.tokenization_xlm_roberta_fast.XLMRobertaTokenizerFast'>
+2026-07-20 13:09:03 - __main__ - INFO - Reranker 模型初始化成功！
+You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+[0.01925404938221098, 0.9953422224496216, 0.051985629883683326, 0.7046943997161241]
 """

@@ -40,3 +40,7 @@ def generate_embeddings(texts: list[str]):
         "sparse": processed_sparse,
         "dense": [emb.tolist() for emb in embeddings["dense"]]
     }
+
+if __name__ == '__main__':
+    embeddings = generate_embeddings(["测试"])
+    print(embeddings)
