@@ -9,7 +9,7 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.llm_utils import get_llm_client
 from app.utils.mongo_history_utils import save_chat_message
-from app.utils.sse_utils import push_to_session, SSEEvent
+from app.utils.sse_utils import push_sse_event, SSEEvent
 from app.utils.task_utils import add_done_task, set_task_result
 
 
@@ -168,14 +168,14 @@ class NodeAnswerOutput(NodeBase):
                     if delta:
                         final_text += delta
                         # 将增量内容放入队列
-                        push_to_session(session_id, SSEEvent.DELTA, {"delta": delta})
+                        push_sse_event(session_id, SSEEvent.DELTA, {"delta": delta})
 
                 self.logger.info(f"流式输出完成，总长度: {len(final_text)}")
 
             except Exception as e:
                 self.logger.error(f"流式生成出错: {e}", exc_info=True)
                 # 发生错误时，尝试推送到前端
-                push_to_session(session_id, SSEEvent.ERROR, {"error": str(e)})
+                push_sse_event(session_id, SSEEvent.ERROR, {"error": str(e)})
 
             state["answer"] = final_text
         else:
@@ -321,7 +321,7 @@ class NodeAnswerOutput(NodeBase):
         # 阶段五: 流式输出结束，发送 final 事件 [最后兜底，确保图片都能争取渲染和结束]
         self.logger.info(f"---发送 final 事件---图片为：{image_urls}")
         if state.get("is_stream"):
-            push_to_session(
+            push_sse_event(
                 state['session_id'],
                 SSEEvent.FINAL,
                 {

@@ -1798,7 +1798,7 @@ data: 50\n\n"""
 yield "event: progress\ndata: 50\n\n"
 ```
 
-```
+```python
 # 写法 3：分开 yield（正确）
 yield "event: progress\n"
 yield "data: 50\n\n"
