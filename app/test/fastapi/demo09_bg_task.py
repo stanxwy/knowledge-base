@@ -9,7 +9,7 @@ app = FastAPI()
 # ✅ 此处适合 CPU 密集型或阻塞操作
 def write_log1(email: str, content: str):
     while True:
-        print(f"异步任务正在执行...... 向 {email} 发邮件，内容是：{content}  {time.asctime()}")
+        print(f"同步任务正在执行...... 向 {email} 发邮件，内容是：{content}  {time.asctime()}")
         time.sleep(1)  # 模拟耗时操作
     #process_large_file()  # 同步的文件处理
     #run_cpu_heavy_task()  # CPU 计算
@@ -24,8 +24,21 @@ async def write_log2(email: str, content: str):
     # await send_email_async(email)  # 调用其他异步函数
     # await save_to_db_async(content)  # 异步数据库操作
 
-@app.get("/send-task/{email}")
-async def send_task(email: str, background_tasks: BackgroundTasks):
+@app.get("/send-sync/{email}")
+def send_task_sync(email: str):
+    # 1. 添加任务到后台队列
+    write_log1(email, "你好")
+
+    # 2. 立即返回响应给用户，不需要等待 write_log 执行完毕
+    return {"message": "同步任务1已完成"}
+
+@app.get("/get-sync")
+def get_task_sync():
+    print("开始同步任务2")
+    return {"message": "同步任务2已完成"}
+
+@app.get("/send-async/{email}")
+async def send_task_async(email: str, background_tasks: BackgroundTasks):
     # 1. 添加任务到后台队列
     background_tasks.add_task(write_log2, email, "你好")
 
