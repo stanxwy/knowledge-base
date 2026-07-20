@@ -1,22 +1,12 @@
-# 导入系统模块：用于读取环境变量
 import os
-# 导入日志模块：用于记录程序运行日志（成功/失败/错误信息）
 import logging
-# 导入类型注解模块：用于函数参数/返回值的类型提示，提升代码可读性和规范性
-from typing import List, Dict, Any, Optional
-# 导入时间模块：用于生成时间戳，记录对话的创建时间
+from typing import List, Dict, Any
 from datetime import datetime
-# 导入pymongo核心模块：MongoDB原生Python驱动，实现数据库连接和操作
-# ASCENDING：表示升序排序，用于MongoDB索引和查询排序
 from pymongo import MongoClient, DESCENDING
-# 导入bson的ObjectId：MongoDB默认的主键类型，用于唯一标识文档
 from bson import ObjectId
-# 导入dotenv模块：用于从.env文件加载环境变量，避免硬编码敏感配置（如MongoDB连接地址）
 from dotenv import load_dotenv
 
-# 加载.env文件中的环境变量，使os.getenv能读取到配置
 load_dotenv()
-
 
 class HistoryMongoTool:
     """
@@ -25,32 +15,19 @@ class HistoryMongoTool:
     扩展功能：支持与LangChain消息对象的格式转换（原代码预留能力）
     """
     def __init__(self):
-        """
-        类初始化方法：完成MongoDB的连接、数据库/集合获取、索引创建
-        初始化失败会抛出异常并记录错误日志，确保程序感知连接问题
-        """
         try:
-            # 从环境变量读取MongoDB连接地址（敏感配置，不硬编码）
-            self.mongo_url = os.getenv("MONGO_URL")
-            # 从环境变量读取要使用的数据库名称
-            self.db_name = os.getenv("MONGO_DB_NAME")
-
-            # 创建MongoDB客户端实例，建立与数据库的连接
-            self.client = MongoClient(self.mongo_url)
-            # 获取指定名称的数据库对象
-            self.db = self.client[self.db_name]
-            # 获取对话记录的集合（相当于关系型数据库的表），集合名：chat_message
-            self.chat_message = self.db["chat_message"]
+            self.__mongo_url = os.getenv("MONGO_URL")
+            self.__db_name = os.getenv("MONGO_DB_NAME")
+            self.__client = MongoClient(self.__mongo_url)
+            self.__db = self.__client[self.__db_name]
+            self.__chat_message = self.__db["chat_message"]
 
             # 为chat_message集合创建复合索引，提升查询性能
             # 索引规则：session_id升序 + ts降序，适配"按会话查最新记录"的核心查询场景
             # create_index自带幂等性：索引已存在时不会重复创建，无需额外判断
-            self.chat_message.create_index([("session_id", 1), ("ts", -1)])
-
-            # 记录成功日志，确认数据库连接和初始化完成
-            logging.info(f"Successfully connected to MongoDB: {self.db_name}")
+            self.__chat_message.create_index([("session_id", 1), ("ts", -1)])
+            logging.info(f"Successfully connected to MongoDB: {self.__db_name}")
         except Exception as e:
-            # 捕获所有初始化异常，记录详细错误日志
             logging.error(f"Failed to connect to MongoDB: {e}")
             # 重新抛出异常，让调用方感知初始化失败，避免使用未初始化的实例
             raise
@@ -58,21 +35,15 @@ class HistoryMongoTool:
 
 # 定义全局变量：存储HistoryMongoTool的单例实例
 # 目的：将数据库连接的初始化提前到模块加载阶段，避免第一次调用接口时才建立连接（提升首次响应速度）
-_history_mongo_tool = HistoryMongoTool()
+__history_mongo_tool = HistoryMongoTool()
 
 def get_history_mongo_tool() -> HistoryMongoTool:
-    """
-    获取HistoryMongoTool的单例实例（懒加载模式）
-    核心逻辑：全局实例为空时创建，不为空时直接返回，保证整个程序只有一个数据库连接实例
-    :return: HistoryMongoTool的单例实例
-    """
     # 声明使用全局变量，避免函数内视为局部变量
-    global _history_mongo_tool
+    global __history_mongo_tool
     # 懒加载：仅当全局实例为空时，才创建新的实例
-    if _history_mongo_tool is None:
-        _history_mongo_tool = HistoryMongoTool()
-    # 返回单例实例
-    return _history_mongo_tool
+    if __history_mongo_tool is None:
+        __history_mongo_tool = HistoryMongoTool()
+    return __history_mongo_tool
 
 def clear_history(session_id: str) -> int:
     """
@@ -96,13 +67,13 @@ def clear_history(session_id: str) -> int:
         return 0
 
 def save_chat_message(
-        session_id: str,
-        role: str,
-        text: str,
-        rewritten_query: str = "",
-        item_names: List[str] = None,
-        image_urls: List[str] = None,
-        message_id: str = None
+    session_id: str,
+    role: str,
+    text: str,
+    rewritten_query: str = "",
+    item_names: List[str] = None,
+    image_urls: List[str] = None,
+    message_id: str = None
 ) -> str:
     """
     写入/更新单条会话记录到MongoDB

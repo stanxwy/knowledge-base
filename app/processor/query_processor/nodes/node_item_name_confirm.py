@@ -172,11 +172,7 @@ class NodeItemNameConfirm(NodeBase):
         """
         必要参数：session_id、original_query
         更新参数：history、rewritten_query、item_names、answer
-
-        :param state: 工作流状态对象
-        :return: 更新后的状态对象
         """
-
         # 步骤1：校验参数
         session_id, original_query = self._step_1_validate_input_state(state)
         self.logger.info("步骤1：参数校验通过")
@@ -211,7 +207,8 @@ class NodeItemNameConfirm(NodeBase):
         return {
             "history": history,
             "rewritten_query": rewritten_query,
-            "item_names": item_names
+            "item_names": item_names,
+            "answer": answer
         }
 
 if __name__ == "__main__":
