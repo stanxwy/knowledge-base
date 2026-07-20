@@ -5,8 +5,6 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from pathlib import Path
 
-BASE_DIR = Path(__file__).parent
-
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -15,6 +13,7 @@ app.add_middleware(
     allow_methods=["*"],  # 允许的请求方法
     allow_headers=["*"],  # 允许的请求头
 )
+BASE_DIR = Path(__file__).parent
 app.mount("/static", StaticFiles(directory=str(BASE_DIR)), name="static")
 
 # key:会话id session_id
