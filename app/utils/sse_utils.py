@@ -43,7 +43,7 @@ def _sse_pack(event: str, data: Dict[str, Any]) -> str:
     return f"event: {event}\ndata: {payload}\n\n"
 
 
-def push_sse_event (task_id: str, event: str, data: Dict[str, Any]):
+def push_sse_event(task_id: str, event: str, data: Dict[str, Any]):
     """
     通过 task_id 推送事件到 SSE 队列
     """

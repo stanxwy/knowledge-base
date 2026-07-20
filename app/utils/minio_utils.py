@@ -59,7 +59,7 @@ def clean_dir(dir_path: str) -> None:
     except Exception as e:
         logging.getLogger().error(f"清理minio目录失败：{e}")
 
-def upload(local_path: str, object_name: str) -> str | None:
+def upload(local_path: str, object_name: str, content_type: str) -> str | None:
     """
     将单张本地图片上传至MinIO对象存储，并返回公网可访问URL
     :param local_path: 图片本地完整路径
@@ -73,7 +73,7 @@ def upload(local_path: str, object_name: str) -> str | None:
             object_name=object_name,  # MinIO对象名称
             file_path=local_path,  # 本地文件路径
             # 关键规则：多后缀文件仅拆分最后一个，如test.tar.gz拆分为("test.tar", ".gz")。
-            content_type=f"image/{os.path.splitext(local_path)[1][1:]}"
+            content_type=content_type or f"image/{os.path.splitext(local_path)[1][1:]}"
         )
 
         # 构造MinIO基础访问URL
