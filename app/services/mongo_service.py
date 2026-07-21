@@ -160,6 +160,9 @@ def get_mongo_service() -> MongoService:
     return MongoService()
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+    load_dotenv()
+    
     mongo = get_mongo_service()
     # 简单测试代码：验证数据库的写入和查询功能是否正常
     # 测试会话ID，用于标识测试的对话记录

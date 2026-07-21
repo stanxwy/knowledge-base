@@ -5,13 +5,12 @@ from collections import deque
 from pathlib import Path
 from typing import Tuple, List, Dict
 
-from app.config.minio_config import minio_config
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
 from app.processor.import_processor.state import ImportGraphState
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.llm_utils import generate_image_caption
-from app.utils.minio_utils import clean_dir, upload
+from app.services.object_store_service import ObjectStoreService, get_object_store_service
 
 
 class NodeMDImg(BaseNode):
@@ -19,6 +18,10 @@ class NodeMDImg(BaseNode):
     MarkDown图片处理节点：多模态图片理解
     """
     name: str = "node_md_img"
+
+    def __init__(self, object_store: ObjectStoreService = get_object_store_service()):
+        super().__init__()
+        self._object_store = object_store
 
     def _step_1_validate_input_state(self, state: ImportGraphState) -> Tuple[str, Path, Path]:
         """
@@ -157,14 +160,11 @@ class NodeMDImg(BaseNode):
         :return: 图片引用替换后的新MD内容
         """
 
-        # 构造上传目录，去除文件名中的空格
-        minio_img_dir = minio_config.img_dir
-        upload_dir = f"{minio_img_dir}/{doc_stem}".replace(" ", "")
-
         # 步骤1：清理该文档对应的MinIO旧目录
         # 幂等性清理：上传前先删除 MinIO 中指定目录下的旧文件。
         # 防止重名文件导致的内容混淆或垃圾堆积。
-        clean_dir(upload_dir)
+        upload_dir = doc_stem.replace(" ", "")
+        self._object_store.clean_img_dir(upload_dir)
 
         # 步骤2：批量上传图片至MinIO，获取URL映射
         urls = self._upload_images_batch(upload_dir, target_images)
@@ -187,8 +187,7 @@ class NodeMDImg(BaseNode):
         """
         urls = {}
         for img_file, local_img_path, _ in target_images:
-            object_name = f"{upload_dir}/{img_file}"
-            urls[img_file] = upload(local_img_path, object_name)
+            urls[img_file] = self._object_store.upload_img(local_img_path, f"{upload_dir}/{img_file}")
             self.logger.debug(f"图片 {img_file} 上传成功 {urls[img_file]}")
         self.logger.info(f"{len(target_images)}张图片上传完成")
         return urls

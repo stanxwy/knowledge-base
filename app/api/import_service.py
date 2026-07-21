@@ -12,7 +12,7 @@ from typing import Any, Dict, List
 
 from app.processor.import_processor.main_graph import KBImportWorkflow
 from app.utils.logger import setup_logging
-from app.utils.minio_utils import upload
+from app.services.object_store_service import get_object_store_service
 from app.utils.task_utils import add_done_task, add_running_task, get_done_task_list, get_running_task_list, get_task_status, update_task_status
 
 logger = setup_logging()
@@ -134,7 +134,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: List[UploadFile
         minio_object_name = f"pdf_files/{datetime.now().strftime('%Y%m%d')}/{file.filename}"
         try:
             # 本地文件上传至MinIO（同名文件会自动覆盖，保证文件最新）
-            url = upload(import_file_path, minio_object_name, file.content_type)
+            url = get_object_store_service().upload(import_file_path, minio_object_name, file.content_type)
             
             logger.info(f"[{task_id}] 文件已成功上传至MinIO，url：{url}")
         except Exception as e:

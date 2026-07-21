@@ -11,6 +11,7 @@ class NodeImportMilvus(BaseNode):
     导入向量库节点：数据持久化
     """
     name: str = "node_import_milvus"
+    
     def __init__(self, chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
         super().__init__()
         self._chunks_vector_db = chunks_vector_db
