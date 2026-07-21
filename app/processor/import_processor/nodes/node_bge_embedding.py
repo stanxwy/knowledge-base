@@ -4,13 +4,17 @@ from typing import List, Dict
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
-from app.utils.embedding_utils import generate_embeddings
+from app.services.embedding_service import EmbeddingService
 
 class NodeBGEEmbedding(BaseNode):
     """
     混合向量化节点：使用 BGE-M3 模型将文本转换为向量
     """
     name: str = "node_bge_embedding"
+
+    def __init__(self, embedding_service: EmbeddingService):
+        super().__init__()
+        self._embedding_service = embedding_service
 
     def _step_1_validate_input_state(self, state: ImportGraphState) -> List[Dict]:
         """
@@ -64,7 +68,7 @@ class NodeBGEEmbedding(BaseNode):
                 flattened_chunks.append(f"{item_name}\n{content}" if item_name else content)
 
             # 对批次内的文本数组进行向量化
-            docs_embeddings = generate_embeddings(flattened_chunks)
+            docs_embeddings = self._embedding_service.generate_embeddings(flattened_chunks)
             for j, chunk in enumerate(batch_chunks):
                 # 将生成的向量数据，重新回填到chunk对象中
                 copied_chunk = chunk.copy() # 防御式编程：函数不修改入参，是最优默认策略
@@ -85,12 +89,8 @@ class NodeBGEEmbedding(BaseNode):
             1. 输入校验：验证chunks有效性，核心数据缺失则终止当前节点
             2. 批量向量化：分批拼接文本、生成双向量，为切片绑定向量字段
             3. 状态更新：将带向量的chunks更新回全局状态，供下游Milvus入库节点使用
-
         必要参数：chunks
         更新参数：chunks字段新增dense_vector/sparse_vector
-
-        :param state: 工作流状态对象
-        :return: 更新后的状态对象
         """
 
         # 步骤1：输入数据校验
@@ -106,6 +106,9 @@ class NodeBGEEmbedding(BaseNode):
         }
 
 if __name__ == "__main__":
+    from app.utils.logger import setup_logging
+    logger = setup_logging()
+    
     json_path = "./test_data/output/B530/chunks.json"
     with open(json_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()
@@ -115,8 +118,10 @@ if __name__ == "__main__":
         "file_title": "B530",
         "output_file_dir": "./test_data/output"
     }
-    node_bge_embedding = NodeBGEEmbedding()
+    from app.services.embedding_service import get_embedding_service
+    node_bge_embedding = NodeBGEEmbedding(get_embedding_service())
     result = node_bge_embedding(init_state)
+    logger.info(result)
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_bge_embedding
