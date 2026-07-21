@@ -128,7 +128,7 @@ def hybrid_search_item_name(item_names: List[str]) -> List[Dict]:
     embeddings = generate_embeddings(item_names)
 
     # 6、遍历每个商品名称，逐个执行向量搜索（保证结果与原始商品名一一对应）
-    for i in range(len(item_names)):
+    for i, item_name in enumerate(item_names):
         try:
             # 从批量生成的向量结果中，取出当前商品名对应的稠密向量（高维连续值，如[0.12, 0.35,...]）
             dense_vector = embeddings.get("dense")[i]
@@ -152,29 +152,27 @@ def hybrid_search_item_name(item_names: List[str]) -> List[Dict]:
                 norm_score=True,                                        # 开启评分归一化，统一评分量级为0-1
                 output_fields=["item_name"]                             # 指定返回Milvus中存储的商品名字段（业务字段）
             )
-            logger.info(f"关键字[{item_names[i]}]在向量数据库中的检索结果：\n{json.dumps(search_res, ensure_ascii=False, indent=4)}")
+            logger.info(f"关键字[{item_name}]在向量数据库中的检索结果：\n{json.dumps(search_res, ensure_ascii=False, indent=4)}")
 
-            # 初始化当前商品名的匹配结果列表，存储匹配到的商品名+对应相似度评分
-            matches = []
             # 校验搜索结果是否有效（非空且包含数据，适配Milvus批量搜索格式）
-            if search_res and len(search_res) > 0:
-                # 遍历当前商品名的Top5匹配结果（search_res[0]为该商品的独立搜索结果集）
-                for hit in search_res[0]:
-                    # 提取匹配结果中的商品名和评分，做防KeyError处理（设置默认空字典）
+            # 遍历当前商品名的Top5匹配结果（search_res[0]为该商品的独立搜索结果集）
+            # 提取匹配结果中的商品名和评分，做防KeyError处理（设置默认空字典）
+            matches = [
+                {
+                    "item_name": hit.get("entity", {}).get("item_name"),    # 数据库标准化商品名
+                    "score": hit.get("distance"),                           # 0-1相似度评分
                     # hit格式：{"id": 数据库ID, "distance": 相似度评分, "entity": {"item_name": "标准化商品名"}}
-                    matches.append({
-                        "item_name": hit.get("entity", {}).get("item_name"),  # 数据库标准化商品名
-                        "score": hit.get("distance"),  # 0-1相似度评分
-                    })
+                } for hit in (search_res[0] if search_res and len(search_res) > 0 else [])
+            ]
 
             # 将当前商品名的原始名称+匹配结果，封装后加入最终结果列表
             results.append({
-                "extracted_name": item_names[i],    # 提取的原始商品名称
+                "extracted_name": item_name,        # 提取的原始商品名称
                 "matches": matches                  # 该商品名的Top5匹配结果（含评分）
             })
-        # 捕获单个商品名处理的异常（不中断其他商品名执行），仅记录错误日志
         except Exception as e:
-            logger.error(f"查询商品名 '{item_names[i]}' 时出错: {e}")
+            # 捕获单个商品名处理的异常（不中断其他商品名执行），仅记录错误日志
+            logger.error(f"查询商品名 '{item_name}' 时出错: {e}")
     return results
 
 # chunks 集合操作
@@ -358,14 +356,15 @@ def _hybrid_search(collection_name, reqs, ranker_weights=(0.5, 0.5), norm_score=
 
 if __name__ == '__main__':
     item_names = ["烫金机", "电脑"]
-    hybrid_search_item_name(item_names)
+    result = hybrid_search_item_name(item_names)
+    logger.info(f"\n{json.dumps(result, ensure_ascii=False, indent=4)}")
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.utils.milvus_utils
-2026-07-18 14:40:00,771 [WARNING][__init__]: Using fp16 with CPU can lead to runtime errors such as 'LayerNormKernelImpl', It's recommended to set 'use_fp16 = False' when using cpu.  (bge_m3.py:50)
-Loading weights: 100%|█████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████████| 391/391 [00:00<00:00, 1751.66it/s]
-2026-07-18 14:40:05.311 | INFO     | __main__:hybrid_search:360 - Milvus混合搜索完成，集合[kb_item_names]共检索到5条结果
-2026-07-18 14:40:05.313 | INFO     | __main__:hybrid_search_item_name:161 - 关键字[烫金机]在向量数据库中的检索结果：
+(knowledge-base) D:\code\atguigu\knowledge-base>python -m app.utils.milvus_utils
+2026-07-21 13:02:59,587 [WARNING][__init__]: Using fp16 with CPU can lead to runtime errors such as 'LayerNormKernelImpl', It's recommended to set 'use_fp16 = False' when using cpu.  (bge_m3.py:50)
+You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
+2026-07-21 13:03:03.732 | INFO     | __main__:_hybrid_search:351 - Milvus混合搜索完成，集合[kb_item_names]共检索到5条结果
+2026-07-21 13:03:03.732 | INFO     | __main__:hybrid_search_item_name:155 - 关键字[烫金机]在向量数据库中的检索结果：
 [
     [
         {
@@ -405,8 +404,8 @@ Loading weights: 100%|███████████████████�
         }
     ]
 ]
-2026-07-18 14:40:05.317 | INFO     | __main__:hybrid_search:360 - Milvus混合搜索完成，集合[kb_item_names]共检索到5条结果
-2026-07-18 14:40:05.318 | INFO     | __main__:hybrid_search_item_name:161 - 关键字[电脑]在向量数据库中的检索结果：
+2026-07-21 13:03:03.739 | INFO     | __main__:_hybrid_search:351 - Milvus混合搜索完成，集合[kb_item_names]共检索到5条结果
+2026-07-21 13:03:03.740 | INFO     | __main__:hybrid_search_item_name:155 - 关键字[电脑]在向量数据库中的检索结果：
 [
     [
         {
@@ -445,5 +444,58 @@ Loading weights: 100%|███████████████████�
             }
         }
     ]
+]
+2026-07-21 13:03:03.740 | INFO     | __main__:<module>:360 - 
+[
+    {
+        "extracted_name": "烫金机",
+        "matches": [
+            {
+                "item_name": "HAK180烫金机",
+                "score": 0.8375090956687927
+            },
+            {
+                "item_name": "华为B530台式计算机",
+                "score": 0.6518365740776062
+            },
+            {
+                "item_name": "万用表RS-12",
+                "score": 0.6430261135101318
+            },
+            {
+                "item_name": "苏伯尓B3-211H显示器",
+                "score": 0.5528860092163086
+            },
+            {
+                "item_name": "苏伯尓M272Q显示器",
+                "score": 0.548590898513794
+            }
+        ]
+    },
+    {
+        "extracted_name": "电脑",
+        "matches": [
+            {
+                "item_name": "华为B530台式计算机",
+                "score": 0.7222466468811035
+            },
+            {
+                "item_name": "华为W585台式机",
+                "score": 0.6882514953613281
+            },
+            {
+                "item_name": "HAK180烫金机",
+                "score": 0.6682947278022766
+            },
+            {
+                "item_name": "苏伯尓M272Q显示器",
+                "score": 0.585623562335968
+            },
+            {
+                "item_name": "苏伯尓B3-211H显示器",
+                "score": 0.5783058404922485
+            }
+        ]
+    }
 ]
 """
