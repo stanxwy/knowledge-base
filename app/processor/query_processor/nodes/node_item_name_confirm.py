@@ -3,7 +3,7 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
 from app.utils.llm_utils import resolve_item_name_and_rewrite_query
-from app.utils.milvus_utils import ItemNameVectorDBService, get_item_name_vector_db
+from app.services.milvus_service import ItemNameVectorDBService, get_item_name_vector_db
 from app.utils.mongo_history_utils import get_recent_messages, save_chat_message, update_message_item_names
 
 class NodeItemNameConfirm(NodeBase):
@@ -12,8 +12,7 @@ class NodeItemNameConfirm(NodeBase):
     """
     name: str = "node_item_name_confirm"
     
-    def __init__(self, 
-                 item_name_vector_db: ItemNameVectorDBService = get_item_name_vector_db()):
+    def __init__(self, item_name_vector_db: ItemNameVectorDBService = get_item_name_vector_db()):
         super().__init__()
         self._item_name_vector_db = item_name_vector_db
 

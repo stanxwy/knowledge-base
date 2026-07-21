@@ -4,7 +4,7 @@ from app.processor.query_processor.state import QueryGraphState
 
 from app.utils.json_format_utils import format_json
 from app.utils.logger import setup_logging
-from app.utils.milvus_utils import ChunksVectorDBService, get_chunks_vector_db
+from app.services.milvus_service import ChunksVectorDBService, get_chunks_vector_db
 
 class NodeSearchEmbedding(NodeBase):
     """
@@ -13,8 +13,7 @@ class NodeSearchEmbedding(NodeBase):
     # 覆盖基类的 name 属性，标识节点名称
     name: str = "node_search_embedding"
 
-    def __init__(self, 
-                 chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
+    def __init__(self, chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
         super().__init__()
         self._chunks_vector_db = chunks_vector_db
 
