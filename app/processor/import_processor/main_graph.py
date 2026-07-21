@@ -16,9 +16,6 @@ from app.utils.logger import setup_logging
 class KBImportWorkflow:
     """知识库导入工作流"""
     def __init__(self, config=None):
-        """
-        初始化工作流
-        """
         self.__graph = StateGraph(ImportGraphState)
         self._register_nodes()
         self._setup_routes()
@@ -92,10 +89,12 @@ class KBImportWorkflow:
 
 
 if __name__ == "__main__":
-    setup_logging()
+    from dotenv import load_dotenv
+    load_dotenv()
+    setup_logging("DEBUG")
     
     init_state = {
-        "import_file_path": "./test_data/kb/M272Q用户指南.pdf",
+        "import_file_path": "./test_data/kb/华为擎云W585.pdf",
         "output_file_dir": "./test_data/output"
     }
     workflow = KBImportWorkflow()

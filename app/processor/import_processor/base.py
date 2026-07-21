@@ -9,6 +9,7 @@ from app.processor.import_processor.state import ImportGraphState
 from app.utils.backup_utils import backup_json
 from app.utils.task_utils import add_running_task, add_done_task
 
+
 T = TypeVar("T", bound="ImportGraphState")
 
 """
@@ -27,67 +28,25 @@ T = TypeVar("T", bound="ImportGraphState")
 """
 
 class BaseNode(ABC):
-    """
-    导入流程节点基类
-
-    所有节点类都应继承此基类，实现 process 方法。
-    基类提供统一的日志、任务追踪和错误处理。
-
-    使用示例:
-        class MyNode(BaseNode):
-            name = "my_node"
-
-            def process(self, state):
-                # 实现具体逻辑
-                return state
-
-        # 作为 LangGraph 节点使用
-        node = MyNode()
-        workflow.add_node("my_node", node)
-    """
-    name: str = "base_node"  # 节点名称，子类应覆盖
+    name: str = "base_node"
 
     def __init__(self, config: Optional[ImportConfig] = None):
         self.config = config or get_config()
         self.logger = logging.getLogger(f"import.{self.name}")
 
     def __call__(self, state: T) -> T:
-        """
-        节点执行入口
-
-        LangGraph 调用节点时会调用此方法。
-        提供统一的日志输出、任务追踪和异常处理。
-
-        Args:
-            state: 图状态字典
-
-        Returns:
-            更新后的状态字典
-
-        Raises:
-            ImportProcessError: 节点执行失败时抛出
-        """
         try:
             task_id = state.get("task_id")
-            
-            # 1. 开始准备执行节点
-            self.logger.info(f"--- {self.name} 开始 ---")
-
-            # 开始：记录节点运行状态
+            self.logger.info(f"--- {self.name} started ---")
             add_running_task(task_id, self.name)
 
-            # 2. 执行节点
             result = self.process(state)
 
-            # 结束：记录节点完成状态
             add_done_task(task_id, self.name)
-
-            # 3. 执行节点成功
-            self.logger.info(f"--- {self.name} 完成 ---")
-
+            self.logger.info(f"--- {self.name} done ---")
             return result
         except Exception as e:
-            self.logger.error(f"{self.name} 执行失败: {e}")
+            self.logger.error(f"Error running node {self.name}: {e}")
             raise ImportProcessError(
                 message=str(e),
                 node_name=self.name,
@@ -95,7 +54,7 @@ class BaseNode(ABC):
             )
 
     @abstractmethod
-    def _step_1_validate_input_state(self, state: T):
+    def _validate_input_state(self, state: T):
         ...
 
     @abstractmethod
@@ -103,15 +62,5 @@ class BaseNode(ABC):
         ...
 
     def backup_json(self, state: T, json_data: dict | list, file_name: str):
-        """
-        【步骤6】Chunk结果本地JSON备份（便于调试/问题排查，保留处理结果）
-        :param state: 项目状态字典，需包含md_dir（备份目录）
-        :param sections: 最终处理后的Chunk列表
-
-        sections是Python 嵌套数据结构（List[Dict[str, str]]，列表里装字典，字典里可能嵌套字符串 / 数字等），而普通文件写入
-        （如f.write(sections)）仅支持写入字符串，直接写 Python 数据结构会报错。
-        json.dump的核心作用就是：将 Python 原生数据结构（列表、字典、字符串、数字等）直接序列化并写入 JSON 文件，无需手动转换为字符串，
-        同时保证数据格式规范、可跨语言 / 跨场景读取，完美适配「Chunk 列表备份」的需求。
-        """
         file_path = Path(state.get("output_file_dir")) / state.get("file_title") / file_name 
         backup_json(file_path, json_data)

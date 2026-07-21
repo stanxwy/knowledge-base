@@ -1,21 +1,16 @@
 """
 导入流程配置管理模块
-
 集中管理所有配置项，支持环境变量覆盖
 """
 import logging
 import os
 from dataclasses import dataclass, field
 from typing import Set, Optional
-from dotenv import load_dotenv
 
-loaded = load_dotenv()
-logging.getLogger().debug(f"env loaded {loaded}...")
+logger = logging.getLogger(__name__)
 
 @dataclass
 class ImportConfig:
-    """导入流程配置"""
-
     # ==================== 文档处理配置 ====================
     max_content_length: int = 2000  # 切片最大长度
     img_content_length: int = 200  # 图片上下文最大长度
