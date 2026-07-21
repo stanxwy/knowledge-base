@@ -6,7 +6,7 @@ from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 from app.services.embedding_service import EmbeddingService, get_embedding_service
 from app.utils.llm_utils import identify_main_product
-from app.services.milvus_service import ItemNameVectorDBService, get_item_name_vector_db
+from app.services.vectordb_service import ItemNameVectorDBService, get_item_name_vector_db
 
 
 class NodeItemNameRecognition(BaseNode):

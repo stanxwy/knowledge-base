@@ -4,7 +4,7 @@ from app.processor.query_processor.state import QueryGraphState
 
 from app.utils.json_format_utils import format_json
 from app.utils.logger import setup_logging
-from app.services.milvus_service import ChunksVectorDBService, get_chunks_vector_db
+from app.services.vectordb_service import ChunksVectorDBService, get_chunks_vector_db
 
 class NodeSearchEmbedding(NodeBase):
     """

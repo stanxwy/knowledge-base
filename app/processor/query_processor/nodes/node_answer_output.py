@@ -8,7 +8,7 @@ from app.processor.query_processor.prompt import ANSWER_PROMPT
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.llm_utils import get_llm_client
-from app.utils.mongo_history_utils import save_chat_message
+from app.services.mongo_service import get_mongo_service, MongoService
 from app.utils.sse_utils import push_sse_event, SSEEvent
 from app.utils.task_utils import set_task_result
 
@@ -21,6 +21,10 @@ class NodeAnswerOutput(NodeBase):
     流程: 检查已有答案 → 构建提示词 → LLM 生成 → 写入历史 → 发送结束事件
     """
     name: str = "node_answer_output"
+
+    def __init__(self, mongo: MongoService = get_mongo_service()):
+        super().__init__()
+        self._mongo = mongo
 
     def _step_1_check_answer(self, state) -> bool:
       """
@@ -268,7 +272,7 @@ class NodeAnswerOutput(NodeBase):
 
         try:
             if answer:
-                save_chat_message(
+                self._mongo.save_chat_message(
                     session_id=session_id,
                     role="assistant",
                     text=answer,

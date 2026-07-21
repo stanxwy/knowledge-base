@@ -3,8 +3,8 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
 from app.utils.llm_utils import resolve_item_name_and_rewrite_query
-from app.services.milvus_service import ItemNameVectorDBService, get_item_name_vector_db
-from app.utils.mongo_history_utils import get_recent_messages, save_chat_message, update_message_item_names
+from app.services.vectordb_service import ItemNameVectorDBService, get_item_name_vector_db
+from app.services.mongo_service import get_mongo_service, MongoService
 
 class NodeItemNameConfirm(NodeBase):
     """
@@ -12,9 +12,12 @@ class NodeItemNameConfirm(NodeBase):
     """
     name: str = "node_item_name_confirm"
     
-    def __init__(self, item_name_vector_db: ItemNameVectorDBService = get_item_name_vector_db()):
+    def __init__(self,
+                 mongo: MongoService = get_mongo_service(), 
+                 item_name_vector_db: ItemNameVectorDBService = get_item_name_vector_db()):
         super().__init__()
         self._item_name_vector_db = item_name_vector_db
+        self._mongo = mongo
 
     def _step_1_validate_input_state(self, state: QueryGraphState) -> Tuple[str, str]:
         session_id = state.get("session_id") 
@@ -123,7 +126,7 @@ class NodeItemNameConfirm(NodeBase):
 
             # 若存在需更新的消息ID，批量更新历史消息的商品名关联
             if ids_to_update:
-                update_message_item_names(ids_to_update, confirmed)
+                self._mongo.update_message_item_names(ids_to_update, confirmed)
 
             # 更新会话状态：设置确认商品名、改写后的查询
             # 返回更新后的状态
@@ -181,11 +184,11 @@ class NodeItemNameConfirm(NodeBase):
         self.logger.info("步骤1：参数校验通过")
 
         # 步骤2：获取历史记录
-        history = get_recent_messages(session_id)
+        history = self._mongo.get_recent_messages(session_id)
         self.logger.info(f"步骤2：获取到 {len(history)} 条历史消息")
 
         # 步骤3：用户初始消息保存
-        message_id = save_chat_message(session_id, "user", original_query)
+        message_id = self._mongo.save_chat_message(session_id, "user", original_query)
         self.logger.info(f"步骤3：用户消息已初始保存, ID: {message_id}")
 
         # 步骤4：提取信息

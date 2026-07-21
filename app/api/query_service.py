@@ -9,7 +9,7 @@ from pydantic import BaseModel, Field
 
 from app.processor.query_processor.main_graph import KBQueryWorkflow
 from app.utils.logger import setup_logging
-from app.utils.mongo_history_utils import clear_history, get_recent_messages
+from app.services.mongo_service import clear_history, get_recent_messages
 from app.utils.sse_utils import create_sse_queue, push_sse_event, sse_generator, SSEEvent
 from app.utils.task_utils import get_task_result, update_task_status, TASK_STATUS_COMPLETED, TASK_STATUS_PROCESSING, TASK_STATUS_FAILED
 
