@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 from typing import Dict, List
+
 from app.config.embedding_config import EmbeddingConfig, load_embedding_config
 
 class EmbeddingService:
@@ -28,7 +29,6 @@ class EmbeddingService:
             sparse_data = embeddings["sparse"].data[start:end].tolist()
             sparse_dict = {k: v for k, v in zip(sparse_indices, sparse_data)}
             processed_sparse.append(sparse_dict)
-
         return {
             "sparse": processed_sparse,
             "dense": [emb.tolist() for emb in embeddings["dense"]]

@@ -16,8 +16,11 @@ class ObjectStoreService:
         self._minio_config = minio_config
         logger.debug(f"MinIO config: {minio_config}")
         self._minio_client = None
-        self._base_url = f"http://{minio_config.endpoint}/{minio_config.bucket_name}"
         self._bucket_name = minio_config.bucket_name
+
+        protocol = "https://" if minio_config.secure else "http://"
+        self._base_url = f"{protocol}{minio_config.endpoint}/{minio_config.bucket_name}"
+        
 
     def _get_minio_client(self):
         minio_config = self._minio_config
@@ -50,10 +53,9 @@ class ObjectStoreService:
                 minio_client.set_bucket_policy(minio_config.bucket_name, json.dumps(policy))
                 logger.debug("MinIO client initialized")
                 self._minio_client = minio_client
-                return self._minio_client
             except Exception as e:
                 logger.error(f"Minio init failed:{e}")
-        return None
+        return self._minio_client
 
     def clean_dir(self, dir_path: str) -> None:
         try:

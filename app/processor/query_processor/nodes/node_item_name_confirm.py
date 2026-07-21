@@ -156,7 +156,7 @@ class NodeItemNameConfirm(NodeBase):
          """
         # 若会话状态中有助手答案（分支B/C），写入助手消息到历史
         if answer:
-            save_chat_message(
+            self._mongo.save_chat_message(
                 session_id=session_id,  # 会话ID，关联所属会话
                 role="assistant",  # 消息角色：助手
                 text=answer,  # 消息内容：向用户确认的提示语/无结果提示语
@@ -165,7 +165,7 @@ class NodeItemNameConfirm(NodeBase):
             )
 
         # 强制更新本次用户原始问题的关联信息（核心：补充改写查询、商品名）
-        save_chat_message(
+        self._mongo.save_chat_message(
             session_id=session_id,  # 会话ID，关联所属会话
             role="user",  # 消息角色：用户
             text=original_query,  # 消息内容：用户原始查询
