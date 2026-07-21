@@ -7,6 +7,8 @@ import logging
 from abc import abstractmethod, ABC
 from typing import TypeVar
 
+from app.utils.task_utils import add_running_task, add_done_task
+
 
 T = TypeVar("T")  # 泛型状态类型
 
@@ -31,11 +33,17 @@ class NodeBase(ABC):
             # 1. 开始准备执行节点
             self.logger.info(f"--- {self.name} 开始啦 ---")
 
+            # 开始：记录节点运行状态
+            add_running_task(state["task_id"], self.name)
+
             # 2. 执行节点
             result = self.process(state)
 
             # 3. 执行节点成功
             self.logger.info(f"--- {self.name} 完成啦 ---")
+            
+            # 结束：记录节点完成状态
+            add_done_task(state["task_id"], self.name)
 
             return result
 

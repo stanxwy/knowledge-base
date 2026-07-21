@@ -10,7 +10,7 @@ from app.processor.query_processor.state import QueryGraphState
 from app.utils.llm_utils import get_llm_client
 from app.utils.mongo_history_utils import save_chat_message
 from app.utils.sse_utils import push_sse_event, SSEEvent
-from app.utils.task_utils import add_done_task, set_task_result
+from app.utils.task_utils import set_task_result
 
 
 MAX_CONTEXT_CHARS = 12000
@@ -33,7 +33,7 @@ class NodeAnswerOutput(NodeBase):
       if answer:
         if is_stream:
           self.logger.info("---Step 1: 发现已有答案，执行流式推送---")
-          push_to_session(state["session_id"], SSEEvent.DELTA, {"delta": answer})
+          push_sse_event(state["session_id"], SSEEvent.DELTA, {"delta": answer})
         else:
           set_task_result(state["session_id"], "answer", answer)
         return True
