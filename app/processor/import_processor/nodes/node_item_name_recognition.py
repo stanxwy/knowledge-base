@@ -4,7 +4,7 @@ from typing import Tuple, Dict, List
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
-from app.utils.embedding_utils import generate_embeddings
+from app.services.embedding_service import EmbeddingService
 from app.utils.llm_utils import identify_main_product
 from app.utils.milvus_utils import create_item_name_collection, insert_into_item_name_collection, delete_from_item_name_collection
 
@@ -13,8 +13,11 @@ class NodeItemNameRecognition(BaseNode):
     """
     主体识别节点：主体识别与标签提取
     """
-
     name: str = "node_item_name_recognition"
+
+    def __init__(self, embedding_service: EmbeddingService):
+        super().__init__()
+        self._embedding_service = embedding_service
 
     def _step_1_validate_input_state(self, state: ImportGraphState) -> Tuple[str, List[Dict]]:
         """
@@ -28,7 +31,6 @@ class NodeItemNameRecognition(BaseNode):
         返回值：
             Tuple[str, List[Dict]]: (处理后的文件标题, 校验后的文本切片列表)
         """
-
         # 1、参数校验
         file_title = state.get("file_title")
         if not file_title:
@@ -122,7 +124,7 @@ class NodeItemNameRecognition(BaseNode):
             return None, None
 
         # 2、调用向量生成工具：传入列表支持批量生成，单条数据仍用列表保证格式统一
-        vectors = generate_embeddings([item_name])
+        vectors = self._embedding_service.generate_embeddings([item_name])
         return vectors["dense"][0], vectors["sparse"][0]
 
     def _step_6_save_to_vector_db(self, file_title: str, item_name: str, dense_vector, sparse_vector):
@@ -214,6 +216,9 @@ class NodeItemNameRecognition(BaseNode):
 
 
 if __name__ == "__main__":
+    from app.utils.logger import setup_logging
+    logger = setup_logging()
+
     md_path = r"./test_data/output/B530/chunks.json"
     with open(md_path, "r", encoding="utf-8") as f:
         chunks_json = f.read()
@@ -224,10 +229,11 @@ if __name__ == "__main__":
         "output_file_dir": "./test_data/output"
     }
 
-    node_item_name_recognition = NodeItemNameRecognition()
+    from app.services.embedding_service import get_embedding_service
+    node_item_name_recognition = NodeItemNameRecognition(get_embedding_service())
     result = node_item_name_recognition(init_state)
 
-    print(json.dumps(result, ensure_ascii=False, indent=4))
+    logger.info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
 (knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_item_name_recognition

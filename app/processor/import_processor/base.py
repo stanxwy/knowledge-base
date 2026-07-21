@@ -1,8 +1,3 @@
-"""
-导入流程节点基类
-
-定义统一的节点接口规范，提供通用功能
-"""
 import logging
 from abc import ABC, abstractmethod
 from typing import TypeVar, Optional
@@ -53,12 +48,6 @@ class BaseNode(ABC):
     name: str = "base_node"  # 节点名称，子类应覆盖
 
     def __init__(self, config: Optional[ImportConfig] = None):
-        """
-        初始化节点
-
-        Args:
-            config: 配置对象，默认使用全局配置
-        """
         self.config = config or get_config()
         self.logger = logging.getLogger(f"import.{self.name}")
 
@@ -79,17 +68,19 @@ class BaseNode(ABC):
             ImportProcessError: 节点执行失败时抛出
         """
         try:
+            task_id = state.get("task_id")
+            
             # 1. 开始准备执行节点
             self.logger.info(f"--- {self.name} 开始 ---")
 
             # 开始：记录节点运行状态
-            add_running_task(state["task_id"], self.name)
+            add_running_task(task_id, self.name)
 
             # 2. 执行节点
             result = self.process(state)
 
             # 结束：记录节点完成状态
-            add_done_task(state["task_id"], self.name)
+            add_done_task(task_id, self.name)
 
             # 3. 执行节点成功
             self.logger.info(f"--- {self.name} 完成 ---")
@@ -109,17 +100,6 @@ class BaseNode(ABC):
 
     @abstractmethod
     def process(self, state: T) -> T:
-        """
-        节点核心处理逻辑
-
-        子类必须实现此方法。
-
-        Args:
-            state: 图状态字典
-
-        Returns:
-            更新后的状态字典
-        """
         ...
 
     def backup_json(self, state: T, json_data: dict | list, file_name: str):

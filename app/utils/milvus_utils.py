@@ -5,7 +5,7 @@ from typing import List, Dict
 
 from app.config.milvus_config import milvus_config
 from app.processor.import_processor.exceptions import MilvusError
-from app.utils.embedding_utils import generate_embeddings
+from app.services.embedding_service import get_embedding_service
 
 logger = logging.getLogger(__name__)
 
@@ -127,7 +127,7 @@ def hybrid_search_item_name(item_names: List[str]) -> List[Dict]:
 
     # 对所有商品名称批量生成BGEM3向量（稠密+稀疏），相比逐个生成提升处理效率
     # embeddings格式：{"dense": [向量1, 向量2,...], "sparse": [向量1, 向量2,...]}
-    embeddings = generate_embeddings(item_names)
+    embeddings = get_embedding_service().generate_embeddings(item_names)
 
     # 6、遍历每个商品名称，逐个执行向量搜索（保证结果与原始商品名一一对应）
     for i, item_name in enumerate(item_names):
@@ -242,7 +242,7 @@ def insert_into_chunks_collection(data: List[Dict]):
 def hybrid_search_chunks(input_text: str, item_names: List[str]) -> List[Dict]:
     try:
         # 1、生成向量 (Dense + Sparse)
-        embeddings = generate_embeddings([input_text])
+        embeddings = get_embedding_service().generate_embeddings([input_text])
         dense_vec = embeddings.get("dense")[0]
         sparse_vec = embeddings.get("sparse")[0]
 

@@ -1,8 +1,3 @@
-"""
-查询流程节点基类
-
-定义统一的节点接口规范，提供通用功能
-"""
 import logging
 import typing
 from abc import abstractmethod, ABC
@@ -18,24 +13,16 @@ class NodeBase(ABC):
     name: str = "base_node"  # 节点名称，子类应覆盖
 
     def __init__(self):
-        """
-        初始化节点
-
-        Args:
-            config: 配置对象，默认使用全局配置
-        """
         self.logger = logging.getLogger(f"import.{self.name}")
 
     def __call__(self, state: T) -> T:
-        """
-        节点执行入口
-        """
         try:
+            task_id = state.get("task_id")
             # 1. 开始准备执行节点
             self.logger.info(f"--- {self.name} 开始啦 ---")
 
             # 开始：记录节点运行状态
-            add_running_task(state["task_id"], self.name)
+            add_running_task(task_id, self.name)
 
             # 2. 执行节点
             result = self.process(state)
@@ -44,7 +31,7 @@ class NodeBase(ABC):
             self.logger.info(f"--- {self.name} 完成啦 ---")
             
             # 结束：记录节点完成状态
-            add_done_task(state["task_id"], self.name)
+            add_done_task(task_id, self.name)
 
             return result
 
@@ -54,10 +41,4 @@ class NodeBase(ABC):
 
     @abstractmethod
     def process(self, state: T) -> T:
-        """
-        节点核心处理逻辑
-        子类必须实现此方法
-        :param state: 工作流状态对象
-        :return: 更新后的状态对象
-        """
         ...
