@@ -3,7 +3,7 @@ from typing import Dict, Any, List, Tuple
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
-from app.utils.reranker_http_utils import rerank_documents
+from app.services.reranker_http import Reranker, get_reranker
 
 # -----------------------------
 # Rerank / TopK 全局常量
@@ -23,6 +23,9 @@ class NodeRerank(NodeBase):
     节点功能：使用 Cross-Encoder 模型对 RRF 后的结果进行精确打分重排。
     """
     name: str = "node_rerank"
+
+    def __init__(self, reranker: Reranker = get_reranker()):
+        self._reranker = reranker
 
     def _validate_input_state(self, state: QueryGraphState) -> Tuple[str, List[Dict[str, Any]], List[Dict[str, Any]]]:
         return state.get('rewritten_query'), state.get('rrf_chunks'), state.get('web_search_docs')
@@ -61,7 +64,7 @@ class NodeRerank(NodeBase):
             contents = [doc.get("content") for doc in merged_multi_docs]
             # 调用Rerank模型：交叉编码器（精排阶段）
             # Query 和 Document 联合编码，精度更高
-            rerank_scores = rerank_documents(user_query, contents)
+            rerank_scores = self._reranker.rerank_documents(user_query, contents)
 
             scored_docs = [{**doc, "score": score} for doc, score in zip(merged_multi_docs, rerank_scores)]
             # 等同如下写法

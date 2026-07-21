@@ -1,11 +1,7 @@
 from dataclasses import dataclass
 import os
-from dotenv import load_dotenv
 
-load_dotenv()
-
-# 定义mcp的服务配置
-@dataclass
+@dataclass(frozen=True)
 class McpConfig:
     mcp_base_url: str
     api_key : str
