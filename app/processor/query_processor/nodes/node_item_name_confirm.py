@@ -3,7 +3,7 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
 from app.utils.llm_utils import resolve_item_name_and_rewrite_query
-from app.utils.milvus_utils import hybrid_search_item_name
+from app.utils.milvus_utils import ItemNameVectorDBService, get_item_name_vector_db
 from app.utils.mongo_history_utils import get_recent_messages, save_chat_message, update_message_item_names
 
 class NodeItemNameConfirm(NodeBase):
@@ -11,6 +11,11 @@ class NodeItemNameConfirm(NodeBase):
     节点功能：确认用户问题中的核心商品名称。
     """
     name: str = "node_item_name_confirm"
+    
+    def __init__(self, 
+                 item_name_vector_db: ItemNameVectorDBService = get_item_name_vector_db()):
+        super().__init__()
+        self._item_name_vector_db = item_name_vector_db
 
     def _step_1_validate_input_state(self, state: QueryGraphState) -> Tuple[str, str]:
         session_id = state.get("session_id") 
@@ -192,7 +197,7 @@ class NodeItemNameConfirm(NodeBase):
         options = []
         if len(item_names) > 0:
             # 把LLM推测的商品名转换成向量，在向量库中检索匹配
-            search_results = hybrid_search_item_name(item_names)
+            search_results = self._item_name_vector_db.hybrid_search_item_name(item_names)
             # 把向量检索结果转换成高置信度，中置信度列表
             confirmed_item_names, options = self._step_6_align_item_names(search_results)
         else:

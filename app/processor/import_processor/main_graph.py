@@ -11,7 +11,6 @@ from app.processor.import_processor.nodes.node_item_name_recognition import Node
 from app.processor.import_processor.nodes.node_md_img import NodeMDImg
 from app.processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
 from app.processor.import_processor.state import ImportGraphState
-from app.services.embedding_service import get_embedding_service
 from app.utils.logger import setup_logging
 
 class KBImportWorkflow:
@@ -32,7 +31,7 @@ class KBImportWorkflow:
         self.__graph.add_node("node_md_img", NodeMDImg())
         self.__graph.add_node("node_document_split", NodeDocumentSplit())
         self.__graph.add_node("node_item_name_recognition", NodeItemNameRecognition())
-        self.__graph.add_node("node_bge_embedding", NodeBGEEmbedding(get_embedding_service()))
+        self.__graph.add_node("node_bge_embedding", NodeBGEEmbedding())
         self.__graph.add_node("node_import_milvus", NodeImportMilvus())
 
     def route_after_entry(self, state: ImportGraphState) -> str:

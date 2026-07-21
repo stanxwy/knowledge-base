@@ -4,26 +4,19 @@ from typing import Dict, Any, List
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
-from app.utils.milvus_utils import create_chunks_collection, delete_from_chunks_collection, insert_into_chunks_collection
+from app.utils.milvus_utils import ChunksVectorDBService, get_chunks_vector_db
 
 class NodeImportMilvus(BaseNode):
     """
     导入向量库节点：数据持久化
     """
     name: str = "node_import_milvus"
+    def __init__(self, chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
+        super().__init__()
+        self._chunks_vector_db = chunks_vector_db
 
     def _step_1_validate_input_state(self, state: ImportGraphState) -> tuple[List[Dict[str, Any]], int]:
-        """
-        步骤1：输入数据有效性校验
-        核心校验项：
-            1. chunks非空且为列表类型
-            2. 切片包含dense_vector核心字段
-            3. 提取向量维度，为集合创建/索引构建提供依据
-        参数：
-            state: Dict[str, Any] - 流程状态对象，包含上游传入的chunks数据
-        返回：
-            tuple - (校验通过的切片列表, 稠密向量维度)
-        """
+
         chunks = state.get("chunks")
 
         if not chunks:
@@ -42,25 +35,6 @@ class NodeImportMilvus(BaseNode):
         vector_dimension = len(first_chunk['dense_vector'])
         return chunks, vector_dimension
     
-    def _step_2_prepare_collection(self, vector_dimension: int):
-        """
-        步骤2：Milvus客户端连接+集合准备
-        核心逻辑：
-            1. 获取Milvus单例客户端，验证连接有效性
-            2. 集合不存在则自动创建（Schema+索引），存在则直接复用
-        """
-        create_chunks_collection(vector_dimension)
-
-    def _step_3_clean_old_data(self, chunks_json_data):
-        """
-        幂等清理
-        基于每个片段的file_title进行旧数据的清理
-        """
-        # 1. 获取查询条件
-        file_title = chunks_json_data[0].get("file_title")
-
-        # 2. 执行幂等清理
-        delete_from_chunks_collection(file_title)
 
     def _step_4_insert_data(self, chunks_json_data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
         """
@@ -68,11 +42,6 @@ class NodeImportMilvus(BaseNode):
         核心逻辑：
             1. 批量插入数据：提升入库效率，减少Milvus连接次数
             2. 回填chunk_id：将Milvus生成的自增主键回填到切片，供下游业务使用
-        参数：
-            client - MilvusClient实例
-            chunks_json_data: List[Dict[str, Any]] - 待入库的切片列表
-        返回：
-            List[Dict[str, Any]] - 回填了chunk_id的切片列表
         """
         # 1. 预处理数据：移除手动chunk_id，避免与Milvus自增主键冲突
         data_to_insert = []
@@ -83,7 +52,7 @@ class NodeImportMilvus(BaseNode):
             data_to_insert.append(chunk_copy)
 
         # 2. 执行批量插入
-        insert_result = insert_into_chunks_collection(data_to_insert)
+        insert_result = self._chunks_vector_db.insert_into_chunks_collection(data_to_insert)
      
         # 3. 主键回填：将Milvus生成的chunk_id回填到原始切片
         inserted_ids = insert_result.get('ids', [])
@@ -108,18 +77,16 @@ class NodeImportMilvus(BaseNode):
 
         必要参数：chunks
         更新参数：chunks字段回填chunk_id
-
-        :param state: 工作流状态对象
-        :return: 更新后的状态对象
         """
         # 步骤1：输入数据有效性校验
         chunks_json_data, vector_dimension = self._step_1_validate_input_state(state)
 
         # 步骤2：Milvus客户端连接+集合准备（自动建表）
-        self._step_2_prepare_collection(vector_dimension)
+        self._chunks_vector_db.create_chunks_collection(vector_dimension)
 
         # 步骤3：幂等性处理 - 清理同file_title旧数据
-        self._step_3_clean_old_data(chunks_json_data)
+        file_title = chunks_json_data[0].get("file_title")
+        self._chunks_vector_db.delete_from_chunks_collection(file_title)
 
         # 步骤4：批量插入数据+主键chunk_id回填
         updated_chunks = self._step_4_insert_data(chunks_json_data)
@@ -141,3 +108,4 @@ if __name__ == "__main__":
     }
     node_import_milvus = NodeImportMilvus()
     result = node_import_milvus(init_state)
+    print(result)

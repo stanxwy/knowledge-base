@@ -4,7 +4,7 @@ from app.processor.query_processor.state import QueryGraphState
 
 from app.utils.json_format_utils import format_json
 from app.utils.logger import setup_logging
-from app.utils.milvus_utils import hybrid_search_chunks
+from app.utils.milvus_utils import ChunksVectorDBService, get_chunks_vector_db
 
 class NodeSearchEmbedding(NodeBase):
     """
@@ -12,6 +12,11 @@ class NodeSearchEmbedding(NodeBase):
     """
     # 覆盖基类的 name 属性，标识节点名称
     name: str = "node_search_embedding"
+
+    def __init__(self, 
+                 chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
+        super().__init__()
+        self._chunks_vector_db = chunks_vector_db
 
     def process(self, state: QueryGraphState) -> QueryGraphState:
         """
@@ -31,7 +36,7 @@ class NodeSearchEmbedding(NodeBase):
         """
         query = state.get("rewritten_query")
         item_names = state.get("item_names")
-        search_results = hybrid_search_chunks(query, item_names)
+        search_results = self._chunks_vector_db.hybrid_search_chunks(query, item_names)
         return {
             "embedding_chunks": search_results
         }

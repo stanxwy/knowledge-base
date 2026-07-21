@@ -3,7 +3,7 @@ from app.processor.query_processor.state import QueryGraphState
 
 from app.utils.json_format_utils import format_json
 from app.utils.llm_utils import generate_hyde_doc
-from app.utils.milvus_utils import hybrid_search_chunks
+from app.utils.milvus_utils import ChunksVectorDBService, get_chunks_vector_db
 
 class NodeSearchEmbeddingHyde(NodeBase):
     """
@@ -11,6 +11,11 @@ class NodeSearchEmbeddingHyde(NodeBase):
     先让 LLM 生成假设性答案，再对答案进行向量检索，提高召回率。
     """
     name: str = "node_search_embedding_hyde"
+
+    def __init__(self, 
+                 chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
+        super().__init__()
+        self._chunks_vector_db = chunks_vector_db
 
     def _step_1_create_hyde_doc(self, rewritten_query: str) -> str:
         """
@@ -35,7 +40,7 @@ class NodeSearchEmbeddingHyde(NodeBase):
         """
         self.logger.info("步骤2: 开始执行 Milvus 混合检索...")
         combined_text = rewritten_query + " " + hyde_doc
-        return hybrid_search_chunks(combined_text, item_names)
+        return self._chunks_vector_db.hybrid_search_chunks(combined_text, item_names)
 
     def process(self, state: QueryGraphState) -> QueryGraphState:
         """

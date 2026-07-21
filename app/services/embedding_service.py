@@ -4,16 +4,16 @@ from typing import Dict, List
 from app.config.embedding_config import EmbeddingConfig, load_embedding_config
 
 class EmbeddingService:
-    def __init__(self, config: EmbeddingConfig):
-        self.config = config
+    def __init__(self, config: EmbeddingConfig = load_embedding_config()):
+        self._config = config
         self._model = None
 
     def _get_model(self):
         if self._model is None:
             self._model = BGEM3EmbeddingFunction(
-                model_name=self.config.bge_m3_path,
-                device=self.config.bge_device,
-                use_fp16=self.config.bge_fp16
+                model_name=self._config.bge_m3_path,
+                device=self._config.bge_device,
+                use_fp16=self._config.bge_fp16
             )
         return self._model
 
@@ -36,8 +36,7 @@ class EmbeddingService:
 
 @lru_cache(maxsize=1)
 def get_embedding_service() -> EmbeddingService:
-    config = load_embedding_config()
-    return EmbeddingService(config)
+    return EmbeddingService()
 
 if __name__ == '__main__':
     embeddings = get_embedding_service().generate_embeddings(["hello","world"])
