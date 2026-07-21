@@ -5,6 +5,8 @@ from datetime import datetime
 from pymongo import MongoClient, DESCENDING
 from bson import ObjectId
 
+logger = logging.getLogger("mongo")
+
 class HistoryMongoTool:
     """
     MongoDB 历史对话记录读写工具类 (基于原生 PyMongo 实现)
@@ -23,9 +25,9 @@ class HistoryMongoTool:
             # 索引规则：session_id升序 + ts降序，适配"按会话查最新记录"的核心查询场景
             # create_index自带幂等性：索引已存在时不会重复创建，无需额外判断
             self.chat_message.create_index([("session_id", 1), ("ts", -1)])
-            logging.info(f"Successfully connected to MongoDB: {self.db_name}")
+            logger.info(f"Successfully connected to MongoDB: {self.db_name}")
         except Exception as e:
-            logging.error(f"Failed to connect to MongoDB: {e}")
+            logger.error(f"Failed to connect to MongoDB: {e}")
             # 重新抛出异常，让调用方感知初始化失败，避免使用未初始化的实例
             raise
 
@@ -51,12 +53,12 @@ def clear_history(session_id: str) -> int:
         # 执行批量删除操作：删除所有session_id匹配的文档
         result = _get_history_mongo_tool().chat_message.delete_many({"session_id": session_id})
         # 记录删除成功日志，包含删除数量和会话ID，便于问题排查
-        logging.info(f"Deleted {result.deleted_count} messages for session {session_id}")
+        logger.info(f"Deleted {result.deleted_count} messages for session {session_id}")
         # 返回实际删除的数量（delete_many的返回对象包含deleted_count属性）
         return result.deleted_count
     except Exception as e:
         # 捕获删除异常，记录错误日志，包含会话ID
-        logging.error(f"Error clearing history for session {session_id}: {e}")
+        logger.error(f"Error clearing history for session {session_id}: {e}")
         # 异常时返回0，标识删除失败
         return 0
 
@@ -103,12 +105,12 @@ def save_chat_message(
             {"_id": ObjectId(message_id)},
             {"$set": document}              
         )
-        logging.info(f"chat message updated: {document}")
+        logger.info(f"chat message updated: {document}")
         return message_id
     else:
         # 无message_id：执行新增操作
         result = mongo_tool.chat_message.insert_one(document)
-        logging.info(f"chat message inserted: {document}")
+        logger.info(f"chat message inserted: {document}")
         # 新增操作返回插入的ObjectId并转为字符串，便于上层使用（避免直接返回ObjectId对象）
         return str(result.inserted_id)
 
@@ -126,11 +128,11 @@ def update_message_item_names(ids: List[str], item_names: List[str]) -> int:
             },
             {"$set": {"item_names": item_names}}
         )
-        logging.info(f"Updated {result.modified_count} records to item_names: {item_names}")
+        logger.info(f"Updated {result.modified_count} records to item_names: {item_names}")
         # 返回实际更新的数量（modified_count：真正被修改的文档数，区别于matched_count）
         return result.modified_count
     except Exception as e:
-        logging.error(f"Error updating history item_names: {e}")
+        logger.error(f"Error updating history item_names: {e}")
         return 0
 
 def get_recent_messages(session_id: str = None, limit: int = 10) -> List[Dict[str, Any]]:
@@ -147,10 +149,10 @@ def get_recent_messages(session_id: str = None, limit: int = 10) -> List[Dict[st
         # 将游标转为列表，触发实际数据库查询，获取所有符合条件的文档
         messages = list(cursor)
         for m in messages:
-            logging.info(f'{datetime.fromtimestamp(m["ts"]).strftime("%Y-%m-%d %H:%M:%S")} - {m["role"]}: {m["text"]}')
+            logger.info(f'{datetime.fromtimestamp(m["ts"]).strftime("%Y-%m-%d %H:%M:%S")} - {m["role"]}: {m["text"]}')
         return messages
     except Exception as e:
-        logging.error(f"Error getting recent messages: {e}")
+        logger.error(f"Error getting recent messages: {e}")
         return []
 
 
