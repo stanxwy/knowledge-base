@@ -5,7 +5,7 @@ from datetime import datetime
 from pymongo import MongoClient, DESCENDING
 from bson import ObjectId
 
-logger = logging.getLogger("mongo")
+logger = logging.getLogger(__name__)
 
 class HistoryMongoTool:
     """

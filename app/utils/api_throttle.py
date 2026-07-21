@@ -1,6 +1,8 @@
-from loguru import logger
+import logging
 from typing import Deque
 import time
+
+logger = logging.getLogger(__name__)
 
 def apply_api_rate_limit(
     request_times: Deque[float],
@@ -17,23 +19,20 @@ def apply_api_rate_limit(
     """
     current_time = time.time()
 
-    # 1. 清理滑动窗口外的过期请求时间戳，保证队列仅存窗口内的请求
+    # clean up the sliding window of expired requests
     while request_times and current_time - request_times[0] >= window_seconds:
         request_times.popleft()
 
-    # 2. 窗口内请求数达上限，计算并阻塞等待剩余时间
     if len(request_times) >= max_requests:
-        # 计算需要等待的时长（窗口总时长 - 最早请求已存在的时长）
+        # calculate the time to wait (window total time - elapsed time of the earliest request)
         sleep_duration = window_seconds - (current_time - request_times[0])
         if sleep_duration > 0:
-            logger.info(
-                f"触发API速率限制，窗口{window_seconds}秒内最多{max_requests}次，需等待：{sleep_duration:.2f} 秒")
+            logger.info(f"Triggered API rate limit, window {window_seconds}s has a maximum of {max_requests} requests, need to wait: {sleep_duration:.2f}s")
             time.sleep(sleep_duration)
-            # 等待后更新当前时间，重新清理过期请求（避免等待期间有请求过期）
+            # clear expired requests on wakeup
             current_time = time.time()
             while request_times and current_time - request_times[0] >= window_seconds:
                 request_times.popleft()
 
-    # 3. 记录当前请求时间戳，加入滑动窗口队列
     request_times.append(current_time)
-    logger.info(f"API请求时间戳已记录，当前{window_seconds}秒窗口内请求数：{len(request_times)}")
+    logger.info(f"API request time stamp has been recorded, current {window_seconds}s window request count: {len(request_times)}")

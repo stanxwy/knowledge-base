@@ -1,30 +1,21 @@
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
-from app.config.embedding_config import embedding_config
+from app.config.embedding_config import config as embedding_config
 
 _bge_m3_ef = None
 
 def get_bge_m3_ef():
-    """
-    单例对象
-    :return:
-    """
     global _bge_m3_ef
     if _bge_m3_ef is not None:
         return _bge_m3_ef
 
     _bge_m3_ef = BGEM3EmbeddingFunction(
-        model_name=embedding_config.bge_m3_path,
-        device=embedding_config.bge_device,
-        use_fp16=embedding_config.bge_fp16
+        model_name=embedding_config().bge_m3_path,
+        device=embedding_config().bge_device,
+        use_fp16=embedding_config().bge_fp16
     )
     return _bge_m3_ef
 
 def generate_embeddings(texts: list[str]):
-    """
-    生成向量
-    :param texts:
-    :return:
-    """
     model = get_bge_m3_ef()
     embeddings = model.encode_documents(texts)
     processed_sparse = []
@@ -42,5 +33,5 @@ def generate_embeddings(texts: list[str]):
     }
 
 if __name__ == '__main__':
-    embeddings = generate_embeddings(["测试"])
+    embeddings = generate_embeddings(["hello","world"])
     print(embeddings)

@@ -1,11 +1,13 @@
 import json
-from loguru import logger
+import logging
 from pymilvus import MilvusClient, DataType, AnnSearchRequest, WeightedRanker
 from typing import List, Dict
 
 from app.config.milvus_config import milvus_config
 from app.processor.import_processor.exceptions import MilvusError
 from app.utils.embedding_utils import generate_embeddings
+
+logger = logging.getLogger(__name__)
 
 _milvus_client = None
 
