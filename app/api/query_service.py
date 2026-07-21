@@ -39,8 +39,8 @@ class QueryRequest(BaseModel):
 # 3. 静态页面路由
 @app.get("/chat.html")  # 对外访问地址
 async def chat():
-    current_dir_parent_path = Path(__file__).absolute().parent.parent
-    html_path = current_dir_parent_path / "page" / "chat.html"
+    current_dir_parent_path = Path(__file__).absolute().parent
+    html_path = current_dir_parent_path / "web" / "chat.html"
     # 如果不存在，抛出404异常
     if not html_path.exists():
         raise HTTPException(status_code=404, detail=f"没有查询到页面，地址为：{html_path}")

@@ -27,16 +27,16 @@ class NodeItemNameConfirm(NodeBase):
         """
         6 根据Milvus搜索评分，逐个对齐step4提取的item_names，生成「确认商品名」和「候选商品名」
         对齐规则（优先级a>b>c>d）：
-                a  如果只有一个匹配结果评分高于0.85 → 直接确认该商品名
-                b  如果多条匹配结果评分超过0.85 → 优先取与原始提取名相同的，无则取分数最高的
-                c  如果无0.85分以上结果 → 取分数≥0.6的最高前5个作为候选
-                d  如果无0.6分及以上结果 → 不返回任何商品名（确认+候选均为空）
+            a  如果只有一个匹配结果评分高于0.85 → 直接确认该商品名
+            b  如果多条匹配结果评分超过0.85 → 优先取与原始提取名相同的，无则取分数最高的
+            c  如果无0.85分以上结果 → 取分数≥0.6的最高前5个作为候选
+            d  如果无0.6分及以上结果 → 不返回任何商品名（确认+候选均为空）
         :param query_results: 列表[字典] - step5的返回结果，每个商品名的搜索匹配数据（格式同step5返回值）
         :return: 字典 - 商品名对齐结果，包含确认列表和候选列表，格式：
-                 {
-                     "confirmed_item_names": ["确认商品名1", "确认商品名2"],  # 去重后的确认商品名，无则空列表
-                     "options": ["候选商品名1", "候选商品名2", ...]          # 去重后的候选商品名，无则空列表
-                 }
+            {
+                "confirmed_item_names": ["确认商品名1", "确认商品名2"],  # 去重后的确认商品名，无则空列表
+                "options": ["候选商品名1", "候选商品名2", ...]          # 去重后的候选商品名，无则空列表
+            }
         """
         # 1、初始化确认商品名列表（符合高置信度规则的商品名）
         confirmed_item_names: List[str] = []
@@ -99,7 +99,7 @@ class NodeItemNameConfirm(NodeBase):
         # 返回最终对齐结果：确认列表和候选列表均做去重处理（list(set())）
         return list(set(confirmed_item_names)), list(set(options))  # 去重，避免重复候选
     
-    def _step_7_check_confirmation(self, confirmed, options, history):
+    def _step_7_resolve_confirmation_branches(self, confirmed, options, history):
         """
         7 检查step6对齐后的商品名状态，分3种分支更新state，并同步更新历史消息的商品名关联
         :param state: 字典 - 原始会话状态，包含session_id/original_query等核心字段
@@ -107,7 +107,6 @@ class NodeItemNameConfirm(NodeBase):
         :param history: 列表[字典] - 近期会话历史
         :return: 字典 - 更新后的会话状态，包含item_names/answer
         """
-
         # 分支A：有确认的商品名（高置信度，无需用户确认）
         if confirmed:
             # 收集历史消息中未关联商品名的消息ID（需批量更新关联）
@@ -200,7 +199,7 @@ class NodeItemNameConfirm(NodeBase):
             self.logger.info("Node: 未提取到商品名，跳过向量检索")
 
         # 7. 检查确认状态
-        item_names, answer = self._step_7_check_confirmation(confirmed_item_names, options, history)
+        item_names, answer = self._step_7_resolve_confirmation_branches(confirmed_item_names, options, history)
 
         # 8. 写入最终历史
         self._step_8_write_history(answer, item_names, session_id, original_query, rewritten_query, message_id)    

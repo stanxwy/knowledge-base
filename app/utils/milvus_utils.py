@@ -9,17 +9,12 @@ from app.utils.embedding_utils import generate_embeddings
 
 _milvus_client = None
 
-def escape_milvus_string(value: str) -> str:
+def _escape_milvus_string(value: str) -> str:
     """
     Milvus数据库过滤表达式中字符串的安全转义函数（防止解析失败）
     作用：
         转义特殊字符（反斜杠、双引号），避免Milvus解析filter时报错
-    参数：
-        value: 需要转义的原始字符串
-    返回：
-        str: 转义后的安全字符串
     """
-    # 转义反斜杠（\ → \\） 双引号（" → \"） 单引号（' → \'）
     value = value.replace("\\", "\\\\").replace('"', '\\"').replace("'", "\\'")
     return value
 
@@ -115,7 +110,7 @@ def delete_from_item_name_collection(file_title: str):
     try:
         # 幂等性处理：删除同名商品数据（避免重复存储）
         # 转义商品名称（防止特殊字符导致filter解析失败）
-        safe_file_title = escape_milvus_string(file_title)
+        safe_file_title = _escape_milvus_string(file_title)
         # 构建过滤表达式：item_name等于目标值
         result = get_milvus_client().delete(collection_name=milvus_config.item_name_collection, filter=f'file_title=="{safe_file_title}"')
         logger.debug("删除结果", result.get('delete_count', 0))
@@ -231,7 +226,7 @@ def create_chunks_collection(vector_dimension):
 
 def delete_from_chunks_collection(file_title: str):
     try:
-        file_title = escape_milvus_string(file_title)
+        file_title = _escape_milvus_string(file_title)
         result = get_milvus_client().delete(collection_name=milvus_config.chunks_collection, filter=f"file_title=='{file_title}'")
         logger.debug("删除结果", result.get('delete_count', 0))
         return result
