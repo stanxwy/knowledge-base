@@ -16,17 +16,17 @@ class HistoryMongoTool:
     """
     def __init__(self):
         try:
-            self.__mongo_url = os.getenv("MONGO_URL")
-            self.__db_name = os.getenv("MONGO_DB_NAME")
-            self.__client = MongoClient(self.__mongo_url)
-            self.__db = self.__client[self.__db_name]
-            self.__chat_message = self.__db["chat_message"]
+            self.mongo_url = os.getenv("MONGO_URL")
+            self.db_name = os.getenv("MONGO_DB_NAME")
+            self.client = MongoClient(self.mongo_url)
+            self.db = self.client[self.db_name]
+            self.chat_message = self.db["chat_message"]
 
             # 为chat_message集合创建复合索引，提升查询性能
             # 索引规则：session_id升序 + ts降序，适配"按会话查最新记录"的核心查询场景
             # create_index自带幂等性：索引已存在时不会重复创建，无需额外判断
-            self.__chat_message.create_index([("session_id", 1), ("ts", -1)])
-            logging.info(f"Successfully connected to MongoDB: {self.__db_name}")
+            self.chat_message.create_index([("session_id", 1), ("ts", -1)])
+            logging.info(f"Successfully connected to MongoDB: {self.db_name}")
         except Exception as e:
             logging.error(f"Failed to connect to MongoDB: {e}")
             # 重新抛出异常，让调用方感知初始化失败，避免使用未初始化的实例
