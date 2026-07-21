@@ -4,9 +4,6 @@ from typing import List, Dict, Any
 from datetime import datetime
 from pymongo import MongoClient, DESCENDING
 from bson import ObjectId
-from dotenv import load_dotenv
-
-load_dotenv()
 
 class HistoryMongoTool:
     """
@@ -34,10 +31,9 @@ class HistoryMongoTool:
 
 
 # 定义全局变量：存储HistoryMongoTool的单例实例
-# 目的：将数据库连接的初始化提前到模块加载阶段，避免第一次调用接口时才建立连接（提升首次响应速度）
-__history_mongo_tool = HistoryMongoTool()
+__history_mongo_tool = None
 
-def get_history_mongo_tool() -> HistoryMongoTool:
+def _get_history_mongo_tool() -> HistoryMongoTool:
     # 声明使用全局变量，避免函数内视为局部变量
     global __history_mongo_tool
     # 懒加载：仅当全局实例为空时，才创建新的实例
@@ -51,11 +47,9 @@ def clear_history(session_id: str) -> int:
     :param session_id: 会话唯一标识，用于筛选要删除的记录
     :return: 实际删除的文档数量，删除失败返回0
     """
-    # 获取全局的HistoryMongoTool实例，使用单例模式避免重复创建数据库连接
-    mongo_tool = get_history_mongo_tool()
     try:
         # 执行批量删除操作：删除所有session_id匹配的文档
-        result = mongo_tool.chat_message.delete_many({"session_id": session_id})
+        result = _get_history_mongo_tool().chat_message.delete_many({"session_id": session_id})
         # 记录删除成功日志，包含删除数量和会话ID，便于问题排查
         logging.info(f"Deleted {result.deleted_count} messages for session {session_id}")
         # 返回实际删除的数量（delete_many的返回对象包含deleted_count属性）
@@ -92,31 +86,29 @@ def save_chat_message(
 
     # 构造要插入/更新的文档数据（MongoDB的基本数据单元是文档，类似Python字典）
     document = {
-        "session_id": session_id,  # 会话ID，关联维度
-        "role": role,  # 消息角色
-        "text": text,  # 消息内容
-        "rewritten_query": rewritten_query or "",  # 问题优化后的改写，空值处理为空字符串
-        "item_names": item_names,  # 关联商品名称列表
-        "image_urls": image_urls,  # 关联图片URL列表
-        "ts": ts  # 时间戳，排序和时间筛选维度
+        "session_id": session_id,                   # 会话ID，关联维度
+        "role": role,                               # 消息角色
+        "text": text,                               # 消息内容
+        "rewritten_query": rewritten_query or "",   # 问题优化后的改写，空值处理为空字符串
+        "item_names": item_names,                   # 关联商品名称列表
+        "image_urls": image_urls,                   # 关联图片URL列表
+        "ts": ts                                    # 时间戳，排序和时间筛选维度
     }
 
-    # 获取全局的HistoryMongoTool实例，使用单例模式
-    mongo_tool = get_history_mongo_tool()
+    mongo_tool = _get_history_mongo_tool()
     # 判断是否传入主键ID，区分更新/新增逻辑
     if message_id:
         # 有message_id：执行更新操作（根据主键更新）
         result = mongo_tool.chat_message.update_one(
-            {"_id": ObjectId(message_id)},  # 更新条件：主键匹配（需将字符串转为ObjectId类型）
-            {"$set": document}  # 更新操作：$set表示只更新指定字段，保留其他字段
+            {"_id": ObjectId(message_id)},
+            {"$set": document}              
         )
-        logging.info(f"更新会话记录: {document}")
-        # 更新操作返回传入的message_id作为标识
+        logging.info(f"chat message updated: {document}")
         return message_id
     else:
         # 无message_id：执行新增操作
         result = mongo_tool.chat_message.insert_one(document)
-        logging.info(f"新增会话记录: {document}")
+        logging.info(f"chat message inserted: {document}")
         # 新增操作返回插入的ObjectId并转为字符串，便于上层使用（避免直接返回ObjectId对象）
         return str(result.inserted_id)
 
@@ -127,27 +119,18 @@ def update_message_item_names(ids: List[str], item_names: List[str]) -> int:
     :param item_names: 要设置的新商品名称列表
     :return: 实际更新的文档数量，更新失败返回0
     """
-    # 获取全局的HistoryMongoTool实例，使用单例模式
-    mongo_tool = get_history_mongo_tool()
     try:
-        # 将字符串类型的主键列表转为MongoDB的ObjectId类型（数据库中主键是ObjectId类型）
-        object_ids = [ObjectId(i) for i in ids]
-        # 执行批量更新操作
-        result = mongo_tool.chat_message.update_many(
-            # 更新条件：复合条件，同时满足
+        result = _get_history_mongo_tool().chat_message.update_many(
             {
-                "_id": {"$in": object_ids}# 主键在指定的ID列表中（批量筛选）
+                "_id": {"$in": [ObjectId(i) for i in ids]}
             },
-            {"$set": {"item_names": item_names}}  # 更新操作：设置新的商品名称列表
+            {"$set": {"item_names": item_names}}
         )
-        # 记录更新成功日志，包含更新数量和新的商品名称
         logging.info(f"Updated {result.modified_count} records to item_names: {item_names}")
         # 返回实际更新的数量（modified_count：真正被修改的文档数，区别于matched_count）
         return result.modified_count
     except Exception as e:
-        # 捕获批量更新异常，记录错误日志
         logging.error(f"Error updating history item_names: {e}")
-        # 异常时返回0，标识更新失败
         return 0
 
 def get_recent_messages(session_id: str = None, limit: int = 10) -> List[Dict[str, Any]]:
@@ -158,31 +141,22 @@ def get_recent_messages(session_id: str = None, limit: int = 10) -> List[Dict[st
     :param limit: 条数限制，默认返回最近10条
     :return: 对话记录列表（字典格式），查询失败返回空列表
     """
-    # 获取全局的HistoryMongoTool实例，使用单例模式
-    mongo_tool = get_history_mongo_tool()
     try:
-        # 构造查询条件：仅查询指定session_id的记录
         query = {"session_id": session_id} if session_id else {}
-
-        # 执行查询：按时间戳升序排序，限制返回条数
-        # find(query)：获取符合条件的游标（惰性加载，不立即查询）
-        # sort("ts", ASCENDING)：按ts字段升序（从旧到新），适配LLM上下文顺序
-        # limit(limit)：限制返回的最大条数
-        cursor = mongo_tool.chat_message.find(query).sort("ts", DESCENDING).limit(limit)
+        cursor = _get_history_mongo_tool().chat_message.find(query).sort("ts", DESCENDING).limit(limit)
         # 将游标转为列表，触发实际数据库查询，获取所有符合条件的文档
         messages = list(cursor)
-        # 返回查询结果列表
         for m in messages:
             logging.info(f'{datetime.fromtimestamp(m["ts"]).strftime("%Y-%m-%d %H:%M:%S")} - {m["role"]}: {m["text"]}')
         return messages
     except Exception as e:
-        # 捕获查询异常，记录错误日志
         logging.error(f"Error getting recent messages: {e}")
-        # 异常时返回空列表，避免上层处理None报错
         return []
 
 
 if __name__ == "__main__":
+    from dotenv import load_dotenv
+    load_dotenv()
     # 简单测试代码：验证数据库的写入和查询功能是否正常
     # 测试会话ID，用于标识测试的对话记录
     sid = "000015_hybrid"

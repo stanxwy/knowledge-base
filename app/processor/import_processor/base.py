@@ -10,10 +10,11 @@ from pathlib import Path
 
 from app.processor.import_processor.import_config import ImportConfig, get_config
 from app.processor.import_processor.exceptions import ImportProcessError
+from app.processor.import_processor.state import ImportGraphState
 from app.utils.backup_utils import backup_json
 from app.utils.task_utils import add_running_task, add_done_task
 
-T = TypeVar("T")  # 泛型状态类型
+T = TypeVar("T", bound="ImportGraphState")
 
 """
 1、抽象的类（ABC），子类需要实现这个类

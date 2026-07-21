@@ -4,13 +4,14 @@
 定义统一的节点接口规范，提供通用功能
 """
 import logging
+import typing
 from abc import abstractmethod, ABC
-from typing import TypeVar
 
+from app.processor.query_processor.state import QueryGraphState
 from app.utils.task_utils import add_running_task, add_done_task
 
 
-T = TypeVar("T")  # 泛型状态类型
+T = typing.TypeVar("T", bound="QueryGraphState")
 
 class NodeBase(ABC):
 
