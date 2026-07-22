@@ -19,3 +19,11 @@ def backup_json(file_path: Path, json_data: Dict | List ) -> None:
         logger.debug(f"Successfully backed up json: {file_path}")
     except Exception as e:
         logger.error(f"Error backing up json: {str(e)}", exc_info=False)
+
+def backup_file(file_path: Path, content: str) -> None:
+    try:
+        with open(file_path, "w", encoding="utf-8") as f:
+            f.write(content)
+        logger.debug(f"Successfully backed up file: {file_path}")
+    except Exception as e:
+        logger.error(f"Error backing up file: {str(e)}", exc_info=False)

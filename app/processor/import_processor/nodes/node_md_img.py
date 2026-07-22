@@ -7,11 +7,12 @@ from typing import Tuple, List, Dict
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
 from app.processor.import_processor.state import ImportGraphState
+from app.services.llm_service import generate_image_caption
 from app.services.object_store_service import ObjectStoreService, get_object_store_service
 from app.utils.api_throttle import apply_api_rate_limit
-from app.services.llm_service import generate_image_caption
+from app.utils.backup_utils import backup_file
 
-
+IMAGE_CONTEXT_LENGTH = 100
 MAX_QUEUE_SIZE = 10
 API_WINDOW_SIZE = 60
 
@@ -42,18 +43,18 @@ class NodeMDImg(BaseNode):
     def _collect_ref_images(self, md_content: str, images_dir: Path) -> List[Tuple[str, str, Tuple[str, str]]]:
         referenced_images = []
         for image_file in os.listdir(images_dir):
-            self.logger.debug(f"Checking image file: {image_file}")
+            self.logger.info(f"Checking image file: {image_file}")
 
             file_ext = os.path.splitext(image_file)[1].lower()
             if file_ext not in self.config.image_extensions:
-                self.logger.warning(f"Extension not supported, skip：{image_file}")
+                self.logger.info(f"Extension not supported, skip：{image_file}")
                 continue
 
             img_path = str(images_dir / image_file)
-            context = self._extract_image_context(md_content, image_file)
+            context = self._extract_image_context(md_content, image_file, IMAGE_CONTEXT_LENGTH)
 
             if not context:
-                self.logger.warning(f"Image not referenced in MD, skip: {image_file}")
+                self.logger.info(f"Image not referenced in MD, skip: {image_file}")
                 continue
 
             referenced_images.append((image_file, img_path, context))
@@ -64,14 +65,12 @@ class NodeMDImg(BaseNode):
     def _extract_image_context(self, md_content: str, image_file: str, context_len: int = 100) -> Tuple[str, str]:
         # ![alt text](images/file.extension)
         pattern = re.compile(r"!\[.*?\]\(.*?" + re.escape(image_file) + r".*?\)")
-
         match = pattern.search(md_content)
         if not match:
-            self.logger.debug(f"Image not referenced in MD, skip: {image_file}")
             return None
 
         start, end = match.span()
-        self.logger.debug(f"Image {image_file} position: {start}-{end}")
+        self.logger.info(f"Image {image_file} position: {start}-{end}")
         pre_text = md_content[max(0, start - context_len):start]
         post_text = md_content[end:min(len(md_content), end + context_len)]
         return pre_text, post_text
@@ -81,7 +80,7 @@ class NodeMDImg(BaseNode):
         request_deque = deque()
 
         for img_file_name, image_file_path, context in target_images:
-            apply_api_rate_limit(request_deque, max_requests=MAX_QUEUE_SIZE, window_seconds=API_WINDOW_SIZE)
+            apply_api_rate_limit(request_deque, MAX_QUEUE_SIZE, API_WINDOW_SIZE)
             captions[img_file_name] = generate_image_caption(image_file_path, doc_stem, context)
         return captions
     
@@ -101,7 +100,7 @@ class NodeMDImg(BaseNode):
         urls = {}
         for img_file, local_img_path, _ in target_images:
             urls[img_file] = self._object_store.upload_img(local_img_path, f"{upload_dir}/{img_file}")
-            self.logger.debug(f"Image {img_file} uploaded to {urls[img_file]}")
+            self.logger.info(f"Image {img_file} uploaded to {urls[img_file]}")
         self.logger.info(f"{len(target_images)} images uploaded to Object Store")
         return urls
 
@@ -113,7 +112,6 @@ class NodeMDImg(BaseNode):
         return image_info
 
     def _replace_img_alt_and_url(self, md_content: str, image_info: Dict[str, Tuple[str, str]]) -> str:
-
         for image_file, (summary, new_url) in image_info.items():
             pattern = re.compile(r"!\[.*?\]\(.*?" + re.escape(image_file) + r".*?\)")
             md_content = pattern.sub(lambda _: f"![{summary}]({new_url})", md_content)
@@ -122,12 +120,8 @@ class NodeMDImg(BaseNode):
         return md_content
 
     def _backup_new_md_file(self, original_md_path: str, md_content: str) -> str:
-
         new_md_file_name = os.path.splitext(original_md_path)[0] + "_new.md"
-        with open(new_md_file_name, "w", encoding="utf-8") as f:
-            f.write(md_content)
-
-        self.logger.info(f"processed MD file saved as {new_md_file_name}")
+        backup_file(new_md_file_name, md_content)
         return new_md_file_name
 
     def process(self, state: ImportGraphState) -> ImportGraphState:
