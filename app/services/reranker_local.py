@@ -78,7 +78,7 @@ You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast t
 [0.0277058673878419, 0.9980846725164658, 0.041886650306271686, 0.50644986966622]
 
 # with query_instruction_for_rerank
-(knowledge-base) PS D:\code\atguigu\knowledge-base> python -m app.utils.bge_rerank_utils
+(knowledge-base) PS D:\knowledge-base> python -m app.utils.bge_rerank_utils
 2026-07-20 13:09:02 - root - INFO - 日志系统初始化完成，日志文件: ./logs\knowledge_base.log
 2026-07-20 13:09:02 - __main__ - INFO - 正在初始化 Reranker 模型，路径: D:\ai_models\modelscope_cache\models\BAAI--bge-reranker-large\snapshots\master, 设备: cpu, fp16: False
 <class 'transformers.models.xlm_roberta.tokenization_xlm_roberta_fast.XLMRobertaTokenizerFast'>

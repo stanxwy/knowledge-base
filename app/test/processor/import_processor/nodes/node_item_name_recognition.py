@@ -2,7 +2,6 @@ import json
 from app.processor.import_processor.nodes.node_item_name_recognition import NodeItemNameRecognition
 from app.utils.logger import setup_logging
 
-
 if __name__ == "__main__":
     logger = setup_logging()
 

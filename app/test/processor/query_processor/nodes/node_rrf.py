@@ -20,7 +20,7 @@ if __name__ == '__main__':
     result = node_rrf(mock_state)
 
 """
-(knowledge-base) PS D:\code\atguigu\knowledge-base> python -m app.processor.query_processor.nodes.node_rrf
+(knowledge-base) PS D:\knowledge-base> python -m app.processor.query_processor.nodes.node_rrf
 2026-07-18 21:14:57 - root - INFO - 日志系统初始化完成，日志文件: ./logs\knowledge_base.log
 2026-07-18 21:14:57 - import.node_rrf - INFO - --- node_rrf 开始啦 ---
 2026-07-18 21:14:57 - import.node_rrf - INFO - rrf_inputs:
