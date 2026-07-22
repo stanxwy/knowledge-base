@@ -2,7 +2,7 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 
 from app.utils.json_format_utils import format_json
-from app.utils.llm_utils import generate_hyde_doc
+from app.services.llm_service import generate_hyde_doc
 from app.services.vectordb_service import ChunksVectorDBService, get_chunks_vector_db
 
 class NodeSearchEmbeddingHyde(NodeBase):

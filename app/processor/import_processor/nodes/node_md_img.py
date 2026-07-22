@@ -9,7 +9,7 @@ from app.processor.import_processor.exceptions import StateFieldError, FileProce
 from app.processor.import_processor.state import ImportGraphState
 from app.services.object_store_service import ObjectStoreService, get_object_store_service
 from app.utils.api_throttle import apply_api_rate_limit
-from app.utils.llm_utils import generate_image_caption
+from app.services.llm_service import generate_image_caption
 
 
 MAX_QUEUE_SIZE = 10

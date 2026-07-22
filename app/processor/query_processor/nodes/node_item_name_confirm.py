@@ -2,7 +2,7 @@ from typing import List, Tuple
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
-from app.utils.llm_utils import resolve_item_name_and_rewrite_query
+from app.services.llm_service import resolve_item_name_and_rewrite_query
 from app.services.vectordb_service import ItemNameVectorDBService, get_item_name_vector_db
 from app.services.mongo_service import get_mongo_service, MongoService
 

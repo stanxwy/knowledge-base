@@ -7,7 +7,7 @@ from app.processor.query_processor.prompt import ANSWER_PROMPT
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-from app.utils.llm_utils import get_llm_client
+from app.services.llm_service import get_llm_client
 from app.services.mongo_service import get_mongo_service, MongoService
 from app.utils.sse_utils import push_sse_event, SSEEvent
 from app.utils.task_utils import set_task_result
