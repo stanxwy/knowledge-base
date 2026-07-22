@@ -1,8 +1,7 @@
-from dotenv import load_dotenv
-from typing import List, Optional
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
+from typing import List, Optional
 
 from app.processor.query_processor.nodes.node_answer_output import NodeAnswerOutput
 from app.processor.query_processor.nodes.node_item_name_confirm import NodeItemNameConfirm
@@ -12,27 +11,16 @@ from app.processor.query_processor.nodes.node_search_embedding import NodeSearch
 from app.processor.query_processor.nodes.node_search_embedding_hyde import NodeSearchEmbeddingHyde
 from app.processor.query_processor.nodes.node_web_search_mcp import NodeWebSearchMcp
 from app.processor.query_processor.state import QueryGraphState
-from app.utils.logger import setup_logging
 
-# 初始化环境变量（类加载前执行，保证全局生效）
-load_dotenv()
 
-class KBQueryWorkflowV2:
-    """
-    知识库查询工作流类
-    封装LangGraph工作流的构建、编译、执行逻辑，支持自定义配置和多实例运行
-    """
+class KBQueryWorkflow:
+    
     def __init__(self):
-        # 1. 初始化LangGraph状态图
-        self.__workflow = StateGraph(QueryGraphState)
-        # 2. 初始化所有业务节点（实例属性，支持多实例隔离）
+        self.__graph = StateGraph(QueryGraphState)
         self._init_nodes()
-        # 3. 注册节点到工作流
         self._register_nodes()
-        # 4. 设置入口和路由规则
         self._setup_routes()
-        # 5. 编译工作流（懒加载，首次执行时编译）
-        self.__compiled_app: Optional[CompiledStateGraph] = None
+        self.__compiled_graph: Optional[CompiledStateGraph] = None
 
     def _init_nodes(self):
         self.node_item_name_confirm = NodeItemNameConfirm()
@@ -44,42 +32,22 @@ class KBQueryWorkflowV2:
         self.node_answer_output = NodeAnswerOutput()
 
     def _register_nodes(self):
-        self.__workflow.add_node("node_item_name_confirm", self.node_item_name_confirm)
-        self.__workflow.add_node("node_search_embedding", self.node_search_embedding)
-        self.__workflow.add_node("node_search_embedding_hyde", self.node_search_embedding_hyde) 
-        self.__workflow.add_node("node_web_search_mcp", self.node_web_search_mcp)
-        self.__workflow.add_node("node_rrf", self.node_rrf)
-        self.__workflow.add_node("node_rerank", self.node_rerank)
-        self.__workflow.add_node("node_answer_output", self.node_answer_output)
+        self.__graph.add_node("node_item_name_confirm", self.node_item_name_confirm)
+        self.__graph.add_node("node_search_embedding", self.node_search_embedding)
+        self.__graph.add_node("node_search_embedding_hyde", self.node_search_embedding_hyde) 
+        self.__graph.add_node("node_web_search_mcp", self.node_web_search_mcp)
+        self.__graph.add_node("node_rrf", self.node_rrf)
+        self.__graph.add_node("node_rerank", self.node_rerank)
+        self.__graph.add_node("node_answer_output", self.node_answer_output)
 
     def _route_after_item_name_confirm(self, state: QueryGraphState) -> str | List[str]:
-        """主体名称确认后的条件路由函数"""
         if state.get("answer"):
-            """
-            这主要发生在 node_item_name_confirm 节点无法直接确定唯一的商品型号，从而需要“反问用户”或“拒绝回答”的场景。
-            具体来说，有以下两种情况会导致 state 中直接出现 answer ，从而跳过后续的检索流程，直接输出：
-            1. 多选一（反问用户） ：
-            - 场景 ：用户问得太模糊（比如“华为P60”），系统发现数据库里有“华为P60 128G”和“华为P60 Art”两个型号，不足以直接确认。
-            - 处理 ：节点会生成一条反问句作为 answer ，例如：“您是想问以下哪个产品：华为P60 128G、华为P60 Art？请明确一下型号。”
-            - 结果 ：此时不需要去检索文档了，直接把这句话发给用户让他选。
-
-            2. 查无此人（拒绝回答） ：
-            - 场景 ：用户问了一个系统里压根没有的商品（比如“小米15”，库里只有华为的数据）。
-            - 处理 ：节点会生成一条拒绝句作为 answer ，例如：“抱歉，未找到相关产品，请提供准确型号以便我为您查询。”
-            - 结果 ：同样不需要后续检索，直接结束流程。
-            """
             return "node_answer_output"
-
-        # 否则继续搜索流程
         return ["node_search_embedding", "node_search_embedding_hyde", "node_web_search_mcp"]
 
     def _setup_routes(self):
-        """设置工作流路由规则"""
-        # 1、设置入口节点
-        self.__workflow.set_entry_point("node_item_name_confirm")
-
-        # 2、注册条件路由边
-        self.__workflow.add_conditional_edges(
+        self.__graph.set_entry_point("node_item_name_confirm")
+        self.__graph.add_conditional_edges(
             "node_item_name_confirm",
             self._route_after_item_name_confirm,
             {
@@ -90,113 +58,22 @@ class KBQueryWorkflowV2:
             }
         )
 
-        # 3. 多路搜索结果合并
-        self.__workflow.add_edge("node_search_embedding", "node_rrf")
-        self.__workflow.add_edge("node_search_embedding_hyde", "node_rrf")
-        self.__workflow.add_edge("node_web_search_mcp", "node_rrf")
+        self.__graph.add_edge("node_search_embedding", "node_rrf")
+        self.__graph.add_edge("node_search_embedding_hyde", "node_rrf")
+        self.__graph.add_edge("node_web_search_mcp", "node_rrf")
 
-        # 4. 排序 -> 重排 -> 生成 -> 结束
-        self.__workflow.add_edge("node_rrf", "node_rerank")
-        self.__workflow.add_edge("node_rerank", "node_answer_output")
-        self.__workflow.add_edge("node_answer_output", END)
+        self.__graph.add_edge("node_rrf", "node_rerank")
+        self.__graph.add_edge("node_rerank", "node_answer_output")
+        self.__graph.add_edge("node_answer_output", END)
 
     @property
     def graph(self):
-        """编译工作流（公开方法，支持手动触发编译）"""
-        if not self.__compiled_app:
-            self.__compiled_app = self.__workflow.compile()
-        return self.__compiled_app
+        if not self.__compiled_graph:
+            self.__compiled_graph = self.__graph.compile()
+        return self.__compiled_graph
 
     def run(self, initial_state: QueryGraphState, stream: bool = False) -> QueryGraphState:
-        """
-        统一执行入口，支持切换invoke/stream
-        :param initial_state:  初始状态对象
-        :param stream: 是否是流式输出
-        :return: 执行完成后的状态对象
-        """
         if stream:
             return self.graph.stream(initial_state)
         else:
             return self.graph.invoke(initial_state)
-
-# ===================== 用法示例 =====================
-if __name__ == "__main__":
-    logger = setup_logging()
-    init_state = { "original_query": "如何使用万用表测量电压？"}
-    workflow = KBQueryWorkflowV2()
-    # 流式输出
-    for chunk in workflow.run(init_state, stream=True):
-        logger.warning(chunk)
-        
-    workflow.graph.get_graph().print_ascii()
-
-"""
-(knowledge-base) PS D:\knowledge-base> python -m app.processor.query_processor.main_graph
-                                                             +-----------+
-                                                             | __start__ |
-                                                             +-----------+
-                                                                   *
-                                                                   *
-                                                                   *
-                                                      +------------------------+
-                                                      | node_item_name_confirm |.
-                                             .........+------------------------+ .........
-                                    .........              ..                ...          ..........
-                           .........                    ...                     ....                .........
-                      .....                           ..                            ..                       .........
-+-----------------------+           +----------------------------+           +---------------------+                  .....
-| node_search_embedding |           | node_search_embedding_hyde |           | node_web_search_mcp |                      .
-+-----------------------+****       +----------------------------+       ****+---------------------+                      .
-                             ******                *              *******                                                 .
-                                   ******          *        ******                                                        .
-                                         ****      *    ****                                                              .
-                                            +----------+                                                                  .
-                                            | node_rrf |                                                                  .
-                                            +----------+                                                                  .
-                                                  *                                                                       .
-                                                  *                                                                       .
-                                                  *                                                                       .
-                                           +-------------+                                                            .....
-                                           | node_rerank |                                                   .........
-                                           +-------------+                                          .........
-                                                          **                              ..........
-                                                            ***                  .........
-                                                               **           .....
-                                                        +--------------------+
-                                                        | node_answer_output |
-                                                        +--------------------+
-                                                                   *
-                                                                   *
-                                                                   *
-                                                              +---------+
-                                                              | __end__ |
-                                                              +---------+
-2026-07-16 08:40:08 - base.py:32 - INFO - --- node_item_name_confirm 开始啦 ---
-2026-07-16 08:40:08 - node_item_name_confirm.py:23 - INFO - 【node_item_name_confirm】节点逻辑
-2026-07-16 08:40:08 - base.py:38 - INFO - --- node_item_name_confirm 完成啦 ---
-2026-07-16 08:40:08 - main_graph.py:143 - WARNING - {'node_item_name_confirm': {'original_query': '如何使用万用表测量电压？'}}
-2026-07-16 08:40:08 - base.py:32 - INFO - --- node_search_embedding 开始啦 ---
-2026-07-16 08:40:08 - node_search_embedding.py:22 - INFO - 【node_search_embedding】节点逻辑
-2026-07-16 08:40:08 - base.py:32 - INFO - --- node_search_embedding_hyde 开始啦 ---
-2026-07-16 08:40:08 - base.py:38 - INFO - --- node_search_embedding 完成啦 ---
-2026-07-16 08:40:08 - base.py:32 - INFO - --- node_web_search_mcp 开始啦 ---
-2026-07-16 08:40:08 - node_search_embedding_hyde.py:23 - INFO - 【node_search_embedding_hyde】节点逻辑
-2026-07-16 08:40:08 - main_graph.py:143 - WARNING - {'node_search_embedding': {'embedding_chunks': []}}
-2026-07-16 08:40:08 - node_web_search_mcp.py:22 - INFO - 【node_web_search_mcp】节点逻辑
-2026-07-16 08:40:08 - base.py:38 - INFO - --- node_search_embedding_hyde 完成啦 ---
-2026-07-16 08:40:08 - base.py:38 - INFO - --- node_web_search_mcp 完成啦 ---
-2026-07-16 08:40:08 - main_graph.py:143 - WARNING - {'node_search_embedding_hyde': {'hyde_embedding_chunks': []}}
-2026-07-16 08:40:08 - main_graph.py:143 - WARNING - {'node_web_search_mcp': {'web_search_docs': []}}
-2026-07-16 08:40:08 - base.py:32 - INFO - --- node_rrf 开始啦 ---
-2026-07-16 08:40:08 - node_rrf.py:23 - INFO - 【node_rrf】节点逻辑
-2026-07-16 08:40:08 - base.py:38 - INFO - --- node_rrf 完成啦 ---
-2026-07-16 08:40:08 - main_graph.py:143 - WARNING - {'node_rrf': {'original_query': '如何使用万用表测量电压？', 'embedding_chunks': [], 'hyde_embedding_chunks': [], 'web_search_docs': []}}
-2026-07-16 08:40:08 - base.py:32 - INFO - --- node_rerank 开始啦 ---
-2026-07-16 08:40:08 - node_rerank.py:22 - INFO - 【node_rerank】节点逻辑
-2026-07-16 08:40:08 - base.py:38 - INFO - --- node_rerank 完成啦 ---
-2026-07-16 08:40:08 - main_graph.py:143 - WARNING - {'node_rerank': {'original_query': '如何使用万用表测量电压？', 'embedding_chunks': [], 'hyde_embedding_chunks': [], 'web_search_docs': []}}
-2026-07-16 08:40:08 - base.py:32 - INFO - --- node_answer_output 开始啦 ---
-2026-07-16 08:40:08 - node_answer_output.py:22 - INFO - 【node_answer_output】节点逻辑
-2026-07-16 08:40:08 - base.py:38 - INFO - --- node_answer_output 完成啦 ---
-2026-07-16 08:40:08 - main_graph.py:143 - WARNING - {'node_answer_output': {'original_query': '如何使用万用表测量电压？', 'embedding_chunks': [], 'hyde_embedding_chunks': [], 'web_search_docs': []}}
-"""

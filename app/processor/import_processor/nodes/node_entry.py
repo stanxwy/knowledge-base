@@ -9,10 +9,8 @@ class NodeEntry(BaseNode):
     name: str = "node_entry"
 
     def _validate_input_state(self, state):
-
-        update_state: ImportGraphState = {}
+        
         import_file_path = state.get("import_file_path")
-        # import_file_path = state["import_file_path"] # throw error if key does not exist
 
         if not import_file_path:
             raise StateFieldError(field_name='import_file_path', expected_type=str)
@@ -21,6 +19,7 @@ class NodeEntry(BaseNode):
         if not import_file_path_obj.exists():
             raise FileProcessingError(message=f"File {import_file_path_obj.name} does not exist")
 
+        update_state: ImportGraphState = {}
         if import_file_path_obj.suffix == ".pdf":
             update_state["is_pdf_read_enabled"] = True
             update_state["pdf_path"] = import_file_path
