@@ -14,7 +14,7 @@ POST_TIMEOUT = 10
 PUT_TIMEOUT = (10, 30)
 GET_TIMEOUT = 10
 
-POLL_TIMEOUT = 60
+POLL_TIMEOUT = 600
 POLL_INTERVAL = 3
 
 logger = logging.getLogger(__name__)

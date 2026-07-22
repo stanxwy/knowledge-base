@@ -23,7 +23,6 @@ class KBQueryWorkflowV2:
     封装LangGraph工作流的构建、编译、执行逻辑，支持自定义配置和多实例运行
     """
     def __init__(self):
-        """初始化工作流：创建状态图、注册节点、定义路由规则"""
         # 1. 初始化LangGraph状态图
         self.__workflow = StateGraph(QueryGraphState)
         # 2. 初始化所有业务节点（实例属性，支持多实例隔离）
@@ -36,7 +35,6 @@ class KBQueryWorkflowV2:
         self.__compiled_app: Optional[CompiledStateGraph] = None
 
     def _init_nodes(self):
-        """初始化所有业务节点（私有方法，封装节点创建逻辑）"""
         self.node_item_name_confirm = NodeItemNameConfirm()
         self.node_search_embedding = NodeSearchEmbedding()
         self.node_search_embedding_hyde = NodeSearchEmbeddingHyde()
@@ -46,15 +44,13 @@ class KBQueryWorkflowV2:
         self.node_answer_output = NodeAnswerOutput()
 
     def _register_nodes(self):
-        """注册所有节点到工作流（私有方法，统一管理节点注册）"""
-        # 节点标识与实例属性名保持一致，便于维护
-        self.__workflow.add_node("node_item_name_confirm", self.node_item_name_confirm) # 确认主体
-        self.__workflow.add_node("node_search_embedding", self.node_search_embedding) # 向量搜索
-        self.__workflow.add_node("node_search_embedding_hyde", self.node_search_embedding_hyde) #假设性答案向量搜索
-        self.__workflow.add_node("node_web_search_mcp", self.node_web_search_mcp) # 联网搜索
-        self.__workflow.add_node("node_rrf", self.node_rrf) # 排序
-        self.__workflow.add_node("node_rerank", self.node_rerank) # 重排
-        self.__workflow.add_node("node_answer_output", self.node_answer_output) # 生成
+        self.__workflow.add_node("node_item_name_confirm", self.node_item_name_confirm)
+        self.__workflow.add_node("node_search_embedding", self.node_search_embedding)
+        self.__workflow.add_node("node_search_embedding_hyde", self.node_search_embedding_hyde) 
+        self.__workflow.add_node("node_web_search_mcp", self.node_web_search_mcp)
+        self.__workflow.add_node("node_rrf", self.node_rrf)
+        self.__workflow.add_node("node_rerank", self.node_rerank)
+        self.__workflow.add_node("node_answer_output", self.node_answer_output)
 
     def _route_after_item_name_confirm(self, state: QueryGraphState) -> str | List[str]:
         """主体名称确认后的条件路由函数"""

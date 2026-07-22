@@ -11,7 +11,7 @@ from app.processor.import_processor.nodes.node_item_name_recognition import Node
 from app.processor.import_processor.nodes.node_md_img import NodeMDImg
 from app.processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
 from app.processor.import_processor.state import ImportGraphState
-from app.utils.logger import setup_logging
+
 
 class KBImportWorkflow:
 
@@ -58,11 +58,6 @@ class KBImportWorkflow:
 
     @property
     def graph(self):
-        """
-        懒加载：只在第一次使用时编译图
-        这个写法是“延迟初始化 + 缓存”的范式，核心目的是把“编译图”这个高成本操作推迟到必须执行时才做。
-        这不仅提升了对象实例化的速度，也避免了无效的资源浪费，是 LangGraph 项目中的最佳实践。
-        """
         if self.__compiled_graph is None:
             self.__compiled_graph = self.__graph.compile()
         return self.__compiled_graph
@@ -73,25 +68,3 @@ class KBImportWorkflow:
             return self.graph.stream(state)
         else:
             return self.graph.invoke(state)
-
-
-if __name__ == "__main__":
-    from dotenv import load_dotenv
-    load_dotenv()
-    setup_logging("DEBUG")
-    
-    init_state = {
-        "import_file_path": "./test_data/kb/华为擎云W585.pdf",
-        "output_file_dir": "./test_data/output"
-    }
-    workflow = KBImportWorkflow()
-    
-    print("=== streaming mode ===")
-    for event in workflow.run(init_state, stream=True):
-        print(f"state: {event}")
-
-    # print("\n=== non-streaming mode ===")
-    # final_state = workflow.run(init_state, stream=False)
-    # print(json.dumps(final_state, ensure_ascii=False, indent=4))
-    
-    # workflow.graph.get_graph().print_ascii()
