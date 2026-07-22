@@ -92,7 +92,7 @@ class ObjectStoreService:
         self.clean_dir(img_dir)
 
     def upload_img(self, local_path: str, object_name: str, content_type: str = None) -> str | None:
-        self.upload(local_path, f"{self._minio_config.img_dir}/{object_name}", content_type)
+        return self.upload(local_path, f"{self._minio_config.img_dir}/{object_name}", content_type)
 
 @lru_cache(maxsize=1)
 def get_object_store_service() -> ObjectStoreService:
