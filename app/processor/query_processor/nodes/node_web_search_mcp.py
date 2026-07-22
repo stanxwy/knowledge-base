@@ -8,6 +8,10 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
 
+MCP_TIME_OUT = 10
+MCP_MAX_RETRY_ATTEMPTS = 3
+MCP_QUERY_RESULT_COUNT = 5
+
 class NodeWebSearchMcp(NodeBase):
     """
     节点功能，调用外部搜索引擎补充信息
@@ -20,19 +24,19 @@ class NodeWebSearchMcp(NodeBase):
             params={
                 "url": mcp_config.mcp_base_url,
                 "headers": {"Authorization": f"Bearer {mcp_config.api_key}"},
-                "timeout": 10,
+                "timeout": MCP_TIME_OUT,
             },
             cache_tools_list=True,
-            max_retry_attempts=3,
+            max_retry_attempts=MCP_MAX_RETRY_ATTEMPTS,
         )
 
         try:
             await search_mcp.connect()
             result = await search_mcp.call_tool(
                 tool_name="bailian_web_search",
-                arguments={"query": query, "count": 5},
+                arguments={"query": query, "count": MCP_QUERY_RESULT_COUNT},
             )
-            self.logger.info(f"MCP 搜索响应: \n{result}")
+            self.logger.info(f"MCP toll call response: \n{result}")
             return result
         finally:
             await search_mcp.cleanup()
@@ -40,14 +44,10 @@ class NodeWebSearchMcp(NodeBase):
     def process(self, state: QueryGraphState) -> QueryGraphState:
         query = state.get("rewritten_query", "")
         docs = []
-        # 如果没有查询内容，直接返回
         if query:
             result = asyncio.run(self._mcp_call(query))
             if result:
                 pages = json.loads(result.content[0].text).get("pages") or []
-                # 统一输出结构化结果，供后续 rerank/引用使用
-                # 每条：{title, url, snippet}
-
                 for page in pages:
                     snippet = (page.get("snippet") or "").strip()
                     url = (page.get("url") or "").strip()
@@ -55,7 +55,7 @@ class NodeWebSearchMcp(NodeBase):
                     if not snippet:
                         continue
                     docs.append({"title": title, "url": url, "snippet": snippet})
-                self.logger.info(f"MCP 搜索结果: \n{format_json(docs)}")
+                self.logger.info(f"MCP search result: \n{format_json(docs)}")
 
         if docs:
             return { "web_search_docs": docs }
