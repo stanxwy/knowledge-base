@@ -26,23 +26,23 @@ class MineruService:
         self._file_url = f"{config.base_url}/file-urls/batch"
         self._poll_url = f"{config.base_url}/extract-results/batch"
 
-    def _build_header(self):
+    def _build_header(self) -> dict:
         return {
             "Content-Type": "application/json",
             "Authorization": f"Bearer {self._config.api_token}",
             "Accept": "*/*"
         }
 
-    def _build_req_data(self, file_path_obj):
+    def _build_req_data(self, file_name: str) -> dict:
         return {
-            "files": [ { "name": file_path_obj.name } ],
+            "files": [ { "name": file_name } ],
             "model_version": "vlm"
         }
 
 
-    def get_upload_url(self, pdf_path_obj: Path) -> str:
+    def get_upload_url(self, file_name: str) -> str:
         header = self._build_header()
-        data = self._build_req_data(pdf_path_obj)
+        data = self._build_req_data(file_name)
 
         logger.info(f"get_upload_url start: {self._file_url}, data: {data}")
         response = requests.post(self._file_url, headers=header, json=data, timeout=POST_TIMEOUT)
@@ -60,8 +60,8 @@ class MineruService:
         return signed_url, batch_id
 
         
-    def upload_doc(self, doc_path_obj: Path, signed_url: str) -> str:
-        with open(doc_path_obj, "rb") as f:
+    def upload_file(self, file_path: str, signed_url: str) -> str:
+        with open(Path(file_path), "rb") as f:
             logger.info(f"start to upload file, signed_url: {signed_url}")
             res_upload = requests.put(signed_url, data=f, timeout=PUT_TIMEOUT)
             if res_upload.status_code != 200:
@@ -119,7 +119,12 @@ class MineruService:
                 time.sleep(POLL_INTERVAL)
 
 
-    def download_zip(self, zip_url: str, output_dir_obj: Path, pdf_stem: str) -> Path:
+    def download_zip(self, zip_url: str, output_dir: str, pdf_stem: str) -> str:
+        output_dir_obj = Path(output_dir)
+        if not output_dir_obj.exists():
+            logger.info(f"Output directory does not exist. Creating: {output_dir_obj.absolute()}")
+            output_dir_obj.mkdir(parents=True, exist_ok=True)
+
         logger.info(f"start to download zip, url: {zip_url}")
         response = requests.get(zip_url, timeout=GET_TIMEOUT)
 
@@ -130,12 +135,12 @@ class MineruService:
         with open(zip_file_path, "wb") as f:
             f.write(response.content)
         logger.info(f"download_zip success, save path: {zip_file_path}")
-        return zip_file_path
+        return str(zip_file_path.absolute())
     
 
-    def extract_processed_doc(self, zip_file_path: Path, output_dir_obj: Path, pdf_stem: str) -> Path:
+    def extract_processed_doc(self, zip_file_path: str, output_dir: str, pdf_stem: str) -> Path:
         # idempotent operation
-        extract_target_dir = output_dir_obj / pdf_stem
+        extract_target_dir = Path(output_dir) / pdf_stem
         if extract_target_dir.exists():
             shutil.rmtree(extract_target_dir)
             logger.info(f"removed existing extract dir: {extract_target_dir}")
@@ -143,7 +148,7 @@ class MineruService:
         extract_target_dir.mkdir(parents=True, exist_ok=True)
 
         logger.info(f"start to unzip {zip_file_path}")
-        with zipfile.ZipFile(zip_file_path, "r") as zip_file_obj:
+        with zipfile.ZipFile(Path(zip_file_path), "r") as zip_file_obj:
             zip_file_obj.extractall(extract_target_dir)
         logger.info(f"unzip success, target dir: {extract_target_dir}")
 
