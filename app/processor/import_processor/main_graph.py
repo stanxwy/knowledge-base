@@ -14,12 +14,11 @@ from app.processor.import_processor.state import ImportGraphState
 from app.utils.logger import setup_logging
 
 class KBImportWorkflow:
-    """知识库导入工作流"""
-    def __init__(self, config=None):
+
+    def __init__(self):
         self.__graph = StateGraph(ImportGraphState)
         self._register_nodes()
         self._setup_routes()
-        # 懒加载，首次执行时编译
         self.__compiled_graph: Optional[CompiledStateGraph] = None
         
     def _register_nodes(self):
@@ -32,11 +31,6 @@ class KBImportWorkflow:
         self.__graph.add_node("node_import_milvus", NodeImportMilvus())
 
     def route_after_entry(self, state: ImportGraphState) -> str:
-        """
-        入口节点后的条件路由函数
-        :param state: 当前状态
-        :return: 下一个节点名称
-        """
         if state.get("is_pdf_read_enabled"):
             return "node_pdf_to_md"
         elif state.get("is_md_read_enabled"):
@@ -50,7 +44,6 @@ class KBImportWorkflow:
             "node_entry",
             self.route_after_entry,
             {
-                #key：路由函数的返回值，value:节点的名字
                 "node_md_img": "node_md_img",
                 "node_pdf_to_md": "node_pdf_to_md",
                 END: END
@@ -75,12 +68,6 @@ class KBImportWorkflow:
         return self.__compiled_graph
 
     def run(self, state: ImportGraphState, stream: bool = False):
-        """
-        统一执行入口，支持切换invoke/stream
-        :param state: 初始状态
-        :param stream: 是否流式输出
-        :return: 执行结果
-        """
         if stream:
             # return self.graph.stream(state, stream_mode="values")
             return self.graph.stream(state)
@@ -99,15 +86,12 @@ if __name__ == "__main__":
     }
     workflow = KBImportWorkflow()
     
-    # 方式1：实例化后使用（推荐方式，可复用）
-    print("=== 方式1：流式执行 ===")
+    print("=== streaming mode ===")
     for event in workflow.run(init_state, stream=True):
         print(f"state: {event}")
 
-    # 方式2：非流式执行
-    # print("\n=== 方式2：非流式执行 ===")
+    # print("\n=== non-streaming mode ===")
     # final_state = workflow.run(init_state, stream=False)
     # print(json.dumps(final_state, ensure_ascii=False, indent=4))
     
-    # 打印编译后的图结构
     # workflow.graph.get_graph().print_ascii()
