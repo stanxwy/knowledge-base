@@ -175,7 +175,7 @@ class ItemNameVectorDBService(VectorDBService):
                     } for hit in (search_res[0] if search_res and len(search_res) > 0 else [])
                 ]
                 results.append({
-                    "extracted_name": item_name,
+                    "resolved_name": item_name,
                     "matches": matches
                 })
             except Exception as e:

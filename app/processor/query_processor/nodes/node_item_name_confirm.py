@@ -1,5 +1,6 @@
 from typing import List, Tuple
 from app.processor.query_processor.base import NodeBase
+from app.processor.query_processor.exceptions import StateFieldError
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
 from app.services.llm_service import get_llm_service, LLMService
@@ -19,18 +20,18 @@ class NodeItemNameConfirm(NodeBase):
         self._llm_service = llm_service
         self._item_name_vector_db = item_name_vector_db
 
-    def _step_1_validate_input_state(self, state: QueryGraphState) -> Tuple[str, str]:
+    def _validate_input_state(self, state: QueryGraphState) -> Tuple[str, str]:
         session_id = state.get("session_id") 
         if not session_id:
-            raise ValueError("核心参数session_id缺失")
+            raise StateFieldError(field_name="session_id", message="State field 'session_id' missing")
 
         original_query = state.get("original_query")
         if not original_query:
-            raise ValueError("核心参数original_query缺失")
+            raise StateFieldError(field_name="original_query", message="State field 'original_query' missing")
 
         return session_id, original_query
     
-    def _step_6_align_item_names(self, query_results) -> dict:
+    def _align_item_names(self, query_results) -> dict:
         """
         6 根据Milvus搜索评分，逐个对齐step4提取的item_names，生成「确认商品名」和「候选商品名」
         对齐规则（优先级a>b>c>d）：
@@ -52,7 +53,7 @@ class NodeItemNameConfirm(NodeBase):
 
         for res in query_results:
             # 提取原始的数据，商品名和匹配结果
-            extracted_name = (res.get("extracted_name", "") or  "").strip()
+            resolved_name = (res.get("resolved_name", "") or  "").strip()
             # 获取匹配的商品名，无就获取空列表
             matches = res.get("matches", []) or []
             # 若无匹配结果，直接跳过当前商品名的对齐
@@ -66,7 +67,7 @@ class NodeItemNameConfirm(NodeBase):
 
             # 优化 ab 所有评分高于0.85的都可以直接确认
             if len(high) > 0:
-                self.logger.info(f"LLM商品识别“{extracted_name}”检索到 {len(high)} 个高置信度的结果，{high}")
+                self.logger.info(f"LLM商品识别“{resolved_name}”检索到 {len(high)} 个高置信度的结果，{high}")
                 for m in high:
                     confirmed_item_names.append(m.get("item_name"))
                 continue
@@ -97,7 +98,7 @@ class NodeItemNameConfirm(NodeBase):
             # 规则c: 无0.85分以上结果，取≥0.6分的最高前3个作为候选
             # 注：高置信度列表high为空时才会走到此处（规则a/b均不满足）
             if len(mid) > 0:
-                self.logger.info(f"LLM商品识别“{extracted_name}”检索到 {len(mid)} 个中置信度的结果，{mid}")
+                self.logger.info(f"LLM商品识别“{resolved_name}”检索到 {len(mid)} 个中置信度的结果，{mid}")
                 # 取中置信度结果的前5个，加入候选列表
                 for m in mid[:3]:
                     options.append(m.get("item_name"))
@@ -106,7 +107,7 @@ class NodeItemNameConfirm(NodeBase):
         # 返回最终对齐结果：确认列表和候选列表均做去重处理（list(set())）
         return list(set(confirmed_item_names)), list(set(options))  # 去重，避免重复候选
     
-    def _step_7_resolve_confirmation_branches(self, confirmed, options, history):
+    def _resolve_confirmation_branches(self, confirmed, options, history):
         """
         7 检查step6对齐后的商品名状态，分3种分支更新state，并同步更新历史消息的商品名关联
         :param state: 字典 - 原始会话状态，包含session_id/original_query等核心字段
@@ -144,92 +145,51 @@ class NodeItemNameConfirm(NodeBase):
         # 分支C：无确认商品名，且无候选商品名（无匹配结果，需用户重新提供）
         return [], "抱歉，未找到相关产品，请提供准确型号以便我为您查询。"
     
-    def _step_8_write_history(self, answer, item_names, session_id, original_query, rewritten_query, message_id):
-        """
-         8 把本次处理的核心信息（用户问题、助手答案、商品名、改写查询）写入MongoDB的会话历史
-         包含2个核心操作：1. 写入助手答案（若有）；2. 更新用户原始问题的关联信息
-         :param state: 字典 - step6更新后的会话状态，包含answer/item_names等字段
-         :param session_id: 字符串 - 会话唯一标识
-         :param rewritten_query: 字符串 - step3改写后的完整问题
-         :param message_id: 字符串 - 本次用户问题的消息唯一ID
-         :return:
-         """
-        # 若会话状态中有助手答案（分支B/C），写入助手消息到历史
+    def _update_chat_history(self, session_id, message_id, original_query, rewritten_query, item_names, answer):
+        # answer generated (provide options to confirm/reject), insert into chat history
         if answer:
             self._mongo.save_chat_message(
-                session_id=session_id,  # 会话ID，关联所属会话
-                role="assistant",  # 消息角色：助手
-                text=answer,  # 消息内容：向用户确认的提示语/无结果提示语
-                rewritten_query="",  # 助手消息无需改写查询，设为空
-                item_names=item_names  # 关联的商品名列表（分支B/C均为空）
+                session_id=session_id,
+                role="assistant",
+                text=answer,
+                rewritten_query="",
+                item_names=item_names
             )
-
-        # 强制更新本次用户原始问题的关联信息（核心：补充改写查询、商品名）
+        # no answer generated yet, update user message with item names and rewritten query
         self._mongo.save_chat_message(
-            session_id=session_id,  # 会话ID，关联所属会话
-            role="user",  # 消息角色：用户
-            text=original_query,  # 消息内容：用户原始查询
-            rewritten_query=rewritten_query,  # 补充step3改写后的完整问题
-            item_names=item_names,  # 补充关联的商品名列表
-            message_id=message_id  # 消息ID，指定更新已存在的用户消息（而非新增）
+            session_id=session_id,
+            role="user",
+            text=original_query,
+            rewritten_query=rewritten_query,
+            item_names=item_names,
+            message_id=message_id
         )
     
     def process(self, state: QueryGraphState) -> QueryGraphState:
-        """
-        必要参数：session_id、original_query
-        更新参数：history、rewritten_query、item_names、answer
-        """
-        # 步骤1：校验参数
-        session_id, original_query = self._step_1_validate_input_state(state)
-        self.logger.info("步骤1：参数校验通过")
 
-        # 步骤2：获取历史记录
+        session_id, original_query = self._validate_input_state(state)
+
         history = self._mongo.get_recent_messages(session_id)
-        self.logger.info(f"步骤2：获取到 {len(history)} 条历史消息")
 
-        # 步骤3：用户初始消息保存
         message_id = self._mongo.save_chat_message(session_id, "user", original_query)
-        self.logger.info(f"步骤3：用户消息已初始保存, ID: {message_id}")
 
-        # 步骤4：提取信息
         item_names, rewritten_query = self._llm_service.resolve_item_name_and_rewrite_query(original_query, history)
 
-        # 5. & 6. 如果有提取到商品名，进行搜索和对齐
         confirmed_item_names = []
         options = []
         if len(item_names) > 0:
-            # 把LLM推测的商品名转换成向量，在向量库中检索匹配
             search_results = self._item_name_vector_db.hybrid_search_item_name(item_names)
-            # 把向量检索结果转换成高置信度，中置信度列表
-            confirmed_item_names, options = self._step_6_align_item_names(search_results)
+            confirmed_item_names, options = self._align_item_names(search_results)
         else:
-            self.logger.info("Node: 未提取到商品名，跳过向量检索")
+            self.logger.info("No item names resolved, skipping vector search...")
 
-        # 7. 检查确认状态
-        item_names, answer = self._step_7_resolve_confirmation_branches(confirmed_item_names, options, history)
+        item_names, answer = self._resolve_confirmation_branches(confirmed_item_names, options, history)
 
-        # 8. 写入最终历史
-        self._step_8_write_history(answer, item_names, session_id, original_query, rewritten_query, message_id)    
+        self._update_chat_history(session_id, message_id, original_query, rewritten_query, item_names, answer)
+
         return {
             "history": history,
             "rewritten_query": rewritten_query,
             "item_names": item_names,
             "answer": answer
         }
-
-if __name__ == "__main__":
-    from app.utils.logger import setup_logging
-    logger = setup_logging()
-    # 初始化图状态
-    init_state = {
-        "session_id": "abc123",
-        "original_query": "M272Q"
-    }
-    # 创建节点对象
-    node_item_name_confirm = NodeItemNameConfirm()
-    # 执行节点的单元测试
-    result = node_item_name_confirm(init_state)
-    # 将返回的图状态进行json序列化
-    json_state = format_json(result)
-    # 输出
-    logger.info(json_state)

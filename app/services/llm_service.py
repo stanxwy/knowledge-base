@@ -134,7 +134,6 @@ class LLMService:
             rewritten_query = result.get("rewritten_query", query)
 
             return item_names, rewritten_query
-
         except Exception as e:
             logger.error(f"Error calling LLM: {e}")
             return [], query
