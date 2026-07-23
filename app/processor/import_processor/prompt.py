@@ -1,3 +1,5 @@
+IMAGE_CAPTION_PROMPT = """这是"{doc_stem}"文件中的一张图片，图片上文部分为"{pre_context}"，下文部分为"{post_context}"，请用中文简要总结这张图片的内容，用于 Markdown 图片标题。尽量不要超过20个字"""
+
 # System Prompt
 ITEM_NAME_SYSTEM_PROMPT = "你是一个专业的商品名称识别模型，请根据提供的信息，识别商品名称。名称最好不要超过20个字"
 

@@ -4,7 +4,7 @@ from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 from app.services.embedding_service import EmbeddingService, get_embedding_service
-from app.services.llm_service import identify_main_product
+from app.services.llm_service import LLMService, get_llm_service
 from app.services.vectordb_service import ItemNameVectorDBService, get_item_name_vector_db
 
 
@@ -13,9 +13,11 @@ class NodeItemNameRecognition(BaseNode):
     name: str = "node_item_name_recognition"
 
     def __init__(self, 
+                 llm_service: LLMService = get_llm_service(),
                  embedding_service: EmbeddingService = get_embedding_service(), 
                  item_name_vector_db: ItemNameVectorDBService = get_item_name_vector_db()):
         super().__init__()
+        self._llm_service = llm_service
         self._embedding_service = embedding_service
         self._item_name_vector_db = item_name_vector_db
 
@@ -33,38 +35,24 @@ class NodeItemNameRecognition(BaseNode):
 
         return file_title, chunks
 
-    def _build_context(self, chunks: List[Dict]) -> str:
-        chunk_size = self.config.item_name_chunk_size
+    def _build_llm_context(self, chunks: List[Dict]) -> str:
+        max_context_size = self.config.item_name_chunk_size
         parts: List[str] = []
         total_chars = 0
         for idx, chunk in enumerate(chunks[:self.config.item_name_chunk_k], start = 1):
             chunk_title = chunk.get("title").strip()
             chunk_content = chunk.get("content").strip()
-
             part = f"【切片{idx}】\n标题{chunk_title}\n内容：{chunk_content}"
             parts.append(part)
 
             total_chars += len(part)
-            if total_chars > chunk_size:
-                self.logger.warning(f"Total chars {total_chars} exceeds size limit {chunk_size}, stop concatenating")
+            if total_chars > max_context_size:
+                self.logger.warning(f"Total chars {total_chars} exceeds size limit {max_context_size}, stop appending")
                 break
-
         context = "\n\n".join(parts).strip()
-        final_context = context[:chunk_size]
+        final_context = context[:max_context_size]
         self.logger.info(f"context size for identification: {len(final_context)}")
-        self.logger.info(f"context content for identification: {final_context}")
         return final_context
-
-    def _update_chunks_with_item_name(self, chunks: List[Dict[str, str]], item_name: str):
-        for chunk in chunks:
-            chunk["item_name"] = item_name
-        return chunks
-
-    def _generate_embeddings(self, item_name: str) -> Tuple[List, Dict]:
-        if not item_name:
-            return None, None
-        vectors = self._embedding_service.generate_embeddings([item_name])
-        return vectors["dense"][0], vectors["sparse"][0]
 
     def _save_to_vector_db(self, file_title: str, item_name: str, dense_vector, sparse_vector):
         try:
@@ -82,7 +70,6 @@ class NodeItemNameRecognition(BaseNode):
                 data["sparse_vector"] = sparse_vector
 
             self._item_name_vector_db.insert_into_item_name_collection(data)
-
         except Exception as e: # catch exceptions but do not interrupt the flow
             self.logger.warning(f"Error inserting data into vector db: {str(e)}", exc_info=True)
 
@@ -90,17 +77,15 @@ class NodeItemNameRecognition(BaseNode):
 
         filename, chunks = self._validate_input_state(state)
 
-        context = self._build_context(chunks)
+        context = self._build_llm_context(chunks)
 
-        item_name = identify_main_product(filename, context)
+        item_name = self._llm_service.identify_main_product(filename, context)
 
-        chunks = self._update_chunks_with_item_name(chunks, item_name)
+        chunks = [{item_name: item_name, **chunk} for chunk in chunks]
 
-        dense_vector, sparse_vector = self._generate_embeddings(item_name)
+        vectors = self._embedding_service.generate_embeddings([item_name])
 
-        self._save_to_vector_db(filename, item_name, dense_vector, sparse_vector)
-
-        self.logger.info(f"--- Identified subject: {item_name} ---")
+        self._save_to_vector_db(filename, item_name, vectors["dense"][0], vectors["sparse"][0])
 
         self.backup_json(state, chunks, "chunks.json")
 

@@ -16,18 +16,15 @@ class NodeBGEEmbedding(BaseNode):
         self._embedding_service = embedding_service
 
     def _validate_input_state(self, state: ImportGraphState) -> List[Dict]:
-
         chunks = state.get("chunks")
         if not chunks:
             raise StateFieldError(field_name="chunks", message="Chunks cannot be empty", expected_type=list)
 
         if not isinstance(chunks, list):
             raise StateFieldError(field_name="chunks", message="Invalid data type for chunks", expected_type=list)
-
         return chunks
 
     def _batch_generate_embeddings(self, chunks: List[Dict[str, str]]) -> List[Dict[str, str]]:
-
         chunks_with_embeddings = []
         for i in range(0, len(chunks), BATCH_SIZE):
             batch_chunks = chunks[i:i + BATCH_SIZE]
@@ -43,7 +40,6 @@ class NodeBGEEmbedding(BaseNode):
                 copied_chunk["dense_vector"] = docs_embeddings["dense"][j]
                 copied_chunk["sparse_vector"] = docs_embeddings["sparse"][j]
                 chunks_with_embeddings.append(copied_chunk)
-
             self.logger.info(f"Embeddings generated for chunks {i + 1}-{min(i + len(batch_chunks), len(chunks))}")
 
         return chunks_with_embeddings

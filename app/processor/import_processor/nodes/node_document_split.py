@@ -6,9 +6,9 @@ from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
 
-REGEX_TITLE_LINE = r'^\s*#{1,6}\s+.+'
-REGEX_CODE_BLOCK_MARKER = r'^(`{3,}|~{3,})'
-NO_TITLE = "No Title"
+_REGEX_TITLE_LINE = r'^\s*#{1,6}\s+.+'
+_REGEX_CODE_BLOCK_MARKER = r'^(`{3,}|~{3,})'
+_NO_TITLE = "No Title"
 
 class NodeDocumentSplit(BaseNode):
 
@@ -17,17 +17,17 @@ class NodeDocumentSplit(BaseNode):
     def _validate_input_state(self, state: ImportGraphState) -> Tuple[str, str]:
         file_title = state.get("file_title")
         if not file_title:
-            raise StateFieldError(field_name="file_title", message="filename cannot be empty", expected_type=str)
+            raise StateFieldError(field_name="file_title", message="filename is required", expected_type=str)
 
         md_content = state.get("md_content")
         if not md_content:
-            raise StateFieldError(field_name="md_content", message="file content cannot be empty", expected_type=str)
+            raise StateFieldError(field_name="md_content", message="md_content cannot be empty", expected_type=str)
 
         md_content = md_content.replace("\r\n", "\n").replace("\r", "\n")
-
         return md_content, file_title
 
     def _split_by_headings(self, content: str, file_title: str) -> Tuple[List[Dict[str, str]], int, int]:
+        sections = []
         def _flush_section():
             if not current_lines:
                 return
@@ -58,19 +58,17 @@ class NodeDocumentSplit(BaseNode):
             if not match:
                 return None
             return len(match.group(1))
-
-
-        sections = []
-        title_count = 0
+        
         current_title = ""
         current_lines = []
+        title_count = 0
         in_code_block = False
 
         lines = content.split("\n")
         for line in lines:
             stripped_line = line.strip()
 
-            code_block_marker_match = re.match(REGEX_CODE_BLOCK_MARKER, stripped_line)
+            code_block_marker_match = re.match(_REGEX_CODE_BLOCK_MARKER, stripped_line)
             if code_block_marker_match:
                 marker = code_block_marker_match.group(1)
                 if not in_code_block:
@@ -82,39 +80,31 @@ class NodeDocumentSplit(BaseNode):
                 current_lines.append(line)
                 continue
 
-            is_valid_title = (not in_code_block) and re.match(REGEX_TITLE_LINE, line)
-            if is_valid_title:
+            is_heading_line = (not in_code_block) and re.match(_REGEX_TITLE_LINE, line)
+            if is_heading_line:
                 _flush_section()
                 current_title = stripped_line
                 current_lines = [current_title]
                 title_count += 1
                 self.logger.info(f"Found heading line: {current_title}")
             else:
-                # non-heading line
                 current_lines.append(line)
 
         _flush_section()
-        self.logger.info(f"Document split by headings completed, total {len(sections)} sections, title count: {title_count}, total lines: {len(lines)}")
+        self.logger.info(f"Document split by headings completed, total {len(sections)} sections, title count: {title_count}, line count: {len(lines)}")
         return sections, title_count, len(lines)
-
-    def _no_headings_fallback(self, content: str, sections: List[Dict[str, str]], title_count: int, file_title: str) -> List[Dict[str, str]]:
-        if title_count == 0:
-            self.logger.warning(f"No headings detected, process as a single section: {file_title}")
-            return [{"title": NO_TITLE, "content": content, "file_title": file_title}]
-        return sections
 
     def _split_and_merge(self, sections: List[Dict[str, str]]) -> List[Dict[str, str]]:
         splitted = []
         for sec in sections:
             splitted.extend(self._split_overlong_chunk(sec))
-        self.logger.info(f"Step 4-1: overlong sections further splitted into {len(splitted)} chunks")
+        self.logger.info(f"Chunks after splitting: {len(splitted)}")
 
         merged = self._merge_tiny_chunks(splitted)
-        self.logger.info(f"Step 4-2: tiny chunks merged into {len(merged)} chunks")
+        self.logger.info(f"Chunks after merging: {len(merged)}")
         return merged
 
     def _split_overlong_chunk(self, section: Dict[str, str]) -> List[Dict[str, str]]:
-
         content = section.get("content", "")
         if len(content) <= self.config.max_content_length:
             return [section]
@@ -143,7 +133,6 @@ class NodeDocumentSplit(BaseNode):
             text = chunk.strip()
             if not text:
                 continue
-
             full_text = (prefix + text).strip()
             splitted.append({
                 "title": f"{title}-{idx}" if title else f"chunk-{idx}",
@@ -152,8 +141,7 @@ class NodeDocumentSplit(BaseNode):
                 "part": idx,
                 "file_title": section.get("file_title"),
             })
-
-        self.logger.debug(f"Overlong section ({title}) splitted into {len(splitted)} chunks")
+        self.logger.info(f"Overlong section ({title}) splitted into {len(splitted)} chunks")
         return splitted
 
     def _merge_tiny_chunks(self, chunks: List[Dict[str, str]]) -> List[Dict[str, str]]:
@@ -164,20 +152,21 @@ class NodeDocumentSplit(BaseNode):
         merged = []
         to_merge = None 
         merge_count = 1
-
         for chunk in chunks:
             if to_merge is None:
                 to_merge = chunk
                 continue
-
-            is_current_short = len(to_merge["content"]) < self.config.min_content_length
+            
+            curr_len = len(to_merge["content"])
+            is_current_short = curr_len < self.config.min_content_length
             is_same_parent = to_merge.get("parent_title") == chunk.get("parent_title")
-            self.logger.debug(f'Checking merge condition: prev {to_merge.get("parent_title")}, current {chunk.get("parent_title")}, can merge: {is_same_parent}')
+            self.logger.debug(f'Checking merge condition: prev {to_merge.get("parent_title")}, current {chunk.get("parent_title")}')
 
             if is_current_short and is_same_parent:
                 # remove duplicate parent title from next content before merge
                 parent_title = chunk.get("parent_title", "")
                 next_content = chunk["content"]
+                self.logger.debug(f"Next length: {len(next_content)}")
                 if parent_title and next_content.startswith(parent_title):
                     next_content = next_content[len(parent_title):].lstrip()
                 # merge content, space-separated
@@ -186,9 +175,10 @@ class NodeDocumentSplit(BaseNode):
                 # update sub-chunk part
                 if "part" in chunk:
                     to_merge["part"] = chunk["part"]
-                self.logger.debug(f"merged tiny chunk: {to_merge.get('parent_title') or to_merge.get('title')} -> accumulated length {len(to_merge['content'])}, merged {merge_count} chunks")
+                self.logger.debug(f">>> Merged tiny chunk: {curr_len} + {len(next_content)} -> {len(to_merge['content'])}, {merge_count} chunks")
             else:
                 # reset merge cursor if merge condition not satisfied
+                self.logger.debug(f"<<< Merge condition not satisfied, current merged length: {curr_len}, same parent: {is_same_parent}")
                 merged.append(to_merge)
                 to_merge = chunk
                 merge_count = 1
@@ -205,14 +195,15 @@ class NodeDocumentSplit(BaseNode):
         content, file_title = self._validate_input_state(state)
 
         sections, title_count, lines_count = self._split_by_headings(content, file_title)
+        # no headings fallback
+        if title_count == 0:
+            self.logger.warning(f"No headings detected, process as a single section: {file_title}")
+            sections = [{"title": _NO_TITLE, "content": content, "file_title": file_title}]
 
-        sections = self._no_headings_fallback(content, sections, title_count, file_title)
-
-        sections = self._split_and_merge(sections)
+        chunks = self._split_and_merge(sections)
 
         self.logger.info("-" * 50 + " chunking stats " + "-" * 50)
         self.logger.info(f"MD file line count: {lines_count}")
-        self.logger.info(f"Final chunks count: {len(sections)}")
-        self.backup_json(state, sections, "chunks.json")
-
-        return { "chunks": sections }
+        self.logger.info(f"Final chunks count: {len(chunks)}")
+        self.backup_json(state, chunks, "chunks.json")
+        return { "chunks": chunks }

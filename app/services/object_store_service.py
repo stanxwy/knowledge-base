@@ -92,7 +92,7 @@ class ObjectStoreService:
             )
             return f"{self._base_url}/{object_name}"
         except Exception as e:
-            logger.error(f"图片上传MinIO失败：{local_path}，错误信息：{str(e)}")
+            logger.error(f"Error uploading file {local_path}, message: {str(e)}")
 
     def clean_img_dir(self, doc_stem: str) -> None:
         img_dir = f"{self._minio_config.img_dir}/{doc_stem}"
