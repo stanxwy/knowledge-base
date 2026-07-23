@@ -95,7 +95,6 @@ class MongoService:
         try:
             query = {"session_id": session_id} if session_id else {}
             cursor = self._get_mongo_client().chat_message.find(query).sort("ts", DESCENDING).limit(limit)
-            # 将游标转为列表，触发实际数据库查询，获取所有符合条件的文档
             messages = list(cursor)
             for m in messages:
                 logger.debug(f'{datetime.fromtimestamp(m["ts"]).strftime("%Y-%m-%d %H:%M:%S")} - {m["role"]}: {m["text"]}')
