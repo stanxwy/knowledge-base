@@ -16,11 +16,11 @@ class NodePDFToMD(BaseNode):
     def _validate_input_state(self, state: ImportGraphState) -> tuple[Path, Path]:
         pdf_path = state.get("pdf_path")
         if not pdf_path:
-            raise StateFieldError(field_name='pdf_path', expected_type=str)
+            raise StateFieldError(field_name='pdf_path', message="pdf_path is required", expected_type=str)
 
         output_file_dir = state.get("output_file_dir")
         if not output_file_dir:
-            raise StateFieldError(field_name='output_file_dir', expected_type=str)
+            raise StateFieldError(field_name='output_file_dir', message="output_file_dir is required", expected_type=str)
 
         pdf_path_obj = Path(pdf_path)
 

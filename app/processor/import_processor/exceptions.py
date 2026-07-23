@@ -11,7 +11,7 @@ class ImportProcessError(Exception):
             parts.append(f"[{self.node_name}]")
         parts.append(super().__str__())
         if self.cause:
-            parts.append(f"(原因: {self.cause})")
+            parts.append(f"(Cause: {self.cause})")
         return " ".join(parts)
 
 

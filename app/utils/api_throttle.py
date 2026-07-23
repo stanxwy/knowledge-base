@@ -4,22 +4,40 @@ import time
 
 logger = logging.getLogger(__name__)
 
+API_QUEUE_SIZE = 10
+API_WINDOW_SIZE = 60
+
 def apply_api_rate_limit(
     request_times: Deque[float],
-    max_requests: int,
-    window_seconds: int = 60
+    max_requests: int = API_QUEUE_SIZE,
+    window_seconds: int = API_WINDOW_SIZE
 ) -> None:
     """
-    通用滑动窗口API速率限制器（抽离为公共工具）
-    核心逻辑：维护请求时间戳双端队列，窗口内请求数超上限则自动等待，防止触发第三方API限流
-    :param request_times: 存储请求时间戳的双端队列，需外部初始化（全局/单例），跨调用复用
-    :param max_requests: 速率限制窗口内的最大允许请求次数
-    :param window_seconds: 速率限制滑动窗口时长，默认60秒（1分钟）
-    :return: None，超出限制时会阻塞等待
+    Sliding window API rate limiter
+    Core logic: Maintain a deque of request timestamps; block and wait when the
+    number of requests within the sliding window exceeds the rate limit,
+    preventing third‑party API throttling.
+
+    Args:
+        request_times (collections.deque[float]): Deque storing request timestamps.
+            Must be initialized externally (global or singleton) and reused across
+            calls. Timestamps are typically time.time() values.
+        max_requests (int): Maximum allowed number of requests within the sliding
+            window.
+        window_seconds (int, optional): Sliding window duration in seconds.
+            Defaults to 60 (1 minute).
+
+    Returns:
+        None: Blocks and waits until the next request is permitted when the rate
+            limit is exceeded.
+
+    Raises:
+        None: This implementation handles rate limiting via blocking rather than
+            raising exceptions.
     """
     current_time = time.time()
 
-    # clean up the sliding window of expired requests
+    # clear expired requests within the window
     while request_times and current_time - request_times[0] >= window_seconds:
         request_times.popleft()
 
