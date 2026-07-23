@@ -2,7 +2,7 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 
 from app.utils.json_format_utils import format_json
-from app.services.llm_service import generate_hyde_doc
+from app.services.llm_service import get_llm_service, LLMService
 from app.services.vectordb_service import ChunksVectorDBService, get_chunks_vector_db
 
 class NodeSearchEmbeddingHyde(NodeBase):
@@ -12,8 +12,11 @@ class NodeSearchEmbeddingHyde(NodeBase):
     """
     name: str = "node_search_embedding_hyde"
 
-    def __init__(self, chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
+    def __init__(self, 
+                 llm_service: LLMService = get_llm_service(),
+                 chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
         super().__init__()
+        self._llm_service = llm_service
         self._chunks_vector_db = chunks_vector_db
 
     def _step_1_create_hyde_doc(self, rewritten_query: str) -> str:
@@ -26,7 +29,7 @@ class NodeSearchEmbeddingHyde(NodeBase):
         :return: LLM生成的假设性文档内容
         """
         self.logger.info("步骤1: 开始生成假设性文档")
-        return generate_hyde_doc(rewritten_query)
+        return self._llm_service.generate_hyde_doc(rewritten_query)
     
     def _step_2_search_embedding_hyde(self, rewritten_query: str, hyde_doc: str, item_names=None):
         """

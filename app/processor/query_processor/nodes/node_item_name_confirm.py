@@ -2,22 +2,22 @@ from typing import List, Tuple
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
-from app.services.llm_service import resolve_item_name_and_rewrite_query
+from app.services.llm_service import get_llm_service, LLMService
 from app.services.vectordb_service import ItemNameVectorDBService, get_item_name_vector_db
 from app.services.mongo_service import get_mongo_service, MongoService
 
 class NodeItemNameConfirm(NodeBase):
-    """
-    节点功能：确认用户问题中的核心商品名称。
-    """
+
     name: str = "node_item_name_confirm"
     
     def __init__(self,
                  mongo: MongoService = get_mongo_service(), 
+                 llm_service: LLMService = get_llm_service(),
                  item_name_vector_db: ItemNameVectorDBService = get_item_name_vector_db()):
         super().__init__()
-        self._item_name_vector_db = item_name_vector_db
         self._mongo = mongo
+        self._llm_service = llm_service
+        self._item_name_vector_db = item_name_vector_db
 
     def _step_1_validate_input_state(self, state: QueryGraphState) -> Tuple[str, str]:
         session_id = state.get("session_id") 
@@ -192,7 +192,7 @@ class NodeItemNameConfirm(NodeBase):
         self.logger.info(f"步骤3：用户消息已初始保存, ID: {message_id}")
 
         # 步骤4：提取信息
-        item_names, rewritten_query = resolve_item_name_and_rewrite_query(original_query, history)
+        item_names, rewritten_query = self._llm_service.resolve_item_name_and_rewrite_query(original_query, history)
 
         # 5. & 6. 如果有提取到商品名，进行搜索和对齐
         confirmed_item_names = []

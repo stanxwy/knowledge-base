@@ -7,7 +7,7 @@ from typing import Tuple, List, Dict
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError, FileProcessingError
 from app.processor.import_processor.state import ImportGraphState
-from app.services.llm_service import generate_image_caption
+from app.services.llm_service import get_llm_service, LLMService
 from app.services.object_store_service import ObjectStoreService, get_object_store_service
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.backup_utils import backup_file
@@ -18,8 +18,11 @@ class NodeMDImg(BaseNode):
 
     name: str = "node_md_img"
 
-    def __init__(self, object_store: ObjectStoreService = get_object_store_service()):
+    def __init__(self, 
+                 llm_service: LLMService = get_llm_service(),
+                 object_store: ObjectStoreService = get_object_store_service()):
         super().__init__()
+        self._llm_service = llm_service
         self._object_store = object_store
 
     def _validate_input_state(self, state: ImportGraphState) -> Tuple[str, Path, Path]:
@@ -79,7 +82,7 @@ class NodeMDImg(BaseNode):
 
         for img_file, img_local_path, context in target_images:
             apply_api_rate_limit(request_deque)
-            captions[img_file] = generate_image_caption(img_local_path, doc_stem, context)
+            captions[img_file] = self._llm_service.generate_image_caption(img_local_path, doc_stem, context)
         return captions
     
     def _upload_images_batch(self, doc_stem: str, target_images: List[Tuple]) -> Dict[str, str]:

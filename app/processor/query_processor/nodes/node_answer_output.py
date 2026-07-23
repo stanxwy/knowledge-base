@@ -7,7 +7,7 @@ from app.processor.query_processor.prompt import ANSWER_PROMPT
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-from app.services.llm_service import get_llm_client
+from app.services.llm_service import get_llm_service, LLMService
 from app.services.mongo_service import get_mongo_service, MongoService
 from app.utils.sse_utils import push_sse_event, SSEEvent
 from app.utils.task_utils import set_task_result
@@ -22,9 +22,11 @@ class NodeAnswerOutput(NodeBase):
     """
     name: str = "node_answer_output"
 
-    def __init__(self, mongo: MongoService = get_mongo_service()):
+    def __init__(self, mongo: MongoService = get_mongo_service(),
+                 llm_service: LLMService = get_llm_service()):
         super().__init__()
         self._mongo = mongo
+        self._llm_service = llm_service
 
     def _step_1_check_answer(self, state) -> bool:
       """
@@ -155,7 +157,7 @@ class NodeAnswerOutput(NodeBase):
 
         # 获取 LLM 客户端
         # 注意：这里我们使用统一的 get_llm_client 获取实例
-        llm = get_llm_client()
+        llm = self._llm_service.get_llm_client()
 
         # 判断是否需要流式输出
         # 通常 state 中会注入 stream_queue 用于 SSE 推送
