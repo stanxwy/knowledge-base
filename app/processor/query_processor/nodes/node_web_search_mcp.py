@@ -22,15 +22,11 @@ class NodeWebSearchMcp(NodeBase):
             result = asyncio.run(self._mcp_search.search_web(query))
             if result:
                 pages = json.loads(result.content[0].text).get("pages") or []
-                for page in pages:
-                    snippet = (page.get("snippet") or "").strip()
-                    url = (page.get("url") or "").strip()
-                    title = (page.get("title") or "").strip()
-                    if not snippet:
-                        continue
-                    docs.append({"title": title, "url": url, "snippet": snippet})
+                docs = [{
+                    "snippet": (page.get("snippet") or "").strip(),
+                    "url": (page.get("url") or "").strip(),
+                    "title": (page.get("title") or "").strip()
+                } for page in pages if page.get("snippet")]
                 self.logger.info(f"MCP search result: \n{format_json(docs)}")
-
-        if docs:
-            return { "web_search_docs": docs }
-        return {}
+                
+        return { "web_search_docs": docs }

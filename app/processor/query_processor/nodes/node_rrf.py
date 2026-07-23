@@ -4,28 +4,28 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
 
-WEIGHT_SEARCH_EMBEDDING = 1.0
-WEIGHT_HYDE = 1.0
-CONSTANT_K = 60
+_WEIGHT_SEARCH_EMBEDDING = 1.0
+_WEIGHT_HYDE = 1.0
+_CONSTANT_K = 60
 
 class NodeRrf(NodeBase):
 
     name: str = "node_rrf"
 
-    def _rrf_merge(self, rrf_inputs, k: int = CONSTANT_K, max_results: int = None) -> List[Tuple[Dict[str, Any], float]]:
-        chunk_scores = {}
-        chunk_data = {}
+    def _rrf_merge(self, rrf_inputs, k: int = _CONSTANT_K, max_results: int = None) -> List[Tuple[Dict[str, Any], float]]:
+        dict_score = {}
+        dict_doc = {}
 
         for rrf_input, weight in rrf_inputs:
             for rank, doc in enumerate(rrf_input, start=1):
                 chunk_id = doc.get('chunk_id')
                 # RRF formula: score += weight / (k + rank)
-                chunk_scores[chunk_id] = chunk_scores.get(chunk_id, 0.0) + weight / (k + rank)
-                chunk_data.setdefault(chunk_id, doc)
-        self.logger.info(f"chunk_scores: \n{format_json(chunk_scores)}")
-        self.logger.info(f"chunk_data: \n{format_json(chunk_data)}")
+                dict_score[chunk_id] = dict_score.get(chunk_id, 0.0) + weight / (k + rank)
+                dict_doc.setdefault(chunk_id, doc)
+        self.logger.info(f"dict_score: \n{format_json(dict_score)}")
+        self.logger.info(f"dict_doc: \n{format_json(dict_doc)}")
 
-        unsorted_results = [(chunk_data[chunk_id], score) for chunk_id, score in chunk_scores.items()]
+        unsorted_results = [(dict_doc[chunk_id], score) for chunk_id, score in dict_score.items()]
         self.logger.info(f"unsorted_results: \n{format_json(unsorted_results)}")
 
         sorted_results = sorted(
@@ -49,8 +49,8 @@ class NodeRrf(NodeBase):
 
         # set weight for each result set from multi-query retrieval
         rrf_inputs = [
-            (embedding_search_list, WEIGHT_SEARCH_EMBEDDING),
-            (hyde_embedding_search_list, WEIGHT_HYDE)
+            (embedding_search_list, _WEIGHT_SEARCH_EMBEDDING),
+            (hyde_embedding_search_list, _WEIGHT_HYDE)
         ]
         self.logger.info(f"rrf_inputs: \n{format_json(rrf_inputs)}")
 

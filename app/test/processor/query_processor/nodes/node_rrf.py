@@ -20,10 +20,10 @@ if __name__ == '__main__':
     result = node_rrf(mock_state)
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.processor.query_processor.nodes.node_rrf
-2026-07-18 21:14:57 - root - INFO - 日志系统初始化完成，日志文件: ./logs\knowledge_base.log
-2026-07-18 21:14:57 - import.node_rrf - INFO - --- node_rrf 开始啦 ---
-2026-07-18 21:14:57 - import.node_rrf - INFO - rrf_inputs:
+(knowledge-base) D:\knowledge-base>python -m app.test.processor.query_processor.nodes.node_rrf
+2026-07-23 22:21:24 - root - INFO - logging initialized: ./logs\knowledge_base.log
+2026-07-23 22:21:24 - import.node_rrf - INFO - --- node_rrf started ---
+2026-07-23 22:21:24 - import.node_rrf - INFO - rrf_inputs:
 [
     [
         [
@@ -60,14 +60,14 @@ if __name__ == '__main__':
         1.0
     ]
 ]
-2026-07-18 21:14:57 - import.node_rrf - INFO - chunk_scores:
+2026-07-23 22:21:24 - import.node_rrf - INFO - dict_score:
 {
     "chunk_1": 0.03278688524590164,
     "chunk_2": 0.03200204813108039,
     "chunk_3": 0.015873015873015872,
     "chunk_4": 0.016129032258064516
 }
-2026-07-18 21:14:57 - import.node_rrf - INFO - chunk_data:
+2026-07-23 22:21:24 - import.node_rrf - INFO - dict_doc:
 {
     "chunk_1": {
         "chunk_id": "chunk_1",
@@ -86,7 +86,7 @@ if __name__ == '__main__':
         "content": "HyDE搜索结果#2"
     }
 }
-2026-07-18 21:14:57 - import.node_rrf - INFO - unsorted_results:
+2026-07-23 22:21:24 - import.node_rrf - INFO - unsorted_results:
 [
     [
         {
@@ -117,7 +117,7 @@ if __name__ == '__main__':
         0.016129032258064516
     ]
 ]
-2026-07-18 21:14:57 - import.node_rrf - INFO - sorted_results:
+2026-07-23 22:21:24 - import.node_rrf - INFO - sorted_results:
 [
     [
         {
@@ -148,7 +148,7 @@ if __name__ == '__main__':
         0.015873015873015872
     ]
 ]
-2026-07-18 21:14:57 - import.node_rrf - INFO - rrf_chunks:
+2026-07-23 22:21:24 - import.node_rrf - INFO - rrf_chunks:
 [
     {
         "chunk_id": "chunk_1",
@@ -167,5 +167,5 @@ if __name__ == '__main__':
         "content": "向量搜索结果#3"
     }
 ]
-2026-07-18 21:14:57 - import.node_rrf - INFO - --- node_rrf 完成啦 ---
+2026-07-23 22:21:24 - import.node_rrf - INFO - --- node_rrf done ---
 """
