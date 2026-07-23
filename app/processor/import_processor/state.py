@@ -1,108 +1,42 @@
-"""
-
-导入流程状态 类型定义
-
-定义完整的状态结构和辅助函数
-
-"""
 from typing import TypedDict, List
 import copy
 
 class ImportGraphState(TypedDict, total=False):
-    """
 
-    导入流程图状态
-    包含整个导入流程中传递的所有数据
-    
-    total=False
-        所有字段都是可选的
-        节点只需更新自己关心的字段
-    """
+    task_id: str  # for realtime tracking of task status
 
-    # ==================== 任务标识 ====================
+    is_md_read_enabled: bool
+    is_pdf_read_enabled: bool
 
-    task_id: str  # 任务 ID，用于任务追踪(web交互的时候用到，实时看到节点的处理日志)
+    import_file_path: str
+    output_file_dir: str
+    pdf_path: str
+    md_path: str
 
-    # ==================== 控制标志 ====================
-    # step 1 node_entry
-    is_md_read_enabled: bool  # 是否启用 MD 读取
-    # step 1 node_entry
-    is_pdf_read_enabled: bool  # 是否启用 PDF 读取
+    file_title: str
+    item_name: str
 
-    # ==================== 路径信息 ====================
-    # step 0 init state
-    import_file_path: str  # 导入文件路径
-    # step 0 init state
-    output_file_dir: str  # 导入(出)文件目录
-    # step 1 node_entry
-    pdf_path: str  # PDF 文件路径
-    # step 1 node_entry, # step 2 node_pdf_to_md, step 3 node_md_img
-    md_path: str  # 转换后Markdown 文件路径
-
-    # ==================== 文件信息 ====================
-    # step 1 node_entry
-    file_title: str  # 文件标题（不含扩展名）
-    # step 5 node_item_name_recognition
-    item_name: str  # 识别出的商品/产品名称(方便程序员用)
-
-    # ==================== 处理中间数据 ====================
-    # step 2 node_pdf_to_md, step 3 node_md_img
-    md_content: str  # Markdown 文档内容
-    # step 4 node_document_split
-    chunks: List  # 文档切片列表
-
-    # ==================== 默认状态 ====================
+    md_content: str
+    chunks: List
 
 GRAPH_DEFAULT_STATE: ImportGraphState = {
-
     "task_id": "",
-
     "is_pdf_read_enabled": False,
-
     "is_md_read_enabled": False,
-
     "output_file_dir": "",
-
     "import_file_path": "",
-
     "pdf_path": "",
-
     "md_path": "",
-
     "file_title": "",
-
     "md_content": "",
-
     "chunks": [],
-
     "item_name": "",
-
 }
 
-
 def create_default_state(**overrides) -> ImportGraphState:
-    """
-    创建默认状态，支持覆盖
-
-    Args:
-        **overrides: 要覆盖的字段
-
-    Returns:
-        新的状态实例
-
-    Examples:
-        >>> state = create_default_state(task_id="task_001", local_file_path="doc.pdf")
-    """
     state = copy.deepcopy(GRAPH_DEFAULT_STATE)
     state.update(overrides)
     return state
 
-
 def get_default_state() -> ImportGraphState:
-    """
-    获取默认状态副本
-
-    Returns:
-        状态副本（避免全局污染）
-    """
     return copy.deepcopy(GRAPH_DEFAULT_STATE)

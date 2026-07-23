@@ -81,7 +81,7 @@ class NodeItemNameRecognition(BaseNode):
 
         item_name = self._llm_service.identify_main_product(filename, context)
 
-        chunks = [{item_name: item_name, **chunk} for chunk in chunks]
+        chunks = [{"item_name": item_name, **chunk} for chunk in chunks]
 
         vectors = self._embedding_service.generate_embeddings([item_name])
 

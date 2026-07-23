@@ -3,7 +3,7 @@ import json
 
 from agents.mcp import MCPServerStreamableHttp
 
-from app.config.bailian_mcp_config import mcp_config
+from app.config.bailian_mcp_config import get_mcp_config
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
 from app.utils.json_format_utils import format_json
@@ -18,12 +18,16 @@ class NodeWebSearchMcp(NodeBase):
     """
     name: str = "node_web_search_mcp"
 
+    def __init__(self, mcp_config=get_mcp_config()):
+        super().__init__()
+        self._mcp_config = mcp_config
+
     async def _mcp_call(self, query):
         search_mcp = MCPServerStreamableHttp(
             name="search_mcp",
             params={
-                "url": mcp_config.mcp_base_url,
-                "headers": {"Authorization": f"Bearer {mcp_config.api_key}"},
+                "url": self._mcp_config.mcp_base_url,
+                "headers": {"Authorization": f"Bearer {self._mcp_config.api_key}"},
                 "timeout": MCP_TIME_OUT,
             },
             cache_tools_list=True,
