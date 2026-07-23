@@ -10,9 +10,9 @@ from pathlib import Path
 from app.config.mineru_config import load_mineru_config, MineruConfig
 from app.processor.import_processor.exceptions import PdfConversionError
 
-POST_TIMEOUT = 10
-PUT_TIMEOUT = (10, 30)
-GET_TIMEOUT = 10
+POST_TIMEOUT = 10       # request for upload url
+PUT_TIMEOUT = (10, 30)  # upload file
+GET_TIMEOUT = 10        # poll task status, download zip
 
 POLL_TIMEOUT = 600
 POLL_INTERVAL = 3
@@ -54,16 +54,16 @@ class MineruService:
         if result.get("code") != 0:
             raise PdfConversionError(f"get_upload_url error: {result}")
 
-        signed_url = result["data"]["file_urls"][0]
+        upload_url = result["data"]["file_urls"][0]
         batch_id = result["data"]["batch_id"]
-        logger.info(f"get_upload_url success, batch_id: {batch_id}, signed_url: {signed_url}")
-        return signed_url, batch_id
+        logger.info(f"get_upload_url success, batch_id: {batch_id}, upload_url: {upload_url}")
+        return upload_url, batch_id
 
         
-    def upload_file(self, file_path: str, signed_url: str) -> str:
+    def upload_file(self, file_path: str, upload_url: str) -> str:
         with open(Path(file_path), "rb") as f:
-            logger.info(f"start to upload file, signed_url: {signed_url}")
-            res_upload = requests.put(signed_url, data=f, timeout=PUT_TIMEOUT)
+            logger.info(f"Start to upload file, signed_url: {upload_url}")
+            res_upload = requests.put(upload_url, data=f, timeout=PUT_TIMEOUT)
             if res_upload.status_code != 200:
                 raise PdfConversionError(f"upload_doc http error: {res_upload}")
             logger.info("upload_doc success")
@@ -74,7 +74,7 @@ class MineruService:
         header = self._build_header()
 
         start_time = time.time() 
-        logger.info(f"start to poll task status, max timeout: {POLL_TIMEOUT}s, poll_url: {poll_url}")
+        logger.info(f"Start to poll task status, max timeout: {POLL_TIMEOUT}s, poll_url: {poll_url}")
 
         while True:
             elapsed_time = time.time() - start_time
@@ -83,35 +83,32 @@ class MineruService:
 
             try:
                 logger.info(f"start to poll, url: {poll_url}")
-                res_poll = requests.get(url=poll_url, headers=header, timeout=GET_TIMEOUT)
+                poll_result = requests.get(url=poll_url, headers=header, timeout=GET_TIMEOUT)
             except Exception as e:
                 logger.warning(f"{batch_id} poll_task_status error, will retry after {POLL_INTERVAL}s: {str(e)}")
                 time.sleep(POLL_INTERVAL)
                 continue
 
-            if res_poll.status_code != 200:
-                raise PdfConversionError(f"{batch_id} poll_task_status http error: {res_poll}")
-
-            poll_data = res_poll.json()
+            if poll_result.status_code != 200:
+                raise PdfConversionError(f"{batch_id} poll_task_status http error: {poll_result}")
+            poll_data = poll_result.json()
             logger.info(f"poll_task_status success: {poll_data}")
-
             if poll_data["code"] != 0:
                 raise PdfConversionError(f"{batch_id} poll_task_status error: {poll_data}")
 
-            batch_results = poll_data["data"]["extract_result"]
-            result_item = batch_results[0]
-            data_state = result_item["state"]
-
+            tasks = poll_data["data"]["extract_result"]
+            task = tasks[0]
+            data_state = task["state"]
             # state: done | waiting-file | pending | running | converting | failed
             if data_state == "done":
                 logger.info(f"{batch_id} task done, total time: {int(elapsed_time)}s")
 
-                full_zip_url = result_item["full_zip_url"]
+                full_zip_url = task["full_zip_url"]
                 logger.info(f"{batch_id} full_zip_url: {full_zip_url}")
                 return full_zip_url
 
             elif data_state == "failed":
-                err_msg = result_item.get("err_msg", "Unknown Error")
+                err_msg = task.get("err_msg", "MinerU Task Unknown Error")
                 raise PdfConversionError(f"{batch_id} task failed: {err_msg}")
 
             else:
@@ -125,7 +122,7 @@ class MineruService:
             logger.info(f"Output directory does not exist. Creating: {output_dir_obj.absolute()}")
             output_dir_obj.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"start to download zip, url: {zip_url}")
+        logger.info(f"Start to download zip, url: {zip_url}")
         response = requests.get(zip_url, timeout=GET_TIMEOUT)
 
         if response.status_code != 200:
@@ -144,19 +141,16 @@ class MineruService:
         if extract_target_dir.exists():
             shutil.rmtree(extract_target_dir)
             logger.info(f"removed existing extract dir: {extract_target_dir}")
-
         extract_target_dir.mkdir(parents=True, exist_ok=True)
 
-        logger.info(f"start to unzip {zip_file_path}")
         with zipfile.ZipFile(Path(zip_file_path), "r") as zip_file_obj:
             zip_file_obj.extractall(extract_target_dir)
-        logger.info(f"unzip success, target dir: {extract_target_dir}")
+        logger.info(f"{zip_file_path} unzipped to {extract_target_dir}")
 
         target_md_file = extract_target_dir / "full.md"
-        logger.info(f"start to rename {target_md_file} to {pdf_stem}.md")
         new_md_path = target_md_file.with_name(f"{pdf_stem}.md")
         target_md_file.rename(new_md_path)
-        logger.info(f"rename success {pdf_stem}.md")
+        logger.info(f"{target_md_file} renamed to {pdf_stem}.md")
         return str(new_md_path.absolute())
 
 

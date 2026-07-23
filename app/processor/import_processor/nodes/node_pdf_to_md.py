@@ -31,14 +31,16 @@ class NodePDFToMD(BaseNode):
 
     def _upload_and_poll(self, pdf_path: str) -> str:
 
-        signed_url, batch_id = self._mineru.get_upload_url(Path(pdf_path).name)
+        upload_url, batch_id = self._mineru.get_upload_url(Path(pdf_path).name)
 
-        self._mineru.upload_file(pdf_path, signed_url)
+        self._mineru.upload_file(pdf_path, upload_url)
 
         return self._mineru.poll_task_status(batch_id)
 
 
-    def _download_and_extract(self, zip_url: str, output_dir: str, pdf_stem: str) -> str:
+    def _download_and_extract(self, zip_url: str, output_dir: str, pdf_path: str) -> str:
+
+        pdf_stem = Path(pdf_path).stem
         
         zip_file_path = self._mineru.download_zip(zip_url, output_dir, pdf_stem)
 
@@ -51,7 +53,7 @@ class NodePDFToMD(BaseNode):
 
         zip_url = self._upload_and_poll(pdf_path)
 
-        md_path = self._download_and_extract(zip_url, output_dir, Path(pdf_path).stem)
+        md_path = self._download_and_extract(zip_url, output_dir, pdf_path)
 
         with open(md_path, "r", encoding="utf-8") as f:
             md_content = f.read()

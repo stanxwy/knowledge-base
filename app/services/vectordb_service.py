@@ -5,7 +5,7 @@ from pymilvus import MilvusClient, DataType, AnnSearchRequest, WeightedRanker
 from typing import List, Dict
 
 from app.config.milvus_config import load_milvus_config, MilvusConfig
-from app.processor.import_processor.exceptions import MilvusError
+from app.processor.import_processor.exceptions import VectorDBError
 from app.services.embedding_service import EmbeddingService, get_embedding_service
 
 logger = logging.getLogger(__name__)
@@ -137,7 +137,7 @@ class ItemNameVectorDBService(VectorDBService):
             return result
         except Exception as e:
             logger.error(f"Error deleting data from vector db: {str(e)}")
-            raise MilvusError(f"Error deleting data from vector db: {str(e)}")
+            raise VectorDBError(f"Error deleting data from vector db: {str(e)}")
 
     def hybrid_search_item_name(self, item_names: List[str]) -> List[Dict]:
         results = []
@@ -231,7 +231,7 @@ class ChunksVectorDBService(VectorDBService):
             return result
         except Exception as e:
             logger.error(f"Error deleting data from vector db: {str(e)}")
-            raise MilvusError(f"Error deleting data from vector db: {str(e)}")
+            raise VectorDBError(f"Error deleting data from vector db: {str(e)}")
         
     def insert_into_chunks_collection(self, data: List[Dict]):
         result = self._get_milvus_client().insert(collection_name=self._milvus_config.chunks_collection, data=data)
