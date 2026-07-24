@@ -52,8 +52,6 @@ class MongoService:
         image_urls: List[str] = None,
         message_id: str = None
     ) -> str:
-
-        ts = datetime.now().timestamp()
         document = {
             "session_id": session_id,
             "role": role,
@@ -61,7 +59,6 @@ class MongoService:
             "rewritten_query": rewritten_query or "",
             "item_names": item_names,
             "image_urls": image_urls,
-            "ts": ts
         }
 
         mongo_client = self._get_mongo_client()
@@ -73,6 +70,7 @@ class MongoService:
             logger.info(f"Chat message updated: {document}")
             return message_id
         else:
+            document["ts"] = datetime.now().timestamp()
             result = mongo_client.chat_message.insert_one(document)
             logger.info(f"Chat message inserted: {document}")
             return str(result.inserted_id)
