@@ -1,10 +1,11 @@
 import json
 import logging
 from functools import lru_cache
-from pymilvus import MilvusClient, DataType, AnnSearchRequest, WeightedRanker
-from typing import List, Dict
+from typing import Dict, List
 
-from app.config.milvus_config import load_milvus_config, MilvusConfig
+from pymilvus import AnnSearchRequest, DataType, MilvusClient, WeightedRanker
+
+from app.config.milvus_config import MilvusConfig, load_milvus_config
 from app.processor.import_processor.exceptions import VectorDBError
 from app.services.embedding_service import EmbeddingService, get_embedding_service
 

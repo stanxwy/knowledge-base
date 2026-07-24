@@ -1,7 +1,9 @@
-import colorlog 
 import logging
 import os
 from logging.handlers import TimedRotatingFileHandler
+
+import colorlog
+
 
 def setup_logging(level: int = logging.INFO, log_dir: str = "./logs"):
 

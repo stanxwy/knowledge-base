@@ -1,4 +1,4 @@
-from typing import List, Dict, Any, Tuple
+from typing import Any, Dict, List, Tuple
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState

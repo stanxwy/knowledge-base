@@ -2,6 +2,7 @@ from typing import List
 
 from app.processor.base_state import KBGraphState
 
+
 class QueryGraphState(KBGraphState):
     
     session_id: str  # 会话ID

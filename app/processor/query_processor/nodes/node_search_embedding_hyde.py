@@ -1,8 +1,8 @@
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-
-from app.services.llm_service import get_llm_service, LLMService
+from app.services.llm_service import LLMService, get_llm_service
 from app.services.vectordb_service import ChunksVectorDBService, get_chunks_vector_db
+
 
 class NodeSearchEmbeddingHyde(NodeBase):
 

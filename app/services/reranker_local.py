@@ -1,8 +1,9 @@
-from functools import lru_cache
 import logging
+from functools import lru_cache
+
 from FlagEmbedding import FlagReranker
 
-from app.config.reranker_config import load_reranker_config, RerankerConfig
+from app.config.reranker_config import RerankerConfig, load_reranker_config
 
 logger = logging.getLogger(__name__)
 

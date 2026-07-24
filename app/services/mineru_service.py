@@ -1,13 +1,13 @@
 import logging
-import requests
 import shutil
 import time
 import zipfile
-
 from functools import lru_cache
 from pathlib import Path
 
-from app.config.mineru_config import load_mineru_config, MineruConfig
+import requests
+
+from app.config.mineru_config import MineruConfig, load_mineru_config
 from app.processor.import_processor.exceptions import PdfConversionError
 
 POST_TIMEOUT = 10       # request for upload url

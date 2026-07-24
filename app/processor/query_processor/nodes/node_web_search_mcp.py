@@ -3,7 +3,7 @@ import json
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-from app.services.mcp_search_service import get_mcp_search_service, MCPSearchService
+from app.services.mcp_search_service import MCPSearchService, get_mcp_search_service
 from app.utils.json_format_utils import format_json
 
 

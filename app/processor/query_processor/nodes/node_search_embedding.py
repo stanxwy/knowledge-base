@@ -1,8 +1,8 @@
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-
 from app.services.vectordb_service import ChunksVectorDBService, get_chunks_vector_db
+
 
 class NodeSearchEmbedding(NodeBase):
 

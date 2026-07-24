@@ -4,11 +4,20 @@ import logging
 from functools import lru_cache
 from typing import Any, Dict, List, Tuple
 
-from langchain_core.messages import SystemMessage, HumanMessage
+from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
-from app.config.lm_config import get_lm_config, LLMConfig
-from app.processor.import_processor.prompt import IMAGE_CAPTION_PROMPT, ITEM_NAME_SYSTEM_PROMPT, ITEM_NAME_USER_PROMPT_TEMPLATE
-from app.processor.query_processor.prompt import ITEM_NAME_EXTRACT_SYSTEM_PROMPT, ITEM_NAME_EXTRACT_TEMPLATE, HYDE_PROMPT
+
+from app.config.lm_config import LLMConfig, get_lm_config
+from app.processor.import_processor.prompt import (
+    IMAGE_CAPTION_PROMPT,
+    ITEM_NAME_SYSTEM_PROMPT,
+    ITEM_NAME_USER_PROMPT_TEMPLATE,
+)
+from app.processor.query_processor.prompt import (
+    HYDE_PROMPT,
+    ITEM_NAME_EXTRACT_SYSTEM_PROMPT,
+    ITEM_NAME_EXTRACT_TEMPLATE,
+)
 
 logger = logging.getLogger(__name__)
 

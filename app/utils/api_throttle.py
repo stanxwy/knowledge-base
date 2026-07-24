@@ -1,6 +1,6 @@
 import logging
-from typing import Deque
 import time
+from typing import Deque
 
 logger = logging.getLogger(__name__)
 
@@ -16,7 +16,7 @@ def apply_api_rate_limit(
     Sliding window API rate limiter
     Core logic: Maintain a deque of request timestamps; block and wait when the
     number of requests within the sliding window exceeds the rate limit,
-    preventing third‑party API throttling.
+    preventing third-party API throttling.
 
     Args:
         request_times (collections.deque[float]): Deque storing request timestamps.

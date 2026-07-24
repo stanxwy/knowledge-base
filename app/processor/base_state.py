@@ -1,5 +1,6 @@
-from typing import TypedDict
 import copy
+from typing import TypedDict
+
 
 class KBGraphState(TypedDict, total=False):
     task_id: str  # for realtime tracking of task status

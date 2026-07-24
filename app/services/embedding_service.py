@@ -1,8 +1,10 @@
 from functools import lru_cache
-from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 from typing import Dict, List
 
+from pymilvus.model.hybrid import BGEM3EmbeddingFunction
+
 from app.config.embedding_config import EmbeddingConfig, load_embedding_config
+
 
 class EmbeddingService:
     def __init__(self, config: EmbeddingConfig = load_embedding_config()):

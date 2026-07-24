@@ -1,6 +1,8 @@
 import logging
-from agents.mcp import MCPServerStreamableHttp
 from functools import lru_cache
+
+from agents.mcp import MCPServerStreamableHttp
+
 from app.config.mcp_config import DashScopeMcpConfig, load_dashscope_mcp_config
 
 _MCP_TIME_OUT = 10
