@@ -28,7 +28,6 @@ app = FastAPI(
     title="Knowledge Base Import Workflow API",
     description="This document describes the API of the Knowledge Base Import Workflow",
 )
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -90,9 +89,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
             shutil.copyfileobj(file.file, file_buffer)
         logger.info(f"[{task_id}] file saved to local, path: {import_file_path}")
 
-        # 6. 将本地文件上传至MinIO对象存储，做持久化保存
-        # 构建MinIO中的文件对象名：pdf_files/YYYYMMDD/文件名（按日期分层，和本地一致）
-        object_name = f"pdf_files/{date_str}/{file.filename}"
+        object_name = f"doc/{date_str}/{file.filename}"
         try:
             url = get_object_store_service().upload(import_file_path, object_name, file.content_type)
             

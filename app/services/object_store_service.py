@@ -1,12 +1,12 @@
-import logging
 import json
+import logging
 import os
-
 from functools import lru_cache
+
 from minio import Minio
 from minio.deleteobjects import DeleteObject
 
-from app.config.minio_config import load_minio_config, MinIOConfig
+from app.config.minio_config import MinIOConfig, load_minio_config
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +14,7 @@ _EXTENSION_TO_CONTENT_TYPE = {
     ".pdf": "application/pdf",
     ".doc": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     ".docx": "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    ".md": "text/markdown",
     ".jpg": "image/jpeg",
     ".jpeg": "image/jpeg",
     ".png": "image/png",
@@ -80,7 +81,7 @@ class ObjectStoreService:
         except Exception as e:
             logger.error(f"Failed to clean directory {dir_path}: {e}")
 
-    def upload(self, local_path: str, object_name: str, content_type: str = None) -> str | None:
+    def upload(self, local_path: str, object_name: str, content_type: str | None = None) -> str | None:
         try:
             # for multi-dot extensions, only the final suffix is split, e.g. test.tar.gz -> ("test.tar", ".gz")
             ext = os.path.splitext(local_path)[1][1:]
@@ -92,7 +93,7 @@ class ObjectStoreService:
             )
             return f"{self._base_url}/{object_name}"
         except Exception as e:
-            logger.error(f"Error uploading file {local_path}, message: {str(e)}")
+            logger.error(f"Error uploading file {local_path}, message: {e!s}")
 
     def clean_img_dir(self, doc_stem: str) -> None:
         img_dir = f"{self._minio_config.img_dir}/{doc_stem}"
