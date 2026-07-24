@@ -1,9 +1,10 @@
 import json
 import logging
+from functools import lru_cache
+
 import dashscope
 
-from functools import lru_cache
-from app.config.reranker_config import load_reranker_config, RerankerConfig
+from app.config.reranker_config import RerankerConfig, load_reranker_config
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +34,7 @@ class Reranker:
         results = response.output.get("results",[])
         scores = [0.0] * len(documents)
         for item in results:
-            index = item.get("index")
+            index = item.get("index") # actual index of the document in the input!!!
             score = item.get("relevance_score")
             scores[int(index)] = float(score)
         return scores

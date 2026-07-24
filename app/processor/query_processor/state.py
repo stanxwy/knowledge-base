@@ -1,11 +1,9 @@
-from typing import TypedDict, List
+from typing import List
 
-class QueryGraphState(TypedDict):
-    """
-    查询流程图状态
-    包含整个查询流程中传递的所有数据。
-    """
+from app.processor.base_state import KBGraphState
 
+class QueryGraphState(KBGraphState):
+    
     session_id: str  # 会话ID
     message_id: str  # 消息ID
 

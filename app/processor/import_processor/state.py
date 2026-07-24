@@ -1,9 +1,7 @@
-from typing import TypedDict, List
-import copy
+from typing import List
+from app.processor.base_state import KBGraphState
 
-class ImportGraphState(TypedDict, total=False):
-
-    task_id: str  # for realtime tracking of task status
+class ImportGraphState(KBGraphState, total=False):
 
     is_md_read_enabled: bool
     is_pdf_read_enabled: bool
@@ -32,11 +30,3 @@ GRAPH_DEFAULT_STATE: ImportGraphState = {
     "chunks": [],
     "item_name": "",
 }
-
-def create_default_state(**overrides) -> ImportGraphState:
-    state = copy.deepcopy(GRAPH_DEFAULT_STATE)
-    state.update(overrides)
-    return state
-
-def get_default_state() -> ImportGraphState:
-    return copy.deepcopy(GRAPH_DEFAULT_STATE)

@@ -1,10 +1,9 @@
-from typing import Dict, Any, List, Tuple
+from typing import Any, dict, list, tuple
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-from app.utils.json_format_utils import format_json
 from app.services.reranker_http import Reranker, get_reranker
-
+from app.utils.json_format_utils import format_json
 
 # -----------------------------
 # Rerank / TopK Global Constants
@@ -33,14 +32,14 @@ class NodeRerank(NodeBase):
         super().__init__()
         self._reranker = reranker
 
-    def _validate_input_state(self, state: QueryGraphState) -> Tuple[str, List[Dict[str, Any]], List[Dict[str, Any]]]:
+    def _validate_input_state(self, state: QueryGraphState) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]]]:
         return (
             state.get('rewritten_query'),
             state.get('rrf_chunks'), 
             state.get('web_search_docs'),
         )
 
-    def _merge_multi_source_docs(self, rrf_chunks, web_search_docs) -> List[Dict[str, Any]]:
+    def _merge_multi_source_docs(self, rrf_chunks, web_search_docs) -> list[dict[str, Any]]:
         """
         Merge documents from local retrieval and web search into a unified list.
 
@@ -58,7 +57,7 @@ class NodeRerank(NodeBase):
         for rrf_doc in rrf_chunks:
             format_rrf_doc = {
                 "content": rrf_doc.get('content'),
-                "title": rrf_doc.get('title'),
+                "title": rrf_doc.get('item_name'),
                 "chunk_id": rrf_doc.get('chunk_id'),
                 "url": None,
                 "source": "local"
@@ -75,7 +74,7 @@ class NodeRerank(NodeBase):
             merged_docs.append(format_web_doc)
         return merged_docs
 
-    def _rerank_merged_docs(self, rewritten_query: str, merged_multi_docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _rerank_merged_docs(self, rewritten_query: str, merged_multi_docs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Score and sort merged documents using a Cross-Encoder reranker.
 
@@ -113,7 +112,7 @@ class NodeRerank(NodeBase):
             # Graceful fallback: return unsorted docs with no score
             return [{**doc, "score": None} for doc in merged_multi_docs]
         
-    def _cliff_cutoff(self, ranked_docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    def _cliff_cutoff(self, ranked_docs: list[dict[str, Any]]) -> list[dict[str, Any]]:
         """
         Dynamically truncate the ranked list using cliff detection.
 
