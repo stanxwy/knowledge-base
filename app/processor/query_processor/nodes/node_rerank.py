@@ -10,14 +10,14 @@ from app.services.reranker_http import Reranker, get_reranker
 # Rerank / TopK Global Constants
 # -----------------------------
 # upper bound for dynamic TopK: maximum number of documents retained (<=10)
-RERANK_MAX_TOPK: int = 10
+_RERANK_MAX_TOPK: int = 10
 # minimum TopK guarantee: at least N documents are kept (>=1 and <= RERANK_MAX_TOPK)
-RERANK_MIN_TOPK: int = 3
+_RERANK_MIN_TOPK: int = 3
 
 # cliff detection thresholds (absolute): gap between high-scoring documents
-RERANK_GAP_ABS: float = 0.5
+_RERANK_GAP_ABS: float = 0.5
 # cliff detection thresholds (relative): gap ratio for low-scoring tail documents
-RERANK_GAP_RATIO: float = 0.25
+_RERANK_GAP_RATIO: float = 0.25
 
 class NodeRerank(NodeBase):
     """
@@ -30,6 +30,7 @@ class NodeRerank(NodeBase):
     name: str = "node_rerank"
 
     def __init__(self, reranker: Reranker = get_reranker()):
+        super().__init__()
         self._reranker = reranker
 
     def _validate_input_state(self, state: QueryGraphState) -> Tuple[str, List[Dict[str, Any]], List[Dict[str, Any]]]:
@@ -53,10 +54,25 @@ class NodeRerank(NodeBase):
         Returns:
             A flattened list of documents ready for re-ranking.
         """
-        merged_docs = [{ **chunk, "url": None, "source": "local" } 
-                      for chunk in rrf_chunks]
-        merged_docs.extend([{ **doc, "chunk_id": None, "source": "web" } 
-                            for doc in web_search_docs])
+        merged_docs = []
+        for rrf_doc in rrf_chunks:
+            format_rrf_doc = {
+                "content": rrf_doc.get('content'),
+                "title": rrf_doc.get('title'),
+                "chunk_id": rrf_doc.get('chunk_id'),
+                "url": None,
+                "source": "local"
+            }
+            merged_docs.append(format_rrf_doc)
+        for web_doc in web_search_docs:
+            format_web_doc = {
+                "content": web_doc.get('snippet'),
+                "title": web_doc.get('title'),
+                "chunk_id": None,
+                "url": web_doc.get('url'),
+                "source": "web"
+            }
+            merged_docs.append(format_web_doc)
         return merged_docs
 
     def _rerank_merged_docs(self, rewritten_query: str, merged_multi_docs: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -120,8 +136,8 @@ class NodeRerank(NodeBase):
         """
         if not ranked_docs:
             return []
-        upper_bound = min(RERANK_MAX_TOPK, len(ranked_docs))
-        lower_bound = min(RERANK_MIN_TOPK, upper_bound)
+        upper_bound = min(_RERANK_MAX_TOPK, len(ranked_docs))
+        lower_bound = min(_RERANK_MIN_TOPK, upper_bound)
 
         # retain up to the hard upper bound
         cutoff_pos = upper_bound
@@ -141,7 +157,7 @@ class NodeRerank(NodeBase):
 
             # Truncate if either absolute or relative gap exceeds its threshold
             self.logger.info(f"Cliff detection, curr_idx={idx}, abs_gap={abs_gap:.4f}, rel_gap={rel_gap:.4f}")
-            if abs_gap >= RERANK_GAP_ABS or rel_gap >= RERANK_GAP_RATIO:
+            if abs_gap >= _RERANK_GAP_ABS or rel_gap >= _RERANK_GAP_RATIO:
                 cutoff_pos = idx + 1
                 self.logger.info(f"Cliff detected: {idx + 1}, abs_gap={abs_gap:.4f}, rel_gap={rel_gap:.4f}")
                 break

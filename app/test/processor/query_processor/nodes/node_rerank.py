@@ -1,3 +1,5 @@
+from dotenv import load_dotenv
+load_dotenv()
 from app.processor.query_processor.nodes.node_rerank import NodeRerank
 from app.utils.logger import setup_logging
 
@@ -32,13 +34,13 @@ if __name__ == "__main__":
         ],
     }
     node_rerank = NodeRerank()
-    result = node_rerank(mock_state)
+    node_rerank(mock_state)
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.processor.query_processor.nodes.node_rerank
-2026-07-19 09:25:34 - root - INFO - 日志系统初始化完成，日志文件: ./logs\knowledge_base.log
-2026-07-19 09:25:34 - import.node_rerank - INFO - --- node_rerank 开始啦 ---
-2026-07-19 09:25:34 - import.node_rerank - INFO - merged_multi_docs:
+(knowledge-base) D:\knowledge-base>python -m app.test.processor.query_processor.nodes.node_rerank
+2026-07-24 09:17:12 - root - INFO - logging initialized: ./logs\knowledge_base.log
+2026-07-24 09:17:12 - import.node_rerank - INFO - --- node_rerank started ---
+2026-07-24 09:17:12 - import.node_rerank - INFO - Merged 4 documents:
 [
     {
         "content": "主板短路通常表现为通电后风扇转一下就停，可以使用万用表的蜂鸣档测量。",
@@ -69,10 +71,10 @@ if __name__ == "__main__":
         "source": "web"
     }
 ]
-2026-07-19 09:25:35 - root - INFO - DashScope rerank response:
+2026-07-24 09:17:12 - app.services.reranker_http - INFO - DashScope rerank response:
 {
   "status_code": 200,
-  "request_id": "a398c4c1-b581-9ff6-bc6c-b98cbd2cd2b0",
+  "request_id": "61bb6200-c71f-9508-abdd-a5f7f87942c1",
   "code": "",
   "message": "",
   "output": {
@@ -105,21 +107,21 @@ if __name__ == "__main__":
   "headers": {
     "vary": "Origin,Access-Control-Request-Method,Access-Control-Request-Headers, Accept-Encoding",
     "content-type": "application/json;charset=utf-8",
-    "x-request-id": "a398c4c1-b581-9ff6-bc6c-b98cbd2cd2b0",
+    "x-request-id": "61bb6200-c71f-9508-abdd-a5f7f87942c1",
     "x-dashscope-call-gateway": "true",
     "x-dashscope-finished": "true",
     "x-dashscope-timeout": "3600",
-    "req-cost-time": "150",
-    "req-arrive-time": "1784424333760",
-    "resp-start-time": "1784424333910",
-    "x-envoy-upstream-service-time": "138",
+    "req-cost-time": "120",
+    "req-arrive-time": "1784855832150",
+    "resp-start-time": "1784855832270",
+    "x-envoy-upstream-service-time": "109",
     "content-encoding": "gzip",
-    "date": "Sun, 19 Jul 2026 01:25:33 GMT",
+    "date": "Fri, 24 Jul 2026 01:17:11 GMT",
     "server": "istio-envoy",
     "transfer-encoding": "chunked"
   }
 }
-2026-07-19 09:25:35 - import.node_rerank - INFO - reranked_docs:
+2026-07-24 09:17:12 - import.node_rerank - INFO - Re-ranked 4 documents:
 [
     {
         "content": "主板短路通常表现为通电后风扇转一下就停，可以使用万用表的蜂鸣档测量。",
@@ -154,9 +156,9 @@ if __name__ == "__main__":
         "score": 0.18357113032525535
     }
 ]
-2026-07-19 09:25:35 - import.node_rerank - INFO - 断崖检测: 当前位置 2, abs_gap=0.2469, rel_gap=0.5736
-2026-07-19 09:25:35 - import.node_rerank - INFO - 断崖判定: 位置 3, abs_gap=0.2469, rel_gap=0.5736
-2026-07-19 09:25:35 - import.node_rerank - INFO - cutoff_docs:
+2026-07-24 09:17:12 - import.node_rerank - INFO - Cliff detection, curr_idx=2, abs_gap=0.2469, rel_gap=0.5736
+2026-07-24 09:17:12 - import.node_rerank - INFO - Cliff detected: 3, abs_gap=0.2469, rel_gap=0.5736
+2026-07-24 09:17:12 - import.node_rerank - INFO - Final reranked documents after cliff cutoff:
 [
     {
         "content": "主板短路通常表现为通电后风扇转一下就停，可以使用万用表的蜂鸣档测量。",
@@ -183,5 +185,5 @@ if __name__ == "__main__":
         "score": 0.430502272123862
     }
 ]
-2026-07-19 09:25:35 - import.node_rerank - INFO - --- node_rerank 完成啦 ---
+2026-07-24 09:17:12 - import.node_rerank - INFO - --- node_rerank done ---
 """
