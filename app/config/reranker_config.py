@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class RerankerConfig:
     text_rerank_api_key: str    

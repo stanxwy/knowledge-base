@@ -1,10 +1,9 @@
 import logging
 import typing
-from abc import abstractmethod, ABC
+from abc import ABC, abstractmethod
 
 from app.processor.query_processor.state import QueryGraphState
-from app.utils.task_utils import add_running_task, add_done_task
-
+from app.utils.task_utils import add_done_task, add_running_task
 
 T = typing.TypeVar("T", bound="QueryGraphState")
 

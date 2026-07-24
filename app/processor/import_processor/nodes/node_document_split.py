@@ -1,5 +1,6 @@
 import re
-from typing import Tuple, List, Dict, Optional
+from typing import Dict, List, Optional, Tuple
+
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
 from app.processor.import_processor.base import BaseNode

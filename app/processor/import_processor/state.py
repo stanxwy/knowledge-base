@@ -1,5 +1,7 @@
 from typing import List
+
 from app.processor.base_state import KBGraphState
+
 
 class ImportGraphState(KBGraphState, total=False):
 

@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True)
 class MineruConfig:
     base_url: str

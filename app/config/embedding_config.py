@@ -1,6 +1,7 @@
 import os
 from dataclasses import dataclass
 
+
 @dataclass(frozen=True) # make it immutable
 class EmbeddingConfig:
     bge_m3_path: str

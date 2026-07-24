@@ -1,11 +1,15 @@
 from typing import List, Tuple
+
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.exceptions import StateFieldError
 from app.processor.query_processor.state import QueryGraphState
-from app.utils.json_format_utils import format_json
-from app.services.llm_service import get_llm_service, LLMService
-from app.services.vectordb_service import ItemNameVectorDBService, get_item_name_vector_db
-from app.services.mongo_service import get_mongo_service, MongoService
+from app.services.llm_service import LLMService, get_llm_service
+from app.services.mongo_service import MongoService, get_mongo_service
+from app.services.vectordb_service import (
+    ItemNameVectorDBService,
+    get_item_name_vector_db,
+)
+
 
 class NodeItemNameConfirm(NodeBase):
 
@@ -147,14 +151,16 @@ class NodeItemNameConfirm(NodeBase):
     
     def _update_chat_history(self, session_id, message_id, original_query, rewritten_query, item_names, answer):
         # answer generated (provide options to confirm/reject), insert into chat history
-        if answer:
-            self._mongo.save_chat_message(
-                session_id=session_id,
-                role="assistant",
-                text=answer,
-                rewritten_query="",
-                item_names=item_names
-            )
+        # if answer:
+        #     self._mongo.save_chat_message(
+        #         session_id=session_id,
+        #         role="assistant",
+        #         text=answer,
+        #         rewritten_query="",
+        #         item_names=item_names
+        #     )
+        # ASSISTANT ANSWER WILL BE SAVED AT THE LAST STEP< NOT HERE!
+
         # no answer generated yet, update user message with item names and rewritten query
         self._mongo.save_chat_message(
             session_id=session_id,
