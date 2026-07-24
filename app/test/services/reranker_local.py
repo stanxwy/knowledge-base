@@ -1,8 +1,12 @@
+import json
+from dotenv import load_dotenv
+load_dotenv()
+
 from app.services.reranker_local import get_reranker
+from app.utils.logger import setup_logging
 
 if __name__ == '__main__':
-    from dotenv import load_dotenv
-    load_dotenv()
+    setup_logging("DEBUG")
     
     query = "1956年发生了哪一事件标志着人工智能这一学科的正式诞生？"
     documents = [
@@ -12,7 +16,7 @@ if __name__ == '__main__':
         "1955 年，艾伦·纽厄尔、赫伯特·A·西蒙和克利夫·肖共同发明的“逻辑理论家”程序标志着首个真正的人工智能程序的诞生，该程序能够解决逻辑问题，类似于证明数学定理。."
     ]
     scores = get_reranker().rerank_documents(query, documents)
-    print(scores)
+    print(json.dumps(scores, indent=4))
 
 """
 #⚠️：安装FlagEmbedding的时候会自动安装一个cpu版本的torch替换掉之前的gpu版本的torch，
@@ -41,11 +45,16 @@ You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast t
 [0.0277058673878419, 0.9980846725164658, 0.041886650306271686, 0.50644986966622]
 
 # with query_instruction_for_rerank
-(knowledge-base) PS D:\knowledge-base> python -m app.utils.bge_rerank_utils
-2026-07-20 13:09:02 - root - INFO - 日志系统初始化完成，日志文件: ./logs\knowledge_base.log
-2026-07-20 13:09:02 - __main__ - INFO - 正在初始化 Reranker 模型，路径: D:\ai_models\modelscope_cache\models\BAAI--bge-reranker-large\snapshots\master, 设备: cpu, fp16: False
-<class 'transformers.models.xlm_roberta.tokenization_xlm_roberta_fast.XLMRobertaTokenizerFast'>
-2026-07-20 13:09:03 - __main__ - INFO - Reranker 模型初始化成功！
+(knowledge-base) D:\knowledge-base>python -m app.test.services.reranker_local
+2026-07-24 10:11:25 - root - INFO - logging initialized: ./logs\knowledge_base.log
+2026-07-24 10:11:25 - app.services.reranker_local - INFO - Initializing Reranker...
+RerankerConfig(text_rerank_api_key='sk-ws-H.EMRLMMH.b5oG.MEUCIEUTDFBGW2yxwBPgwwFev5thtDIbXTtyUJEdmj3X3uNDAiEAqUguWZEovOVdVtkQN7WvpAyF7xzWhRgcdTB6z1W_Wg4', text_rerank_model='qwen3-rerank', text_rerank_instruct='针对给定的查询，检索能够解答该查询的相关段落', bge_rerank_model='D:\\ai_models\\modelscope_cache\\models\\BAAI--bge-reranker-large\\snapshots\\master', bge_rerank_device='cpu', bge_rerank_fp16=True)
+2026-07-24 10:11:26 - app.services.reranker_local - INFO - Reranker initialized
 You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast tokenizer, using the `__call__` method is faster than using a method to encode the text followed by a call to the `pad` method to get a padded encoding.
-[0.01925404938221098, 0.9953422224496216, 0.051985629883683326, 0.7046943997161241]
+[
+    0.01925404938221098,
+    0.9953422224496216,
+    0.051985629883683326,
+    0.7046943997161241
+]
 """

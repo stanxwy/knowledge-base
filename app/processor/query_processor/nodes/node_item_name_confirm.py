@@ -173,23 +173,23 @@ class NodeItemNameConfirm(NodeBase):
 
         message_id = self._mongo.save_chat_message(session_id, "user", original_query)
 
-        item_names, rewritten_query = self._llm_service.resolve_item_name_and_rewrite_query(original_query, history)
+        guessed_item_names, rewritten_query = self._llm_service.resolve_item_name_and_rewrite_query(original_query, history)
 
         confirmed_item_names = []
         options = []
-        if len(item_names) > 0:
-            search_results = self._item_name_vector_db.hybrid_search_item_name(item_names)
+        if len(guessed_item_names) > 0:
+            search_results = self._item_name_vector_db.hybrid_search_item_name(guessed_item_names)
             confirmed_item_names, options = self._align_item_names(search_results)
         else:
             self.logger.info("No item names resolved, skipping vector search...")
 
-        item_names, answer = self._resolve_confirmation_branches(confirmed_item_names, options, history)
+        confirmed_item_names, answer = self._resolve_confirmation_branches(confirmed_item_names, options, history)
 
-        self._update_chat_history(session_id, message_id, original_query, rewritten_query, item_names, answer)
+        self._update_chat_history(session_id, message_id, original_query, rewritten_query, confirmed_item_names, answer)
 
         return {
             "history": history,
             "rewritten_query": rewritten_query,
-            "item_names": item_names,
+            "item_names": confirmed_item_names,
             "answer": answer
         }

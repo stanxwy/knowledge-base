@@ -16,6 +16,7 @@ class Reranker:
         if self._model is None:
             try:
                 config = self._reranker_config
+                logger.info(f"Initializing Reranker...\n{config}")
                 self._model = FlagReranker(
                     model_name_or_path=config.bge_rerank_model,
                     devices=config.bge_rerank_device,
