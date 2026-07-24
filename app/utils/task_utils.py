@@ -1,38 +1,39 @@
 from collections import defaultdict
-from typing import dict, list
+from typing import Dict, List
 
 # init with [] if key not exist
-_tasks_running_list: dict[str, list[str]] = defaultdict(list)
-_tasks_done_list: dict[str, list[str]] = defaultdict(list)
+_tasks_running_list: Dict[str, List[str]] = defaultdict(list)
+_tasks_done_list: Dict[str, List[str]] = defaultdict(list)
 
 # init with {} if key not exist
-_tasks_result: dict[str, dict[str, str]] = defaultdict(dict)
+_tasks_result: Dict[str, Dict[str, str]] = defaultdict(Dict)
 
-_tasks_status: dict[str, str] = {}
+_tasks_status: Dict[str, str] = {}
 
+TASK_STATUS_PENDING = "pending"
 TASK_STATUS_PROCESSING = "processing"
 TASK_STATUS_COMPLETED = "completed"
 TASK_STATUS_FAILED = "failed"
 
-_NODE_NAME_TO_CN: dict[str, str] = {
+_NODE_NAME_TO_CN: Dict[str, str] = {
     "upload_file": "上传文件",
-    "entry": "检查文件",
-    "pdf_to_md_node": "PDF转Markdown",
-    "md_img_node": "Markdown图片处理",
-    "document_split_node": "文档切分",
-    "item_name_recognition": "主体名称识别",
-    "bge_embedding_chunks_node": "向量生成",
-    "import_milvus_node": "导入向量数据库",
+    "node_entry": "检查文件",
+    "node_pdf_to_md": "PDF转Markdown",
+    "node_md_img": "Markdown图片处理",
+    "node_document_split": "文档切分",
+    "node_item_name_recognition": "主体名称识别",
+    "node_bge_embedding": "向量生成",
+    "node_import_milvus": "导入向量数据库",
     # "knowledge_graph_node": "导入知识图谱",
     "__end__": "处理完成",
 
-    "item_name_confirm_node": "确认问题产品",
-    "answer_output_node": "生成答案",
-    "rerank_node": "重排序",
-    "rrf_node": "倒排融合",
-    "mcp_search_node": "网络搜索",
-    "vector_search_node": "切片搜索",
-    "hyde_search_node": "切片搜索(假设性文档)",
+    "noed_item_name_confirm": "确认问题产品",
+    "node_web_search_mcp": "网络搜索",
+    "node_search_embedding": "切片搜索",
+    "node_search_embedding_hyde": "切片搜索(假设性文档)",
+    "node_rerank": "重排序",
+    "node_rrf": "倒排融合",
+    "node_answer_output": "生成答案",
     # "kg_search_node": "查询知识图谱"
 }
 
@@ -57,15 +58,15 @@ def add_done_task(task_id: str, node_name: str) -> None:
         done.append(node_name)
 
 
-def get_running_task_list(task_id: str) -> list[str]:
+def get_running_task_list(task_id: str) -> List[str]:
     return [_to_cn(n) for n in _tasks_running_list.get(task_id, [])]
 
-def get_done_task_list(task_id: str) -> list[str]:
+def get_done_task_list(task_id: str) -> List[str]:
     return [_to_cn(n) for n in _tasks_done_list.get(task_id, [])]
 
 
 def get_task_status(task_id: str) -> str:
-    return _tasks_status.get(task_id, "")
+    return _tasks_status.get(task_id, TASK_STATUS_PENDING)
 
 def update_task_status(task_id: str, status_name: str) -> None:
     _tasks_status[task_id] = status_name

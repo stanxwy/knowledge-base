@@ -2,8 +2,9 @@ import asyncio
 import json
 import logging
 import queue
+from typing import Any, dict, Optional
+from collections.abc import AsyncGenerator
 
-from typing import Dict, Any, Optional, AsyncGenerator
 from fastapi import Request
 
 
@@ -16,7 +17,7 @@ class SSEEvent:
 
 # 全局 SSE 任务队列存储
 # Key: task_id, Value: queue.Queue
-_task_stream: Dict[str, queue.Queue] = {}
+_task_stream: dict[str, queue.Queue] = {}
 
 
 def get_sse_queue(task_id: str) -> Optional[queue.Queue]:
@@ -37,13 +38,13 @@ def remove_sse_queue(task_id: str):
     _task_stream.pop(task_id, None)
 
 
-def _sse_pack(event: str, data: Dict[str, Any]) -> str:
+def _sse_pack(event: str, data: dict[str, Any]) -> str:
     """打包 SSE 消息格式"""
     payload = json.dumps(data, ensure_ascii=False)
     return f"event: {event}\ndata: {payload}\n\n"
 
 
-def push_sse_event(task_id: str, event: str, data: Dict[str, Any]):
+def push_sse_event(task_id: str, event: str, data: dict[str, Any]):
     """
     通过 task_id 推送事件到 SSE 队列
     """

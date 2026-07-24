@@ -1,18 +1,20 @@
-import datetime
 import logging
 import os
 import shutil
 import uuid
+from datetime import datetime
 from pathlib import Path
-from typing import Any, dict, list
+from typing import Any, Dict, List
 
 import uvicorn
+from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
 from app.processor.import_processor.main_graph import KBImportWorkflow
 from app.services.object_store_service import get_object_store_service
+from app.utils.logger import setup_logging
 from app.utils.task_utils import (
     add_done_task,
     add_running_task,
@@ -22,7 +24,11 @@ from app.utils.task_utils import (
     update_task_status,
 )
 
+load_dotenv(override=True)
+setup_logging("DEBUG")
+
 logger = logging.getLogger(__name__)
+
 
 app = FastAPI(
     title="Knowledge Base Import Workflow API",
@@ -38,7 +44,7 @@ app.add_middleware(
 
 @app.get("/import.html")
 async def get_import_page():
-    current_dir_parent_path = Path(__file__).absolute().parent
+    current_dir_parent_path = Path(__file__).absolute().parent.parent
     html_path = current_dir_parent_path / "pages" / "import.html"
     if not html_path.exists():
         raise HTTPException(status_code=404, detail=f"Page not found: {html_path}")
@@ -68,51 +74,54 @@ def run_graph_task(task_id: str, output_file_dir: str, import_file_path: str):
 
 
 @app.post("/upload", summary="file upload API", description="multiple files upload supported, triggers import workflow")
-async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)):
-
-    data_based_root_dir = os.getenv("DATA_BASED_ROOT_DIR")
-    date_str = datetime.now().strftime("%Y%m%d")
-    date_dir = os.path.join(data_based_root_dir, date_str)
-    task_ids = []
-
-    for file in files:
-        task_id = str(uuid.uuid4())
-        task_ids.append(task_id)
-        add_running_task(task_id, "upload_file")
-        logger.info(f"[{task_id}] start processing upload file: {file.filename}, file type: {file.content_type}")
-
-        task_dir = os.path.join(date_dir, task_id)
-        os.makedirs(task_dir, exist_ok=True)
-        import_file_path = os.path.join(task_dir, file.filename)
-
-        with open(import_file_path, "wb") as file_buffer:
-            shutil.copyfileobj(file.file, file_buffer)
-        logger.info(f"[{task_id}] file saved to local, path: {import_file_path}")
-
-        object_name = f"doc/{date_str}/{file.filename}"
-        try:
-            url = get_object_store_service().upload(import_file_path, object_name, file.content_type)
-            
-            logger.info(f"[{task_id}] file uploaded, url: {url}")
-        except Exception as e:
-            logger.warning(f"[{task_id}] error uploading file: {str(e)}", exc_info=True)
-
-        add_done_task(task_id, "upload_file")
-
-        background_tasks.add_task(run_graph_task, task_id, task_dir, import_file_path)
-        logger.info(f"[{task_id}] Import Workflow task submitted to background executor")
-
-    logger.info(f"File upload complete, total: {len(files)} files, tasks: {task_ids}")
-    return {
-        "code": 200,
-        "message": f"{len(files)} files uploaded successfully",
-        "task_ids": task_ids
-    }
+async def upload_files(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...)):
+    try:
+        data_based_root_dir = os.getenv("DATA_BASED_ROOT_DIR")
+        date_str = datetime.now().strftime("%Y%m%d")
+        date_dir = os.path.join(data_based_root_dir, date_str)
+        task_ids = []
+    
+        for file in files:
+            task_id = str(uuid.uuid4())
+            task_ids.append(task_id)
+            add_running_task(task_id, "upload_file")
+            logger.info(f"[{task_id}] start processing upload file: {file.filename}, file type: {file.content_type}")
+    
+            task_dir = os.path.join(date_dir, task_id)
+            os.makedirs(task_dir, exist_ok=True)
+            import_file_path = os.path.join(task_dir, file.filename)
+    
+            with open(import_file_path, "wb") as file_buffer:
+                shutil.copyfileobj(file.file, file_buffer)
+            logger.info(f"[{task_id}] file saved to local, path: {import_file_path}")
+    
+            object_name = f"doc/{date_str}/{file.filename}"
+            try:
+                url = get_object_store_service().upload(import_file_path, object_name, file.content_type)
+                
+                logger.info(f"[{task_id}] file uploaded, url: {url}")
+            except Exception as e:
+                logger.warning(f"[{task_id}] error uploading file: {str(e)}", exc_info=True)
+    
+            add_done_task(task_id, "upload_file")
+    
+            background_tasks.add_task(run_graph_task, task_id, task_dir, import_file_path)
+            logger.info(f"[{task_id}] Import Workflow task submitted to background executor")
+    
+        logger.info(f"File upload complete, total: {len(files)} files, tasks: {task_ids}")
+        return {
+            "code": 200,
+            "message": f"{len(files)} files uploaded successfully",
+            "task_ids": task_ids
+        }
+    except Exception as e:
+        logger.error(f"Error uploading files: {e!s}", exc_info=True)
+        raise HTTPException(status_code=500, detail=str(e))
 
 
 @app.get("/status/{task_id}", summary="query task status", description="query task status with steps running/done by task_id")
 async def get_task_progress(task_id: str):
-    task_status_info: dict[str, Any] = {
+    task_status_info: Dict[str, Any] = {
         "code": 200,
         "task_id": task_id,
         "status": get_task_status(task_id),             # pending/processing/completed/failed

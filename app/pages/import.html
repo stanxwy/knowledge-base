@@ -339,7 +339,7 @@
     const fileList = document.getElementById('fileList');
 
     // 模拟后端API地址
-    const API_BASE = 'http://127.0.0.1:8000';
+    const API_BASE = '';
 
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -422,7 +422,7 @@
         const logListEl = itemEl.querySelector('.log-list');
 
         const formData = new FormData();
-        formData.append('file', file);
+        formData.append('files', file);
 
         try {
             progressWrapper.style.display = 'block';
@@ -444,7 +444,8 @@
             if (!response.ok) throw new Error('Upload failed');
 
             const result = await response.json();
-            const taskId = result.task_id;
+            console.log(result);
+            const taskId = result.task_ids[0];
 
             updateProgressUI(progressWrapper, uploadPercentage);
             statusBadge.textContent = '处理中';
