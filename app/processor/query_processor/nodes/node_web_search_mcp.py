@@ -11,15 +11,15 @@ class NodeWebSearchMcp(NodeBase):
 
     name: str = "node_web_search_mcp"
 
-    def __init__(self, mcp_search: MCPSearchService = get_mcp_search_service()):
+    def __init__(self, mcp: MCPSearchService = get_mcp_search_service()):
         super().__init__()
-        self._mcp_search = mcp_search
+        self._mcp = mcp
     
     def process(self, state: QueryGraphState) -> QueryGraphState:
         query = state.get("rewritten_query", "")
         docs = []
         if query:
-            result = asyncio.run(self._mcp_search.search_web(query))
+            result = asyncio.run(self._mcp.search_web(query))
             if result:
                 pages = json.loads(result.content[0].text).get("pages") or []
                 docs = [{
@@ -28,5 +28,5 @@ class NodeWebSearchMcp(NodeBase):
                     "title": (page.get("title") or "").strip()
                 } for page in pages if page.get("snippet")]
                 self.logger.info(f"MCP search result: \n{format_json(docs)}")
-                
+
         return { "web_search_docs": docs }
