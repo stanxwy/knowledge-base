@@ -308,6 +308,7 @@
  <script>
     // ================= 核心配置 =================
     const API_BASE = `${location.protocol}//${location.host}`.includes('http') ? `${location.protocol}//${location.host}` : 'http://127.0.0.1:8001';
+    console.info(`API_BASE: ${API_BASE}`);
     const chatEl = document.getElementById('chat');
     const inputEl = document.getElementById('input');
     const sendBtn = document.getElementById('send');
@@ -455,6 +456,7 @@
             const res = await fetch(`${API_BASE}/query`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({query:text, session_id:sessionId, is_stream:isStream}) });
             if(!res.ok) throw new Error(await res.text() || '请求失败');
             const data = await res.json();
+            console.info(data);
 
             if (!isStream) {
                 // 【非流式模式】直接拿到最终结果渲染
@@ -464,7 +466,7 @@
             }
 
             // 【流式模式】建立 SSE 连接监听进度和文本流
-            const es = new EventSource(`${API_BASE}/stream/${data.task_id}`);
+            const es = new EventSource(`${API_BASE}/stream/${data.session_id}`);
             let rawAnswerText = '';
             const bubble = botMsgEl.querySelector('.bubble');
             let answerEl = bubble.querySelector('.answer');
@@ -472,6 +474,7 @@
 
             es.addEventListener('progress', (e) => {
                 try{
+                    console.log(e);
                     const d = JSON.parse(e.data);
                     renderProgress(botMsgEl, d.done_list, d.running_list, d.status);
                     if(d.status === 'completed') sendBtn.disabled = false;
@@ -479,6 +482,7 @@
             });
             es.addEventListener('delta', (e) => {
                 try{
+                    console.log(e);
                     const d = JSON.parse(e.data);
                     if(d.delta){ rawAnswerText += d.delta; renderAnswerWithImages(answerEl, rawAnswerText, []); scrollToBottom(); }
                 }catch(_){}
@@ -486,6 +490,7 @@
 
             const handleFinal = (e) => {
                 try{
+                    console.log(e);
                     const d = JSON.parse(e.data);
                     const finalText = (d.answer && d.answer.trim()) ? d.answer : rawAnswerText;
                     finalizeBotAnswer(botMsgEl, finalText, d.error, d.image_urls);
@@ -496,6 +501,7 @@
             es.addEventListener('final_answer', handleFinal);
 
             es.addEventListener('error', () => {
+                console.error('SSE 连接中断/失败');
                 finalizeBotAnswer(botMsgEl, rawAnswerText, 'SSE 连接中断/失败', []);
                 es.close(); sendBtn.disabled = false;
             });

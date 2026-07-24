@@ -1,17 +1,26 @@
+import logging
+from typing import List, Optional
+
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from typing import List, Optional
 
 from app.processor.query_processor.nodes.node_answer_output import NodeAnswerOutput
-from app.processor.query_processor.nodes.node_item_name_confirm import NodeItemNameConfirm
+from app.processor.query_processor.nodes.node_item_name_confirm import (
+    NodeItemNameConfirm,
+)
 from app.processor.query_processor.nodes.node_rerank import NodeRerank
 from app.processor.query_processor.nodes.node_rrf import NodeRrf
-from app.processor.query_processor.nodes.node_search_embedding import NodeSearchEmbedding
-from app.processor.query_processor.nodes.node_search_embedding_hyde import NodeSearchEmbeddingHyde
+from app.processor.query_processor.nodes.node_search_embedding import (
+    NodeSearchEmbedding,
+)
+from app.processor.query_processor.nodes.node_search_embedding_hyde import (
+    NodeSearchEmbeddingHyde,
+)
 from app.processor.query_processor.nodes.node_web_search_mcp import NodeWebSearchMcp
 from app.processor.query_processor.state import QueryGraphState
 
+logger = logging.getLogger(__name__)
 
 class KBQueryWorkflow:
     
@@ -70,6 +79,7 @@ class KBQueryWorkflow:
     def graph(self):
         if not self.__compiled_graph:
             self.__compiled_graph = self.__graph.compile()
+            logger.info(self.__compiled_graph.get_graph().draw_ascii())
         return self.__compiled_graph
 
     def run(self, initial_state: QueryGraphState, stream: bool = False) -> QueryGraphState:

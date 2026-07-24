@@ -25,10 +25,8 @@ from app.utils.task_utils import (
 )
 
 load_dotenv(override=True)
-setup_logging("DEBUG")
-
+setup_logging(os.getenv("LOG_LEVEL", logging.INFO))
 logger = logging.getLogger(__name__)
-
 
 app = FastAPI(
     title="Knowledge Base Import Workflow API",

@@ -68,7 +68,7 @@ def get_done_task_list(task_id: str) -> List[str]:
 def get_task_status(task_id: str) -> str:
     return _tasks_status.get(task_id, TASK_STATUS_PENDING)
 
-def update_task_status(task_id: str, status_name: str) -> None:
+def update_task_status(task_id: str, status_name: str, is_stream: bool = False) -> None:
     _tasks_status[task_id] = status_name
 
 

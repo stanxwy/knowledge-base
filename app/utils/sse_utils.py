@@ -2,11 +2,12 @@ import asyncio
 import json
 import logging
 import queue
-from typing import Any, dict, Optional
 from collections.abc import AsyncGenerator
+from typing import Any, Dict, Optional
 
 from fastapi import Request
 
+logger = logging.getLogger(__name__)
 
 class SSEEvent:
     READY = "ready"         # 连接建立
@@ -15,53 +16,34 @@ class SSEEvent:
     FINAL = "final"         # 最终完整答案
 
 
-# 全局 SSE 任务队列存储
-# Key: task_id, Value: queue.Queue
-_task_stream: dict[str, queue.Queue] = {}
+_task_stream: Dict[str, queue.Queue] = {}
 
 
 def get_sse_queue(task_id: str) -> Optional[queue.Queue]:
-    """获取指定任务的队列"""
     return _task_stream.get(task_id)
 
 
 def create_sse_queue(task_id: str) -> queue.Queue:
-    """创建并注册一个新的 SSE 队列"""
     q = queue.Queue()
     _task_stream[task_id] = q
     return q
 
 def remove_sse_queue(task_id: str):
-    """移除指定任务的队列
-    不存在 key 默认返回 None
-    """
     _task_stream.pop(task_id, None)
 
 
-def _sse_pack(event: str, data: dict[str, Any]) -> str:
-    """打包 SSE 消息格式"""
+def _sse_pack(event: str, data: Dict[str, Any]) -> str:
     payload = json.dumps(data, ensure_ascii=False)
     return f"event: {event}\ndata: {payload}\n\n"
 
 
 def push_sse_event(task_id: str, event: str, data: dict[str, Any]):
-    """
-    通过 task_id 推送事件到 SSE 队列
-    """
-    # 1. 获取 SSE 队列
     stream_queue = get_sse_queue(task_id)
-
-    # 2. 队列存在
     if stream_queue:
-        # 3. 将事件推送到队列
         stream_queue.put({"event": event, "data": data})
 
 
 async def sse_generator(task_id: str, request: Request) -> AsyncGenerator[str, None]:
-    """
-    SSE 生成器，用于 FastAPI 的 StreamingResponse
-    """
-    # 1. 获取队列
     stream_queue = get_sse_queue(task_id)
 
     # 2. 如果没有对应的队列，直接结束
@@ -77,7 +59,7 @@ async def sse_generator(task_id: str, request: Request) -> AsyncGenerator[str, N
         while True:
             # 5. 若客户端断开，尽快退出
             if await request.is_disconnected():
-                logging.getLogger().info("client disconnected...")
+                logger.info("client disconnected...")
                 break
 
             try:
@@ -86,7 +68,7 @@ async def sse_generator(task_id: str, request: Request) -> AsyncGenerator[str, N
                 # timeout=1.0: 阻塞的超时时间（秒），1.0 秒后若仍无数据则抛出 queue.Empty 异常
                 msg = await loop.run_in_executor(None, stream_queue.get, True, 1.0)
             except queue.Empty:
-                logging.getLogger().info("queue empty...")
+                logger.info("queue empty...")
                 # 7. 若 1 秒内队列为空（超时），则跳过本次循环，重新开始检查断开状态并继续监听
                 continue
 
@@ -99,15 +81,14 @@ async def sse_generator(task_id: str, request: Request) -> AsyncGenerator[str, N
     except (ConnectionResetError, BrokenPipeError):
         # 客户端强行刷新页面或关闭标签页，TCP 管道破裂，静默退出
         if ConnectionResetError:
-            logging.getLogger().info("client connection reset...")
+            logger.info("client connection reset...")
         if BrokenPipeError:
-            logging.getLogger().info("client connection broken pipe...")
+            logger.info("client connection broken pipe...")
         return
     except asyncio.CancelledError:
         # 协程被取消：重新抛出，让外层框架知道它被成功取消了
-        logging.getLogger().info("task cancelled...")
+        logger.info("task cancelled...")
         raise
     finally:
-        logging.getLogger().info(f"clean up task queue {task_id}...")
-        # 清理资源（防止内存泄漏）
+        logger.info(f"clean up task queue {task_id}...")
         remove_sse_queue(task_id)

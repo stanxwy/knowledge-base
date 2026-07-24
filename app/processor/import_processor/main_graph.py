@@ -1,17 +1,22 @@
+import logging
+from typing import Optional
+
 from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
-from typing import Optional
 
 from app.processor.import_processor.nodes.node_bge_embedding import NodeBGEEmbedding
 from app.processor.import_processor.nodes.node_document_split import NodeDocumentSplit
 from app.processor.import_processor.nodes.node_entry import NodeEntry
 from app.processor.import_processor.nodes.node_import_milvus import NodeImportMilvus
-from app.processor.import_processor.nodes.node_item_name_recognition import NodeItemNameRecognition
+from app.processor.import_processor.nodes.node_item_name_recognition import (
+    NodeItemNameRecognition,
+)
 from app.processor.import_processor.nodes.node_md_img import NodeMDImg
 from app.processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
 from app.processor.import_processor.state import ImportGraphState
 
+logger = logging.getLogger(__name__)
 
 class KBImportWorkflow:
 
@@ -60,6 +65,7 @@ class KBImportWorkflow:
     def graph(self):
         if self.__compiled_graph is None:
             self.__compiled_graph = self.__graph.compile()
+            logger.info(self.__compiled_graph.get_graph().draw_ascii())
         return self.__compiled_graph
 
     def run(self, state: ImportGraphState, stream: bool = False):
