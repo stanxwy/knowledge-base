@@ -10,10 +10,10 @@ from fastapi import Request
 logger = logging.getLogger(__name__)
 
 class SSEEvent:
-    READY = "ready"         # 连接建立
-    PROGRESS = "progress"   # 任务节点进度
-    DELTA = "delta"         # LLM 流式输出增量
-    FINAL = "final"         # 最终完整答案
+    READY = "ready"
+    PROGRESS = "progress"
+    DELTA = "delta" 
+    FINAL = "final"
 
 
 _task_stream: Dict[str, queue.Queue] = {}

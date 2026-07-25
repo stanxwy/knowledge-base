@@ -339,7 +339,7 @@
     const fileList = document.getElementById('fileList');
 
     // 模拟后端API地址
-    const API_BASE = '';
+    const API_BASE = `${location.protocol}//${location.host}`.includes('http') ? `${location.protocol}//${location.host}` : 'http://127.0.0.1:8000';
 
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -455,7 +455,7 @@
             pollStatus(taskId, itemEl, totalNodes);
 
         } catch (error) {
-            console.error(error);
+            console.error("Upload error", error);
             statusBadge.textContent = '上传失败';
             statusBadge.className = 'status-badge status-error';
             updateProgressUI(progressWrapper, 0);

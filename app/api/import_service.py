@@ -16,6 +16,9 @@ from app.processor.import_processor.main_graph import KBImportWorkflow
 from app.services.object_store_service import get_object_store_service
 from app.utils.logger import setup_logging
 from app.utils.task_utils import (
+    TASK_STATUS_COMPLETED,
+    TASK_STATUS_FAILED,
+    TASK_STATUS_PROCESSING,
     add_done_task,
     add_running_task,
     get_done_task_list,
@@ -50,7 +53,7 @@ async def get_import_page():
 
 def run_graph_task(task_id: str, output_file_dir: str, import_file_path: str):
     try:
-        update_task_status(task_id, "processing")
+        update_task_status(task_id, TASK_STATUS_PROCESSING)
 
         init_state = {
             "task_id": task_id,
@@ -64,11 +67,11 @@ def run_graph_task(task_id: str, output_file_dir: str, import_file_path: str):
                 logger.info(f"[{task_id}] {node_name}\n{node_result}")
                 add_done_task(task_id, node_name)
 
-        update_task_status(task_id, "completed")
+        update_task_status(task_id, TASK_STATUS_COMPLETED)
 
     except Exception as e:
-        update_task_status(task_id, "failed")
-        logger.info(f"[{task_id}] error running ImportWorkflow: {e!s}", exc_info=True)
+        logger.error(f"[{task_id}] error running ImportWorkflow: {e!s}", exc_info=True)
+        update_task_status(task_id, TASK_STATUS_FAILED)
 
 
 @app.post("/upload", summary="file upload API", description="multiple files upload supported, triggers import workflow")
