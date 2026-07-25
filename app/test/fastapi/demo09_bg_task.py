@@ -1,7 +1,7 @@
 import asyncio
+import time
 
 from fastapi import BackgroundTasks, FastAPI
-import time
 
 app = FastAPI()
 

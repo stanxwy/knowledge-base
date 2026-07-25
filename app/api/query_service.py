@@ -23,6 +23,7 @@ from app.utils.task_utils import (
     TASK_STATUS_COMPLETED,
     TASK_STATUS_FAILED,
     TASK_STATUS_PROCESSING,
+    get_done_task_list,
     get_task_result,
     update_task_status,
 )
@@ -63,30 +64,27 @@ async def query(background_tasks: BackgroundTasks, request: QueryRequest):
 
     is_stream = request.is_stream
     if is_stream:
-        # 创建一个字典 存储对一个session_id : queue 结果队列
         create_sse_queue(session_id)
-    # 更新任务状态
-    # 当前会话id作为key! 整体装填处于运行中！
+
     update_task_status(session_id, TASK_STATUS_PROCESSING, is_stream)
     logger.info(f"Starting Query Workflow task {session_id}, query: {user_query}, is_stream: {is_stream}")
 
     if is_stream:
         # 如果是流式，则返回一个流式响应，过程不断地推送
-        # 运行执行图对象方法
         background_tasks.add_task(run_query_graph, session_id, user_query, is_stream)
         logger.info(f"[{session_id}] Query Workflow task submitted to background executor")
         return {
-            "message": "结果正在处理中...",
+            "message": "Task started",
             "session_id": session_id
         }
     else:
         run_query_graph(session_id, user_query, is_stream)
         answer = get_task_result(session_id, "answer", "")
         return {
-            "message": "处理完成！",
+            "message": "Task completed",
             "session_id": session_id,
             "answer": answer,
-            "done_list":[]
+            "done_list": get_done_task_list(session_id)
         }
 
 
@@ -112,7 +110,7 @@ def run_query_graph(session_id: str, user_query: str, is_stream: bool = True):
 
 @app.get("/stream/{session_id}")
 async def stream(session_id: str, request: Request):
-    logger.info("Started streaming...")
+    logger.info(f"{session_id} started streaming...")
     logger.info(request)
     return StreamingResponse(
         sse_generator(session_id, request),
@@ -127,7 +125,7 @@ async def stream(session_id: str, request: Request):
 @app.delete("/history/{session_id}")
 async def clear_chat_history(session_id: str):
     count = get_mongo_service().clear_history(session_id)
-    return {"message": "历史会话已清空", "deleted_count": count}
+    return {"message": "Message history cleared", "deleted_count": count}
 
 @app.get("/history/{session_id}")
 async def history(session_id: str, limit: int = 50):

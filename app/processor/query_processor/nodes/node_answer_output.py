@@ -1,25 +1,24 @@
 import re
-from typing import List, Dict, Tuple
+from typing import Dict, List, Tuple
 
 from langchain_core.prompts import load_prompt
 
-from app.processor.query_processor.prompt import ANSWER_PROMPT
-
 from app.processor.query_processor.base import NodeBase
+from app.processor.query_processor.exceptions import StateFieldError
+from app.processor.query_processor.prompt import ANSWER_PROMPT
 from app.processor.query_processor.state import QueryGraphState
-from app.services.llm_service import get_llm_service, LLMService
-from app.services.mongo_service import get_mongo_service, MongoService
-from app.utils.sse_utils import push_sse_event, SSEEvent
+from app.services.llm_service import LLMService, get_llm_service
+from app.services.mongo_service import MongoService, get_mongo_service
+from app.utils.sse_utils import SSEEvent, push_sse_event
 from app.utils.task_utils import set_task_result
 
-
-MAX_CONTEXT_CHARS = 12000
+_MAX_CONTEXT_LENGTH = 12000
+_EMPTY_CONTEXT = "无参考内容"
+_NO_CHAT_HISTORY = "暂无历史对话"
+_NO_ITEM_NAME = "无指定商品"
 
 class NodeAnswerOutput(NodeBase):
-    """
-    节点功能: 答案输出
-    流程: 检查已有答案 → 构建提示词 → LLM 生成 → 写入历史 → 发送结束事件
-    """
+
     name: str = "node_answer_output"
 
     def __init__(self, mongo: MongoService = get_mongo_service(),
@@ -28,79 +27,50 @@ class NodeAnswerOutput(NodeBase):
         self._mongo = mongo
         self._llm_service = llm_service
 
-    def _step_1_check_answer(self, state) -> bool:
-      """
-      阶段一：检查 state 中是否已有 answer。
-      - 若已存在：按需推送流式 delta（用于 SSE），并返回 True
-      - 若不存在：返回 False
-      """
-      answer = state.get("answer")
-      is_stream = state.get("is_stream" )
+    def _validate_input_state(self, state: QueryGraphState):
+        if "session_id" not in state:
+            raise StateFieldError(field_name="session_id", message="State field 'session_id' missing", expected_type=str)
+        if "original_query" not in state:
+            raise StateFieldError(field_name="original_query", message="State field 'original_query' missing", expected_type=str)
+
+    def _step_1_check_answer(self, answer: str, is_stream: bool, session_id: str) -> bool:
       if answer:
         if is_stream:
           self.logger.info("---Step 1: 发现已有答案，执行流式推送---")
-          push_sse_event(state["session_id"], SSEEvent.DELTA, {"delta": answer})
+          push_sse_event(session_id, SSEEvent.DELTA, {"delta": answer})
         else:
-          set_task_result(state["session_id"], "answer", answer)
+          set_task_result(session_id, "answer", answer)
         return True
       else:
         return False
       
-    def _step_2_construct_prompt(self, state: QueryGraphState) -> str:
-        """
-        阶段二：构建 Prompt
-        根据state中的问题、重新问题、历史对话、提问商品（item_names）、 重排内容 组装 LLM 提示词
-        """
-        char_budget = MAX_CONTEXT_CHARS
+    def _construct_prompt(self, reranked_docs: List[Dict], history: List[Dict], item_names: List[str], original_query: str, rewritten_query: str) -> str:
+        available_chars = _MAX_CONTEXT_LENGTH
 
-        # 1. 获取问题和商品名
-        # 优先使用重写后的问题
-        question = state.get("rewritten_query") or state.get("original_query", "")
-        item_names = state["item_names"]
+        context_str, available_chars = self._format_reranked_docs(reranked_docs or [], available_chars)
 
-        # 2. 格式化上下文文档
-        context_str, char_budget = self._format_reranked_docs(
-            state.get("reranked_docs") or [], char_budget
-        )
+        history_str = self._format_chat_history(history or [], available_chars)
 
-        # 3. 格式化历史对话
-        history_str, char_budget = self._format_chat_history(
-            state.get("history") or [], char_budget
-        )
+        item_names_str = ", ".join(item_names) if item_names else _NO_ITEM_NAME
 
-        # 4. 格式化 Item Names (提问商品)
-        item_names_str = ", ".join(item_names) if item_names else "无指定商品"
+        question = rewritten_query or original_query
 
-        # 5. 组装提示词
         prompt = ANSWER_PROMPT.format(
-            context=context_str or "无参考内容",
-            history=history_str if history_str else "暂无历史对话",
+            context=context_str or _EMPTY_CONTEXT,
+            history=history_str if history_str else _NO_CHAT_HISTORY,
             item_names=item_names_str,
             question=question,
         )
-        self.logger.info(f"组装后的提示词为：{prompt}")
+        self.logger.info(f"Prompt constructed: \n{prompt}")
         return prompt
 
-    def _format_reranked_docs(self, reranked_docs: List[Dict], char_budget: int) -> Tuple[str, int]:
-        """格式化重排序文档，带字符预算控制"""
+    def _format_reranked_docs(self, reranked_docs: List[Dict], available_chars: int) -> Tuple[str, int]:
         formatted_lines = []
         used_chars = 0
-
-        # 从重排内容中，提取为资料字符串，不可超过限额
-        # 优先使用结构化 reranked_docs（包含 source/chunk_id/url/score），便于约束与引用
-        # ---------------------------------------------------------
-        # 逻辑解释：
-        # 1. 遍历重排序后的文档列表 (reranked_docs)，这些文档已经按相关性从高到低排序。
-        # 2. 对每个文档提取关键信息 (text, source, chunk_id, url, title, score)。
-        # 3. 构造 "元数据头 + 正文" 格式的字符串，例如：
-        #    "[1] [local] [chunk_id=123] [score=0.95] [title=操作手册]
-        #     这里是文档的正文内容..."
-        # 4. 累加字符长度，如果超过 MAX_CONTEXT_CHARS (如 12000 字符)，则停止添加，
-        #    确保 Prompt 长度在 LLM 的处理范围内，避免 Token 溢出。
-        # ---------------------------------------------------------
         for idx, doc in enumerate(reranked_docs, start=1):
-            content = doc.get("content")
+            
             meta_tags = [f"[{idx}]"]
+
             for field, template in [
                 ("source", "[source={}]"),
                 ("chunk_id", "[chunk_id={}]"),
@@ -115,44 +85,35 @@ class NodeAnswerOutput(NodeBase):
             if relevance_score is not None:
                 meta_tags.append(f"[score={float(relevance_score):.4f}]")
 
-            doc_entry = " ".join(meta_tags) + "\n" + content
+            doc_entry = " ".join(meta_tags) + "\n" + doc.get("content")
 
-            if used_chars + len(doc_entry) > char_budget:
+            if used_chars + len(doc_entry) > available_chars:
                 break
 
             formatted_lines.append(doc_entry)
             used_chars += len(doc_entry) + 2
 
-        return "\n\n".join(formatted_lines), char_budget - used_chars
+        return "\n\n".join(formatted_lines), available_chars - used_chars
 
-    def _format_chat_history(self, chat_history: List[Dict], char_budget: int) -> Tuple[str, int]:
-        """格式化历史对话"""
+    def _format_chat_history(self, chat_history: List[Dict], available_chars: int) -> str:
         formatted_lines = []
         used_chars = 0
-
-        role_label_map = {"user": "用户", "assistant": "助手"}
-
         for message in chat_history:
             role = message.get("role", "")
             text = message.get("text", "")
-            if not text or role not in role_label_map:
+            if not text or not role:
                 continue
-
-            formatted_line = f"{role_label_map[role]}: {text}"
+            formatted_line = f"{role}: {text}"
             used_chars += len(formatted_line) + 1
 
-            if used_chars > char_budget:
-                return "\n".join(formatted_lines), char_budget - used_chars
+            if used_chars > available_chars:
+                return "\n".join(formatted_lines)
 
             formatted_lines.append(formatted_line)
 
-        return "\n".join(formatted_lines), char_budget - used_chars
+        return "\n".join(formatted_lines)
 
-    def _step_3_generate_response(self, state: QueryGraphState, prompt: str) -> QueryGraphState:
-        """
-        阶段三：生成回答
-        调用llm生成答案，支持流式输出
-        """
+    def _generate_response(self, state: QueryGraphState, prompt: str) -> QueryGraphState:
         self.logger.info("---Step 3: 开始生成回答 (LLM Generation)---")
 
         # 获取 LLM 客户端
@@ -180,12 +141,10 @@ class NodeAnswerOutput(NodeBase):
 
             except Exception as e:
                 self.logger.error(f"流式生成出错: {e}", exc_info=True)
-                # 发生错误时，尝试推送到前端
                 push_sse_event(session_id, SSEEvent.ERROR, {"error": str(e)})
 
             state["answer"] = final_text
         else:
-            # 非流式直接调用
             self.logger.info(f"模式: 非流式输出 (Blocking), Session: {session_id}")
             try:
                 response = llm.invoke(prompt)
@@ -289,39 +248,28 @@ class NodeAnswerOutput(NodeBase):
         return state
     
     def process(self, state: QueryGraphState) -> QueryGraphState:
-        """
-        1 判断state 中的answer是否已经存在，如果存在直接输出answer中的答案，注意判断是否需要流式输出需要则流式输出
-        2 根据state中的问题、重新问题、历史对话、提问商品（item_names）、 重排内容 组织prompt 并调用llm 生成答案
-        3 调用大模型输出答案 注意判断是否需要流式输出需要则流式输出
-        4 把答案写入到mongodb的history中 利用utils/mongo_history_utils.py中的save_chat_message方法
-        5 做最后一次push操作（主要是为了触发前端图片渲染)
-             {
-                "answer": "HAK 180 烫金机的操作面板位于...（大模型生成的纯文本）...",
-                "status": "completed",
-                "image_urls": [
-                    "http://local-server/images/panel_view.jpg",
-                    "http://local-server/images/button_detail.jpg"
-                ]
-              }
-        """
+        self._validate_input_state(state)
+        session_id = state.get("session_id")
+        original_query = state.get("original_query")
+        rewritten_query = state.get("rewritten_query")
+        item_names = state.get("item_names")
+        history = state.get("history")
+        reranked_docs = state.get("reranked_docs")
+        is_stream = state.get("is_stream")
 
-        # 阶段一：检查answer是否存在,如果存在直接输出answer中的答案
-        answer_exists = self._step_1_check_answer(state)
+        answer_exists = self._step_1_check_answer(answer, is_stream, session_id)
 
-        # 阶段二  如果没有answer则 构建 Prompt
         if not answer_exists:
-            prompt = self._step_2_construct_prompt(state)
+            prompt = self._construct_prompt(reranked_docs, item_names, history, original_query, rewritten_query)
             state["prompt"] = prompt
 
-            # 阶段三：  如果没有answer则 调用大模型输出答案
-            self._step_3_generate_response(state, prompt)
+            self._generate_response(state, prompt)
 
             # 提取图片URL（用于历史记录和前端展示）
-        image_urls = self._extract_images_from_docs(state.get("reranked_docs") or [])
+            image_urls = self._extract_images_from_docs(state.get("reranked_docs") or [])
 
         # 阶段四：把答案写入到mongodb的history中
         if state.get("answer"):
-            self.logger.info("---写入MongoDB历史记录---")
             self._step_4_write_history(state, image_urls=image_urls)
 
         # 阶段五: 流式输出结束，发送 final 事件 [最后兜底，确保图片都能争取渲染和结束]

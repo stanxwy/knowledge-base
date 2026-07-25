@@ -1,6 +1,7 @@
-from fastapi.staticfiles import StaticFiles
 from pathlib import Path
-from fastapi import FastAPI, Request
+
+from fastapi import FastAPI
+from fastapi.staticfiles import StaticFiles
 
 app = FastAPI()
 

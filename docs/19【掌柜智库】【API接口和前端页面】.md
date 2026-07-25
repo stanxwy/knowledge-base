@@ -434,11 +434,11 @@ API 文档：http://localhost:8000/docs
       {
         "_id": str(r.get("_id")) if r.get("_id") is not None else "",
         "session_id": r.get("session_id", ""),
-         "role": r.get("role", ""),
-         "text": r.get("text", ""),
-         "rewritten_query": r.get("rewritten_query", ""),
-          "item_names": r.get("item_names", []),
-          "ts": r.get("ts")
+        "role": r.get("role", ""),
+        "text": r.get("text", ""),
+        "rewritten_query": r.get("rewritten_query", ""),
+        "item_names": r.get("item_names", []),
+        "ts": r.get("ts")
         }
     ]
   }
@@ -465,7 +465,7 @@ API 文档：http://localhost:8000/docs
 1. Web 服务层 ( query_service.py ): 负责接收请求、建立 SSE 连接。
 2. SSE 工具层 ( sse_utils.py ): 负责管理消息队列、打包和推送事件。
 3. 任务状态层 ( task_utils.py ): 负责记录每个节点的执行进度，并自动触发 SSE 推送。
-4. 图节点执行层 ( query_process/ ): 实际的业务逻辑节点（如检索、Rerank、生成答案），它们通过更新状态来驱动进度条。
+4. 图节点执行层 ( query_processor/ ): 实际的业务逻辑节点（如检索、Rerank、生成答案），它们通过更新状态来驱动进度条。
 
 #### 2.3.2  应用初始化与跨域配置
 

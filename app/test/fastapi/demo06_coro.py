@@ -1,9 +1,10 @@
 import asyncio
 import time
 
+
 # 1. 定义【异步函数】
 async def my_task():
-    await asyncio.sleep(1) #
+    await asyncio.sleep(1)
     return "完成"
 
 # 2. 调用异步函数时，返回的是【协程对象】

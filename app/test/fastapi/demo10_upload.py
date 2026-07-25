@@ -1,9 +1,8 @@
+import os
 import uuid
 from typing import Optional
 
-from fastapi import FastAPI, File,UploadFile,HTTPException
-import os
-
+from fastapi import FastAPI, File, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
 app = FastAPI()
@@ -51,7 +50,7 @@ async def upload(
         alias="upload_file",                            # 前端参数的名称，默认文件名是file
         media_type="application/octet-stream"           # 接受任何类型的文件（图片、文档、视频等）
     ), 
-    remark:str = None #可选参数
+    remark: str = None #可选参数
 ):
     """
     文件上传接口

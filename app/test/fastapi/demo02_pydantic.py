@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field, ValidationError
 
+
 class Student(BaseModel):
     name: str = Field(..., description="姓名")
     #           │       │         │

@@ -1,4 +1,5 @@
 import time
+
 import uvicorn
 from fastapi import FastAPI
 from loguru import logger
@@ -54,8 +55,8 @@ async def create_and_return_item(item: Item):
     return item
 
 
-#2、使用 HTTPException 抛出异常，返回自定义的状态码和详细信息。
-#以下实例在 item_id 为 42 会返回 404 状态码：
+# 2、使用 HTTPException 抛出异常，返回自定义的状态码和详细信息。
+# 以下实例在 item_id 为 42 会返回 404 状态码：
 @app.delete("/items/{item_id}", summary="抛出异常")
 async def read_item_exception(item_id: int):
     from fastapi import HTTPException
@@ -85,7 +86,7 @@ async def download_pdf():
     return FileResponse(
         path=pdf_path,
         filename="file.pdf",
-        #media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+        # media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         media_type="application/pdf"
     )
 
