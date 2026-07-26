@@ -1,5 +1,3 @@
-from typing import List, Tuple
-
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.exceptions import StateFieldError
 from app.processor.query_processor.state import QueryGraphState
@@ -21,7 +19,7 @@ class NodeItemNameConfirm(NodeBase):
         self._llm_service = llm_service
         self._item_name_vector_db = item_name_vector_db
 
-    def _validate_input_state(self, state: QueryGraphState) -> Tuple[str, str]:
+    def _validate_input_state(self, state: QueryGraphState) -> tuple[str, str]:
         session_id = state.get("session_id") 
         if not session_id:
             raise StateFieldError(field_name="session_id", message="State field 'session_id' missing")
@@ -48,9 +46,9 @@ class NodeItemNameConfirm(NodeBase):
             }
         """
         # 1、初始化确认商品名列表（符合高置信度规则的商品名）
-        confirmed_item_names: List[str] = []
+        confirmed_item_names: list[str] = []
         # 2、初始化候选商品名列表（低置信度，需用户确认的商品名）
-        options: List[str] = []
+        options: list[str] = []
 
         for res in query_results:
             # 提取原始的数据，商品名和匹配结果

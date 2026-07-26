@@ -1,5 +1,4 @@
 import re
-from typing import Dict, List, Optional, Tuple
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
@@ -15,7 +14,7 @@ class NodeDocumentSplit(BaseNode):
 
     name: str = "node_document_split"
 
-    def _validate_input_state(self, state: ImportGraphState) -> Tuple[str, str]:
+    def _validate_input_state(self, state: ImportGraphState) -> tuple[str, str]:
         file_title = state.get("file_title")
         if not file_title:
             raise StateFieldError(field_name="file_title", message="filename is required", expected_type=str)
@@ -27,7 +26,7 @@ class NodeDocumentSplit(BaseNode):
         md_content = md_content.replace("\r\n", "\n").replace("\r", "\n")
         return md_content, file_title
 
-    def _split_by_headings(self, content: str, file_title: str) -> Tuple[List[Dict[str, str]], int, int]:
+    def _split_by_headings(self, content: str, file_title: str) -> tuple[list[dict[str, str]], int, int]:
         sections = []
         def _flush_section():
             if not current_lines:
@@ -39,7 +38,7 @@ class NodeDocumentSplit(BaseNode):
                 "file_title": file_title,
             })
         
-        def _find_parent_title(current_title: str, sections: List[Dict[str, str]]) -> str:
+        def _find_parent_title(current_title: str, sections: list[dict[str, str]]) -> str:
             current_level = _get_title_level(current_title)
             if current_level is None or current_level <= 1:
                 return ""
@@ -52,7 +51,7 @@ class NodeDocumentSplit(BaseNode):
                     return parent_title
             return ""
 
-        def _get_title_level(title: str) -> Optional[int]:
+        def _get_title_level(title: str) -> int | None:
             if not title:
                 return None
             match = re.match(r'^(#{1,6})\s+', title)
@@ -95,7 +94,7 @@ class NodeDocumentSplit(BaseNode):
         self.logger.info(f"Document split by headings completed, total {len(sections)} sections, title count: {title_count}, line count: {len(lines)}")
         return sections, title_count, len(lines)
 
-    def _split_and_merge(self, sections: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _split_and_merge(self, sections: list[dict[str, str]]) -> list[dict[str, str]]:
         splitted = []
         for sec in sections:
             splitted.extend(self._split_overlong_chunk(sec))
@@ -105,7 +104,7 @@ class NodeDocumentSplit(BaseNode):
         self.logger.info(f"Chunks after merging: {len(merged)}")
         return merged
 
-    def _split_overlong_chunk(self, section: Dict[str, str]) -> List[Dict[str, str]]:
+    def _split_overlong_chunk(self, section: dict[str, str]) -> list[dict[str, str]]:
         content = section.get("content", "")
         if len(content) <= self.config.max_content_length:
             return [section]
@@ -145,7 +144,7 @@ class NodeDocumentSplit(BaseNode):
         self.logger.info(f"Overlong section ({title}) splitted into {len(splitted)} chunks")
         return splitted
 
-    def _merge_tiny_chunks(self, chunks: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _merge_tiny_chunks(self, chunks: list[dict[str, str]]) -> list[dict[str, str]]:
         if not chunks:
             self.logger.info("No sections to merge")
             return []

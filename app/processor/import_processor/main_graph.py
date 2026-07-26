@@ -25,10 +25,10 @@ logger = logging.getLogger(__name__)
 class KBImportWorkflow:
 
     def __init__(self):
-        self.__graph = StateGraph(ImportGraphState)
+        self._graph = StateGraph(ImportGraphState)
         self._register_nodes()
         self._setup_routes()
-        self.__compiled_graph: CompiledStateGraph | None = None
+        self._compiled_graph: CompiledStateGraph | None = None
         
     def _register_nodes(self):
         mineru_service = get_mineru_service()
@@ -38,13 +38,13 @@ class KBImportWorkflow:
         item_name_vector_db = get_item_name_vector_db()
         chunks_vector_db = get_chunks_vector_db()
 
-        self.__graph.add_node("node_entry", NodeEntry())
-        self.__graph.add_node("node_pdf_to_md", NodePDFToMD(mineru_service))
-        self.__graph.add_node("node_md_img", NodeMDImg(llm_service, object_store))
-        self.__graph.add_node("node_document_split", NodeDocumentSplit())
-        self.__graph.add_node("node_item_name_recognition", NodeItemNameRecognition(llm_service, embedding_service, item_name_vector_db))
-        self.__graph.add_node("node_bge_embedding", NodeBGEEmbedding(embedding_service))
-        self.__graph.add_node("node_import_milvus", NodeImportMilvus(chunks_vector_db))
+        self._graph.add_node("node_entry", NodeEntry())
+        self._graph.add_node("node_pdf_to_md", NodePDFToMD(mineru_service))
+        self._graph.add_node("node_md_img", NodeMDImg(llm_service, object_store))
+        self._graph.add_node("node_document_split", NodeDocumentSplit())
+        self._graph.add_node("node_item_name_recognition", NodeItemNameRecognition(llm_service, embedding_service, item_name_vector_db))
+        self._graph.add_node("node_bge_embedding", NodeBGEEmbedding(embedding_service))
+        self._graph.add_node("node_import_milvus", NodeImportMilvus(chunks_vector_db))
 
     def route_after_entry(self, state: ImportGraphState) -> str:
         if state.get("is_pdf_read_enabled"):
@@ -55,8 +55,8 @@ class KBImportWorkflow:
             return END
         
     def _setup_routes(self):
-        self.__graph.set_entry_point("node_entry")
-        self.__graph.add_conditional_edges(
+        self._graph.set_entry_point("node_entry")
+        self._graph.add_conditional_edges(
             "node_entry",
             self.route_after_entry,
             {
@@ -65,19 +65,19 @@ class KBImportWorkflow:
                 END: END
             }
         )
-        self.__graph.add_edge("node_pdf_to_md", "node_md_img")
-        self.__graph.add_edge("node_md_img", "node_document_split")
-        self.__graph.add_edge("node_document_split", "node_item_name_recognition")
-        self.__graph.add_edge("node_item_name_recognition", "node_bge_embedding")
-        self.__graph.add_edge("node_bge_embedding", "node_import_milvus")
-        self.__graph.add_edge("node_import_milvus", END)
+        self._graph.add_edge("node_pdf_to_md", "node_md_img")
+        self._graph.add_edge("node_md_img", "node_document_split")
+        self._graph.add_edge("node_document_split", "node_item_name_recognition")
+        self._graph.add_edge("node_item_name_recognition", "node_bge_embedding")
+        self._graph.add_edge("node_bge_embedding", "node_import_milvus")
+        self._graph.add_edge("node_import_milvus", END)
 
     @property
     def graph(self):
-        if self.__compiled_graph is None:
-            self.__compiled_graph = self.__graph.compile()
-            logger.info(self.__compiled_graph.get_graph().draw_ascii())
-        return self.__compiled_graph
+        if self._compiled_graph is None:
+            self._compiled_graph = self._graph.compile()
+            logger.info(f"\n{self._compiled_graph.get_graph().draw_ascii()}")
+        return self._compiled_graph
 
     def run(self, state: ImportGraphState, stream: bool = False):
         if stream:

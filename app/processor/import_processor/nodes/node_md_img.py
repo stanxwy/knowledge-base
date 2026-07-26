@@ -2,7 +2,6 @@ import os
 import re
 from collections import deque
 from pathlib import Path
-from typing import Dict, List, Tuple
 
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import (
@@ -28,7 +27,7 @@ class NodeMDImg(BaseNode):
         self._llm_service = llm_service
         self._object_store = object_store
 
-    def _validate_input_state(self, state: ImportGraphState) -> Tuple[str, Path, Path]:
+    def _validate_input_state(self, state: ImportGraphState) -> tuple[str, Path, Path]:
         md_content = state["md_content"]
         if not md_content:
             raise StateFieldError(field_name='md_content', message="md_content cannot be empty", expected_type=str)
@@ -45,7 +44,7 @@ class NodeMDImg(BaseNode):
 
         return md_content, md_path_obj, images_dir_obj
 
-    def _collect_ref_images(self, md_content: str, images_dir_obj: Path) -> List[Tuple[str, str, Tuple[str, str]]]:
+    def _collect_ref_images(self, md_content: str, images_dir_obj: Path) -> list[tuple[str, str, tuple[str, str]]]:
         referenced_images = []
         for image_file in os.listdir(images_dir_obj):
             self.logger.info(f"Checking image file: {image_file}")
@@ -66,7 +65,7 @@ class NodeMDImg(BaseNode):
         self.logger.info(f"Images to be processed: {len(referenced_images)}")
         return referenced_images
     
-    def _extract_image_context(self, md_content: str, image_file: str, context_len: int = IMAGE_CONTEXT_LENGTH) -> Tuple[str, str]:
+    def _extract_image_context(self, md_content: str, image_file: str, context_len: int = IMAGE_CONTEXT_LENGTH) -> tuple[str, str]:
         # ![alt text](images/file.extension)
         pattern = re.compile(r"!\[.*?\]\(.*?" + re.escape(image_file) + r".*?\)")
         match = pattern.search(md_content)
@@ -79,7 +78,7 @@ class NodeMDImg(BaseNode):
         post_text = md_content[end:min(len(md_content), end + context_len)]
         return pre_text, post_text
 
-    def _generate_image_captions(self, doc_stem: str, target_images: List[Tuple[str, str, Tuple[str, str]]]) -> Dict[str, str]:
+    def _generate_image_captions(self, doc_stem: str, target_images: list[tuple[str, str, tuple[str, str]]]) -> dict[str, str]:
         captions = {}
         request_deque = deque()
 
@@ -88,7 +87,7 @@ class NodeMDImg(BaseNode):
             captions[img_file] = self._llm_service.generate_image_caption(img_local_path, doc_stem, context)
         return captions
     
-    def _upload_images_batch(self, doc_stem: str, target_images: List[Tuple]) -> Dict[str, str]:
+    def _upload_images_batch(self, doc_stem: str, target_images: list[tuple]) -> dict[str, str]:
         upload_dir = doc_stem.replace(" ", "")
         self._object_store.clean_img_dir(upload_dir) # idempotent operation
 
@@ -99,7 +98,7 @@ class NodeMDImg(BaseNode):
         self.logger.info(f"{len(target_images)} images uploaded to Object Store")
         return urls
 
-    def _replace_img_alt_and_url(self, md_content: str, captions: Dict[str, str], urls: Dict[str, str]) -> str:
+    def _replace_img_alt_and_url(self, md_content: str, captions: dict[str, str], urls: dict[str, str]) -> str:
         for img_file, caption in captions.items():
             pattern = re.compile(r"!\[.*?\]\(.*?" + re.escape(img_file) + r".*?\)")
             md_content = pattern.sub(lambda _: f"![{caption}]({urls.get(img_file)})", md_content)

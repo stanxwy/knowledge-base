@@ -1,5 +1,4 @@
 import re
-from typing import Dict, List, Tuple
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.exceptions import StateFieldError
@@ -34,7 +33,7 @@ class NodeAnswerOutput(NodeBase):
         if "original_query" not in state:
             raise StateFieldError(field_name="original_query", message="State field 'original_query' missing", expected_type=str)
 
-    def _construct_prompt(self, reranked_docs: List[Dict], history: List[Dict], item_names: List[str], original_query: str, rewritten_query: str) -> str:
+    def _construct_prompt(self, reranked_docs: list[dict], history: list[dict], item_names: list[str], original_query: str, rewritten_query: str) -> str:
         available_chars = _MAX_CONTEXT_LENGTH
 
         context_str, available_chars = self._format_reranked_docs(reranked_docs or [], available_chars)
@@ -54,7 +53,7 @@ class NodeAnswerOutput(NodeBase):
         self.logger.info(f"Prompt constructed: \n{prompt}")
         return prompt
 
-    def _format_reranked_docs(self, reranked_docs: List[Dict], available_chars: int) -> Tuple[str, int]:
+    def _format_reranked_docs(self, reranked_docs: list[dict], available_chars: int) -> tuple[str, int]:
         formatted_lines = []
         used_chars = 0
         for idx, doc in enumerate(reranked_docs, start=1):
@@ -85,7 +84,7 @@ class NodeAnswerOutput(NodeBase):
 
         return "\n\n".join(formatted_lines), available_chars - used_chars
 
-    def _format_chat_history(self, chat_history: List[Dict], available_chars: int) -> str:
+    def _format_chat_history(self, chat_history: list[dict], available_chars: int) -> str:
         formatted_lines = []
         used_chars = 0
         for message in chat_history:
@@ -129,7 +128,7 @@ class NodeAnswerOutput(NodeBase):
                 self.logger.info(f"Generation completed, content length: {len(content)}")
                 return content
             except Exception as e:
-                self.logger.exception(f"Error invoking LLM: {e}", stack_info=True)
+                self.logger.exception(f"Error invoking LLM: {e!s}", stack_info=True)
                 return _ERROR_RESPONSE
 
     def _extract_images_from_docs(self, docs):
@@ -160,7 +159,7 @@ class NodeAnswerOutput(NodeBase):
         self.logger.info(f"Unique images extracted: {len(images)} \n{images}")
         return images
     
-    def _write_history(self, session_id: str, item_names: List[str], answer: str, image_urls = None) -> QueryGraphState:
+    def _write_history(self, session_id: str, item_names: list[str], answer: str, image_urls = None) -> QueryGraphState:
         try:
             if answer:
                 self._mongo.save_chat_message(
@@ -196,6 +195,7 @@ class NodeAnswerOutput(NodeBase):
             prompt = self._construct_prompt(reranked_docs, history, item_names, original_query, rewritten_query)
 
             generated_answer = self._generate_response(session_id, is_stream, prompt)
+            self.logger.debug(f"Generated answer: \n{generated_answer}")
 
             image_urls = self._extract_images_from_docs(reranked_docs)
 

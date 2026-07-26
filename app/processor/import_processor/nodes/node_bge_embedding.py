@@ -1,5 +1,3 @@
-from typing import Dict, List
-
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
@@ -15,7 +13,7 @@ class NodeBGEEmbedding(BaseNode):
         super().__init__()
         self._embedding_service = embedding_service
 
-    def _validate_input_state(self, state: ImportGraphState) -> List[Dict]:
+    def _validate_input_state(self, state: ImportGraphState) -> list[dict]:
         chunks = state.get("chunks")
         if not chunks:
             raise StateFieldError(field_name="chunks", message="Chunks cannot be empty", expected_type=list)
@@ -24,7 +22,7 @@ class NodeBGEEmbedding(BaseNode):
             raise StateFieldError(field_name="chunks", message="Invalid data type for chunks", expected_type=list)
         return chunks
 
-    def _batch_generate_embeddings(self, chunks: List[Dict[str, str]]) -> List[Dict[str, str]]:
+    def _batch_generate_embeddings(self, chunks: list[dict[str, str]]) -> list[dict[str, str]]:
         chunks_with_embeddings = []
         for i in range(0, len(chunks), BATCH_SIZE):
             batch_chunks = chunks[i:i + BATCH_SIZE]

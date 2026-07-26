@@ -1,4 +1,4 @@
-from typing import Any, Dict, List
+from typing import Any
 
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
@@ -14,7 +14,7 @@ class NodeImportMilvus(BaseNode):
         super().__init__()
         self._chunks_vector_db = chunks_vector_db
     
-    def _validate_input_state(self, state: ImportGraphState) -> tuple[List[Dict[str, Any]], int]:
+    def _validate_input_state(self, state: ImportGraphState) -> tuple[list[dict[str, Any]], int]:
         file_title = state.get("file_title")
         if not file_title:
             raise StateFieldError(field_name="file_title", message="Missing field: file_title")

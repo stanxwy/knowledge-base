@@ -1,4 +1,4 @@
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
@@ -12,7 +12,7 @@ class NodeRrf(NodeBase):
 
     name: str = "node_rrf"
 
-    def _rrf_merge(self, rrf_inputs, k: int = _CONSTANT_K, max_results: int = None) -> List[Tuple[Dict[str, Any], float]]:
+    def _rrf_merge(self, rrf_inputs, k: int = _CONSTANT_K, max_results: int | None = None) -> list[tuple[dict[str, Any], float]]:
         dict_score = {}
         dict_doc = {}
 

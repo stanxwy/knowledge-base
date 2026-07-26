@@ -29,11 +29,11 @@ logger = logging.getLogger(__name__)
 class KBQueryWorkflow:
     
     def __init__(self):
-        self.__graph = StateGraph(QueryGraphState)
+        self._graph = StateGraph(QueryGraphState)
         self._init_nodes()
         self._register_nodes()
         self._setup_routes()
-        self.__compiled_graph: CompiledStateGraph | None = None
+        self._compiled_graph: CompiledStateGraph | None = None
 
     def _init_nodes(self):
         llm_service = get_llm_service()
@@ -52,13 +52,13 @@ class KBQueryWorkflow:
         self.node_answer_output = NodeAnswerOutput(mongo_service, llm_service)
 
     def _register_nodes(self):
-        self.__graph.add_node("node_item_name_confirm", self.node_item_name_confirm)
-        self.__graph.add_node("node_search_embedding", self.node_search_embedding)
-        self.__graph.add_node("node_search_embedding_hyde", self.node_search_embedding_hyde) 
-        self.__graph.add_node("node_web_search_mcp", self.node_web_search_mcp)
-        self.__graph.add_node("node_rrf", self.node_rrf)
-        self.__graph.add_node("node_rerank", self.node_rerank)
-        self.__graph.add_node("node_answer_output", self.node_answer_output)
+        self._graph.add_node("node_item_name_confirm", self.node_item_name_confirm)
+        self._graph.add_node("node_search_embedding", self.node_search_embedding)
+        self._graph.add_node("node_search_embedding_hyde", self.node_search_embedding_hyde) 
+        self._graph.add_node("node_web_search_mcp", self.node_web_search_mcp)
+        self._graph.add_node("node_rrf", self.node_rrf)
+        self._graph.add_node("node_rerank", self.node_rerank)
+        self._graph.add_node("node_answer_output", self.node_answer_output)
 
     def _route_after_item_name_confirm(self, state: QueryGraphState) -> str | list[str]:
         if state.get("answer"):
@@ -66,8 +66,8 @@ class KBQueryWorkflow:
         return ["node_search_embedding", "node_search_embedding_hyde", "node_web_search_mcp"]
 
     def _setup_routes(self):
-        self.__graph.set_entry_point("node_item_name_confirm")
-        self.__graph.add_conditional_edges(
+        self._graph.set_entry_point("node_item_name_confirm")
+        self._graph.add_conditional_edges(
             "node_item_name_confirm",
             self._route_after_item_name_confirm,
             {
@@ -77,21 +77,20 @@ class KBQueryWorkflow:
                 "node_web_search_mcp": "node_web_search_mcp"
             }
         )
+        self._graph.add_edge("node_search_embedding", "node_rrf")
+        self._graph.add_edge("node_search_embedding_hyde", "node_rrf")
+        self._graph.add_edge("node_web_search_mcp", "node_rrf")
 
-        self.__graph.add_edge("node_search_embedding", "node_rrf")
-        self.__graph.add_edge("node_search_embedding_hyde", "node_rrf")
-        self.__graph.add_edge("node_web_search_mcp", "node_rrf")
-
-        self.__graph.add_edge("node_rrf", "node_rerank")
-        self.__graph.add_edge("node_rerank", "node_answer_output")
-        self.__graph.add_edge("node_answer_output", END)
+        self._graph.add_edge("node_rrf", "node_rerank")
+        self._graph.add_edge("node_rerank", "node_answer_output")
+        self._graph.add_edge("node_answer_output", END)
 
     @property
     def graph(self):
-        if not self.__compiled_graph:
-            self.__compiled_graph = self.__graph.compile()
-            logger.info(self.__compiled_graph.get_graph().draw_ascii())
-        return self.__compiled_graph
+        if not self._compiled_graph:
+            self._compiled_graph = self._graph.compile()
+            logger.info(f"\n{self._compiled_graph.get_graph().draw_ascii()}")
+        return self._compiled_graph
 
     def run(self, initial_state: QueryGraphState, stream: bool = False) -> QueryGraphState:
         if stream:

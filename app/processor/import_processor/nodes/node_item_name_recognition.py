@@ -1,5 +1,3 @@
-from typing import Dict, List, Tuple
-
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
@@ -21,7 +19,7 @@ class NodeItemNameRecognition(BaseNode):
         self._embedding_service = embedding_service
         self._item_name_vector_db = item_name_vector_db
 
-    def _validate_input_state(self, state: ImportGraphState) -> Tuple[str, List[Dict]]:
+    def _validate_input_state(self, state: ImportGraphState) -> tuple[str, list[dict]]:
         file_title = state.get("file_title")
         if not file_title:
             raise StateFieldError(field_name="file_title", message="File title cannot be empty", expected_type=str)
@@ -35,9 +33,9 @@ class NodeItemNameRecognition(BaseNode):
 
         return file_title, chunks
 
-    def _build_llm_context(self, chunks: List[Dict]) -> str:
+    def _build_llm_context(self, chunks: list[dict]) -> str:
         max_context_size = self.config.item_name_chunk_size
-        parts: List[str] = []
+        parts: list[str] = []
         total_chars = 0
         for idx, chunk in enumerate(chunks[:self.config.item_name_chunk_k], start = 1):
             chunk_title = chunk.get("title").strip()
@@ -71,7 +69,7 @@ class NodeItemNameRecognition(BaseNode):
 
             self._item_name_vector_db.insert_into_item_name_collection(data)
         except Exception as e: # catch exceptions but do not interrupt the flow
-            self.logger.warning(f"Error inserting data into vector db: {str(e)}", exc_info=True)
+            self.logger.warning(f"Error inserting data into vector db: {e!s}", exc_info=True)
 
     def process(self, state: ImportGraphState) -> ImportGraphState:
 
