@@ -4,25 +4,25 @@ from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from app.processor.query_processor.nodes.node_answer_output import NodeAnswerOutput
-from app.processor.query_processor.nodes.node_item_name_confirm import (
-    NodeItemNameConfirm,
-)
-from app.processor.query_processor.nodes.node_rerank import NodeRerank
-from app.processor.query_processor.nodes.node_rrf import NodeRrf
-from app.processor.query_processor.nodes.node_search_embedding import (
-    NodeSearchEmbedding,
-)
-from app.processor.query_processor.nodes.node_search_embedding_hyde import (
-    NodeSearchEmbeddingHyde,
-)
-from app.processor.query_processor.nodes.node_web_search_mcp import NodeWebSearchMcp
-from app.processor.query_processor.state import QueryGraphState
 from app.services.llm_service import get_llm_service
 from app.services.mcp_search_service import get_mcp_search_service
 from app.services.mongo_service import get_mongo_service
 from app.services.reranker_http import get_reranker
 from app.services.vectordb_service import get_chunks_vector_db, get_item_name_vector_db
+from app.workflows.query.nodes.node_answer_output import NodeAnswerOutput
+from app.workflows.query.nodes.node_item_name_confirm import (
+    NodeItemNameConfirm,
+)
+from app.workflows.query.nodes.node_rerank import NodeRerank
+from app.workflows.query.nodes.node_rrf import NodeRrf
+from app.workflows.query.nodes.node_search_embedding import (
+    NodeSearchEmbedding,
+)
+from app.workflows.query.nodes.node_search_embedding_hyde import (
+    NodeSearchEmbeddingHyde,
+)
+from app.workflows.query.nodes.node_web_search_mcp import NodeWebSearchMcp
+from app.workflows.query.state import QueryGraphState
 
 logger = logging.getLogger(__name__)
 

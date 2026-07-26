@@ -4,7 +4,7 @@ import shutil
 import uuid
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
 
 import uvicorn
 from dotenv import load_dotenv
@@ -14,7 +14,6 @@ from fastapi.responses import FileResponse
 from app.api.middleware.cors import setup_cors
 from app.api.middleware.request_logger import request_logger_middleware
 from app.core.config import settings
-from app.processor.import_processor.main_graph import KBImportWorkflow
 from app.services.object_store_service import get_object_store_service
 from app.utils.logger import setup_logging
 from app.utils.task_utils import (
@@ -29,6 +28,7 @@ from app.utils.task_utils import (
     get_task_status,
     update_task_status,
 )
+from app.workflows.ingestion.main_graph import KBImportWorkflow
 
 load_dotenv(override=True)
 setup_logging(os.getenv("LOG_LEVEL", logging.INFO))
@@ -75,7 +75,7 @@ def run_graph_task(task_id: str, output_file_dir: str, import_file_path: str):
 
 
 @app.post("/upload", summary="file upload API", description="multiple files upload supported, triggers import workflow")
-async def upload_files(background_tasks: BackgroundTasks, files: List[UploadFile] = File(...)):
+async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)):
     try:
         data_based_root_dir = os.getenv("DATA_BASED_ROOT_DIR")
         date_str = datetime.now().strftime("%Y%m%d")
@@ -123,7 +123,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: List[UploadFile
 
 @app.get("/status/{task_id}", summary="query task status", description="query task status with steps running/done by task_id")
 async def get_task_progress(task_id: str):
-    task_status_info: Dict[str, Any] = {
+    task_status_info: dict[str, Any] = {
         "code": 200,
         "task_id": task_id,
         "status": get_task_status(task_id),             # pending/processing/completed/failed

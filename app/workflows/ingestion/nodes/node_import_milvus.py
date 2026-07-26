@@ -1,9 +1,9 @@
 from typing import Any
 
-from app.processor.import_processor.base import BaseNode
-from app.processor.import_processor.exceptions import StateFieldError
-from app.processor.import_processor.state import ImportGraphState
 from app.services.vectordb_service import ChunksVectorDBService
+from app.workflows.ingestion.base import BaseNode
+from app.workflows.ingestion.exceptions import StateFieldError
+from app.workflows.ingestion.state import ImportGraphState
 
 
 class NodeImportMilvus(BaseNode):

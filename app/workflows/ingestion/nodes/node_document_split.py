@@ -2,9 +2,9 @@ import re
 
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 
-from app.processor.import_processor.base import BaseNode
-from app.processor.import_processor.exceptions import StateFieldError
-from app.processor.import_processor.state import ImportGraphState
+from app.workflows.ingestion.base import BaseNode
+from app.workflows.ingestion.exceptions import StateFieldError
+from app.workflows.ingestion.state import ImportGraphState
 
 _REGEX_TITLE_LINE = r'^\s*#{1,6}\s+.+'
 _REGEX_CODE_BLOCK_MARKER = r'^(`{3,}|~{3,})'

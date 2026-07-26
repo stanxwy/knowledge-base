@@ -1,9 +1,9 @@
 from typing import Any
 
-from app.processor.query_processor.base import NodeBase
-from app.processor.query_processor.state import QueryGraphState
 from app.services.reranker_http import Reranker
 from app.utils.json_format_utils import format_json
+from app.workflows.query.base import NodeBase
+from app.workflows.query.state import QueryGraphState
 
 # -----------------------------
 # Rerank / TopK Global Constants

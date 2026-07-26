@@ -3,11 +3,11 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import Optional, TypeVar
 
-from app.processor.import_processor.exceptions import ImportProcessError
-from app.processor.import_processor.import_config import ImportConfig, get_config
-from app.processor.import_processor.state import ImportGraphState
 from app.utils.backup_utils import backup_json
 from app.utils.task_utils import add_done_task, add_running_task
+from app.workflows.ingestion.exceptions import ImportProcessError
+from app.workflows.ingestion.import_config import ImportConfig, get_config
+from app.workflows.ingestion.state import ImportGraphState
 
 T = TypeVar("T", bound="ImportGraphState")
 

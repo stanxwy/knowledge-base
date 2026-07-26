@@ -1,10 +1,10 @@
 import asyncio
 import json
 
-from app.processor.query_processor.base import NodeBase
-from app.processor.query_processor.state import QueryGraphState
 from app.services.mcp_search_service import MCPSearchService
 from app.utils.json_format_utils import format_json
+from app.workflows.query.base import NodeBase
+from app.workflows.query.state import QueryGraphState
 
 
 class NodeWebSearchMcp(NodeBase):

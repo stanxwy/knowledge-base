@@ -1,13 +1,13 @@
 import re
 
-from app.processor.query_processor.base import NodeBase
-from app.processor.query_processor.exceptions import StateFieldError
-from app.processor.query_processor.prompt import ANSWER_PROMPT
-from app.processor.query_processor.state import QueryGraphState
 from app.services.llm_service import LLMService
 from app.services.mongo_service import MongoService
 from app.utils.sse_utils import SSEEvent, push_sse_event
 from app.utils.task_utils import set_task_result
+from app.workflows.query.base import NodeBase
+from app.workflows.query.exceptions import StateFieldError
+from app.workflows.query.prompt import ANSWER_PROMPT
+from app.workflows.query.state import QueryGraphState
 
 _MAX_CONTEXT_LENGTH = 12000
 _EMPTY_CONTEXT = "无参考内容"

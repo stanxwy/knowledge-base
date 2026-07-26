@@ -3,16 +3,16 @@ import re
 from collections import deque
 from pathlib import Path
 
-from app.processor.import_processor.base import BaseNode
-from app.processor.import_processor.exceptions import (
-    FileProcessingError,
-    StateFieldError,
-)
-from app.processor.import_processor.state import ImportGraphState
 from app.services.llm_service import LLMService
 from app.services.object_store_service import ObjectStoreService
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.backup_utils import backup_file
+from app.workflows.ingestion.base import BaseNode
+from app.workflows.ingestion.exceptions import (
+    FileProcessingError,
+    StateFieldError,
+)
+from app.workflows.ingestion.state import ImportGraphState
 
 IMAGE_CONTEXT_LENGTH = 100
 

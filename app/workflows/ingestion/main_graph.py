@@ -4,21 +4,21 @@ from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from app.processor.import_processor.nodes.node_bge_embedding import NodeBGEEmbedding
-from app.processor.import_processor.nodes.node_document_split import NodeDocumentSplit
-from app.processor.import_processor.nodes.node_entry import NodeEntry
-from app.processor.import_processor.nodes.node_import_milvus import NodeImportMilvus
-from app.processor.import_processor.nodes.node_item_name_recognition import (
-    NodeItemNameRecognition,
-)
-from app.processor.import_processor.nodes.node_md_img import NodeMDImg
-from app.processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
-from app.processor.import_processor.state import ImportGraphState
 from app.services.embedding_service import get_embedding_service
 from app.services.llm_service import get_llm_service
 from app.services.mineru_service import get_mineru_service
 from app.services.object_store_service import get_object_store_service
 from app.services.vectordb_service import get_chunks_vector_db, get_item_name_vector_db
+from app.workflows.ingestion.nodes.node_bge_embedding import NodeBGEEmbedding
+from app.workflows.ingestion.nodes.node_document_split import NodeDocumentSplit
+from app.workflows.ingestion.nodes.node_entry import NodeEntry
+from app.workflows.ingestion.nodes.node_import_milvus import NodeImportMilvus
+from app.workflows.ingestion.nodes.node_item_name_recognition import (
+    NodeItemNameRecognition,
+)
+from app.workflows.ingestion.nodes.node_md_img import NodeMDImg
+from app.workflows.ingestion.nodes.node_pdf_to_md import NodePDFToMD
+from app.workflows.ingestion.state import ImportGraphState
 
 logger = logging.getLogger(__name__)
 

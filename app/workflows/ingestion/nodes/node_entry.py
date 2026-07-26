@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from app.processor.import_processor.base import BaseNode
-from app.processor.import_processor.exceptions import (
+from app.workflows.ingestion.base import BaseNode
+from app.workflows.ingestion.exceptions import (
     FileProcessingError,
     StateFieldError,
     ValidationError,
 )
-from app.processor.import_processor.state import ImportGraphState
+from app.workflows.ingestion.state import ImportGraphState
 
 
 class NodeEntry(BaseNode):

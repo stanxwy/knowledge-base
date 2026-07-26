@@ -1,7 +1,7 @@
-from app.processor.import_processor.base import BaseNode
-from app.processor.import_processor.exceptions import StateFieldError
-from app.processor.import_processor.state import ImportGraphState
 from app.services.embedding_service import EmbeddingService
+from app.workflows.ingestion.base import BaseNode
+from app.workflows.ingestion.exceptions import StateFieldError
+from app.workflows.ingestion.state import ImportGraphState
 
 BATCH_SIZE = 5
 

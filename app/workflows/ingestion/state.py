@@ -1,6 +1,4 @@
-from typing import List
-
-from app.processor.base_state import KBGraphState
+from app.workflows.base_state import KBGraphState
 
 
 class ImportGraphState(KBGraphState, total=False):
@@ -17,7 +15,7 @@ class ImportGraphState(KBGraphState, total=False):
     item_name: str
 
     md_content: str
-    chunks: List
+    chunks: list
 
 GRAPH_DEFAULT_STATE: ImportGraphState = {
     "task_id": "",

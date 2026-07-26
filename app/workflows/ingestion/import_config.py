@@ -5,7 +5,6 @@
 import logging
 import os
 from dataclasses import dataclass, field
-from typing import Optional, Set
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +18,7 @@ class ImportConfig:
     item_name_chunk_k: int = 3  # 商品名识别时使用的切片数量
     item_name_chunk_size: int = 2500  # 商品名识别时使用的切片内容长度
 
-    image_extensions: Set[str] = field(
+    image_extensions: set[str] = field(
         default_factory=lambda: {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
     )
 
@@ -75,7 +74,7 @@ class ImportConfig:
 
 
 # ==================== 全局单例 ====================
-_config: Optional[ImportConfig] = None
+_config: ImportConfig | None = None
 
 
 def get_config() -> ImportConfig:

@@ -1,7 +1,7 @@
-from app.processor.query_processor.base import NodeBase
-from app.processor.query_processor.state import QueryGraphState
 from app.services.llm_service import LLMService
 from app.services.vectordb_service import ChunksVectorDBService
+from app.workflows.query.base import NodeBase
+from app.workflows.query.state import QueryGraphState
 
 
 class NodeSearchEmbeddingHyde(NodeBase):
