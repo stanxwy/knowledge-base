@@ -2,18 +2,18 @@ import base64
 import json
 import logging
 from functools import lru_cache
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
-from app.config.lm_config import LLMConfig, get_lm_config
+from app.infra.config.settings import Settings
 from app.workflows.ingestion.prompt import (
     IMAGE_CAPTION_PROMPT,
     ITEM_NAME_SYSTEM_PROMPT,
     ITEM_NAME_USER_PROMPT_TEMPLATE,
 )
-from app.processor.query_processor.prompt import (
+from app.workflows.query.prompt import (
     HYDE_PROMPT,
     ITEM_NAME_EXTRACT_SYSTEM_PROMPT,
     ITEM_NAME_EXTRACT_TEMPLATE,
@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 _DEFAULT_IMAGE_CAPTION = "alt text"
 
 class LLMService:
-    def __init__(self, config: LLMConfig = get_lm_config()):
-        self._config = config
+    def __init__(self, settings: Settings):
+        self._config = settings
         self._llm_client_cache = {}
 
     def get_llm_client(self, model: str | None = None, json_mode: bool = False) -> ChatOpenAI:
@@ -54,11 +54,11 @@ class LLMService:
         logger.info(f"LangChain ChatOpenAI {key} client instance created...")
         return llm
 
-    def generate_image_caption(self, image_path: str, doc_stem: str, image_context: Tuple[str, str]) -> str:
+    def generate_image_caption(self, image_path: str, doc_stem: str, image_context: tuple[str, str]) -> str:
         with open(image_path, "rb") as img_file:
             base64_image = base64.b64encode(img_file.read()).decode("utf-8")
         try:
-            chat_model = self.get_llm_client(get_lm_config().vl_model)
+            chat_model = self.get_llm_client(self._config.vl_model)
             user_prompt = IMAGE_CAPTION_PROMPT.format(
                 doc_stem=doc_stem,
                 pre_context=image_context[0],
@@ -80,7 +80,7 @@ class LLMService:
             # logger.verbose(json.dumps(response, ensure_ascii=False, indent=2)) # Object of type AIMessage is not JSON serializable
             return response.content.strip().replace("\n", "")
         except Exception as e:
-            logger.error(f"Error generating image caption for {image_path}: {e}")
+            logger.exception(f"Error generating image caption for {image_path}: {e!s}", stack_info=True)
             return _DEFAULT_IMAGE_CAPTION
     
     def identify_main_product(self, filename: str, context: str) -> str:
@@ -107,10 +107,10 @@ class LLMService:
                 return filename
             return product_name
         except Exception as e:
-            logger.error(f"Error identifying item name for {filename}: {e}")
+            logger.exception(f"Error identifying item name for {filename}: {e!s}", stack_info=True)
             return filename
     
-    def resolve_item_name_and_rewrite_query(self, query: str, history: List[Dict[str, Any]]) -> Tuple[List[str], str]:
+    def resolve_item_name_and_rewrite_query(self, query: str, history: list[dict[str, Any]]) -> tuple[list[str], str]:
         try:
             history_text = ""
             for msg in reversed(history):
@@ -127,7 +127,7 @@ class LLMService:
                 SystemMessage(content=ITEM_NAME_EXTRACT_SYSTEM_PROMPT),
                 HumanMessage(content=user_prompt)
             ]
-            chat_model = self.get_llm_client(model=get_lm_config().item_model, json_mode=True)
+            chat_model = self.get_llm_client(model=self._config.item_model, json_mode=True)
             response = chat_model.invoke(messages)
             content = response.content
             logger.info(f"LLM response: \n{response}")
@@ -144,7 +144,7 @@ class LLMService:
 
             return item_names, rewritten_query
         except Exception as e:
-            logger.error(f"Error calling LLM: {e}")
+            logger.exception(f"Error calling LLM: {e!s}", stack_info=True)
             return [], query
 
     def generate_hyde_doc(self, rewritten_query: str) -> str:
@@ -155,7 +155,7 @@ class LLMService:
             logger.info(f"Hyde document generated: \n{response}")
             return response.content
         except Exception as e:
-            logger.exception(f"Error generating Hyde document: {e}")
+            logger.exception(f"Error generating Hyde document: {e!s}", stack_info=True)
             raise e
 
 @lru_cache(maxsize=1)

@@ -1,4 +1,4 @@
-from app.processor.query_processor.nodes.node_rrf import NodeRrf
+from app.workflows.query.nodes.node_rrf import NodeRrf
 from app.utils.logger import setup_logging
 
 if __name__ == '__main__':
@@ -20,7 +20,7 @@ if __name__ == '__main__':
     result = node_rrf(mock_state)
 
 """
-(knowledge-base) D:\knowledge-base>python -m app.test.processor.query_processor.nodes.node_rrf
+(knowledge-base) D:\knowledge-base>python -m app.test.workflows.query.nodes.node_rrf
 2026-07-23 22:21:24 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-23 22:21:24 - import.node_rrf - INFO - --- node_rrf started ---
 2026-07-23 22:21:24 - import.node_rrf - INFO - rrf_inputs:

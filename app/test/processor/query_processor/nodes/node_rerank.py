@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 load_dotenv()
-from app.processor.query_processor.nodes.node_rerank import NodeRerank
+from app.workflows.query.nodes.node_rerank import NodeRerank
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":
@@ -37,7 +37,7 @@ if __name__ == "__main__":
     node_rerank(mock_state)
 
 """
-(knowledge-base) D:\knowledge-base>python -m app.test.processor.query_processor.nodes.node_rerank
+(knowledge-base) D:\knowledge-base>python -m app.test.workflows.query.nodes.node_rerank
 2026-07-24 09:17:12 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-24 09:17:12 - import.node_rerank - INFO - --- node_rerank started ---
 2026-07-24 09:17:12 - import.node_rerank - INFO - Merged 4 documents:

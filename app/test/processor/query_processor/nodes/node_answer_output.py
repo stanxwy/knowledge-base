@@ -1,7 +1,7 @@
 from dotenv import load_dotenv
 load_dotenv()
 
-from app.processor.query_processor.nodes.node_answer_output import NodeAnswerOutput
+from app.workflows.query.nodes.node_answer_output import NodeAnswerOutput
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":
@@ -97,7 +97,7 @@ if __name__ == "__main__":
 
 
 """
-(knowledge-base) D:\code\atguigu\knowledge-base>python -m app.test.processor.query_processor.nodes.node_answer_output
+(knowledge-base) D:\code\atguigu\knowledge-base>python -m app.test.workflows.query.nodes.node_answer_output
 2026-07-25 20:55:26 - root - INFO - logging initialized: ./logs\knowledge_base.log
 开始测试: 答案生成节点
 2026-07-25 20:55:26 - import.node_answer_output - INFO - --- node_answer_output started ---

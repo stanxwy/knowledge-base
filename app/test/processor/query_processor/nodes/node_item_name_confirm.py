@@ -1,4 +1,4 @@
-from app.processor.query_processor.nodes.node_item_name_confirm import NodeItemNameConfirm
+from app.workflows.query.nodes.node_item_name_confirm import NodeItemNameConfirm
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     logger.info(result)
 
 """
-(knowledge-base) D:\knowledge-base>python -m app.test.processor.query_processor.nodes.node_item_name_confirm
+(knowledge-base) D:\knowledge-base>python -m app.test.workflows.query.nodes.node_item_name_confirm
 2026-07-24 10:27:31 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-24 10:27:31 - import.node_item_name_confirm - INFO - --- node_item_name_confirm started ---
 2026-07-24 10:27:31 - pymongo.topology - DEBUG - {"message": "Starting topology monitoring", "topologyId": {"$oid": "6a62cd93ce09b780cad69058"}}
@@ -161,7 +161,7 @@ You're using a XLMRobertaTokenizerFast tokenizer. Please note that with a fast t
 2026-07-24 10:27:39 - pymongo.topology - DEBUG - {"message": "Server heartbeat failed", "topologyId": {"$oid": "6a62cd93ce09b780cad69058"}, "serverHost": "192.168.222.8", "serverPort": 27017, "awaited": true, "durationMS": 7608.999999938533, "failure": "\"_OperationCancelled('operation cancelled')\"", "driverConnectionId": 1}
 
 
-(knowledge-base) D:\knowledge-base>python -m app.test.processor.query_processor.nodes.node_item_name_confirm
+(knowledge-base) D:\knowledge-base>python -m app.test.workflows.query.nodes.node_item_name_confirm
 2026-07-24 11:23:09 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-24 11:23:09 - import.node_item_name_confirm - INFO - --- node_item_name_confirm started ---
 2026-07-24 11:23:09 - pymongo.topology - DEBUG - {"message": "Starting topology monitoring", "topologyId": {"$oid": "6a62da9dc8a0df18d5b1efba"}}

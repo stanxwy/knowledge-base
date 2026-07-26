@@ -1,19 +1,20 @@
 import logging
-import os
 from datetime import datetime
 from functools import lru_cache
-from typing import Any, Dict, List
+from typing import Any
 
 from bson import ObjectId
 from pymongo import DESCENDING, MongoClient
 
+from app.infra.config.settings import Settings
+
 logger = logging.getLogger(__name__)
 
 class MongoDBClient:
-    def __init__(self):
+    def __init__(self, settings: Settings):
         try:
-            self.mongo_url = os.getenv("MONGO_URL")
-            self.db_name = os.getenv("MONGO_DB_NAME")
+            self.mongo_url = settings.mongo_url
+            self.db_name = settings.mongo_db_name
             self.client = MongoClient(self.mongo_url)
             self.db = self.client[self.db_name]
             self.chat_message = self.db["chat_message"]
@@ -49,9 +50,9 @@ class MongoService:
         role: str,
         text: str,
         rewritten_query: str = "",
-        item_names: List[str] = None,
-        image_urls: List[str] = None,
-        message_id: str = None
+        item_names: list[str] | None = None,
+        image_urls: list[str] | None = None,
+        message_id: str | None = None
     ) -> str:
         document = {
             "session_id": session_id,
@@ -76,7 +77,7 @@ class MongoService:
             logger.info(f"Chat message inserted: {document}")
             return str(result.inserted_id)
 
-    def update_message_item_names(self, ids: List[str], item_names: List[str]) -> int:
+    def update_message_item_names(self, ids: list[str], item_names: list[str]) -> int:
         try:
             result = self._get_mongo_client().chat_message.update_many(
                 {
@@ -90,7 +91,7 @@ class MongoService:
             logger.error(f"Error updating history item_names: {e}")
             return 0
 
-    def get_recent_messages(self, session_id: str = None, limit: int = 10) -> List[Dict[str, Any]]:
+    def get_recent_messages(self, session_id: str = None, limit: int = 10) -> list[dict[str, Any]]:
         try:
             query = {"session_id": session_id} if session_id else {}
             cursor = self._get_mongo_client().chat_message.find(query).sort("ts", DESCENDING).limit(limit)
@@ -99,7 +100,7 @@ class MongoService:
                 logger.debug(f'{datetime.fromtimestamp(m["ts"]).strftime("%Y-%m-%d %H:%M:%S")} - {m["role"]}: {m["text"]}')
             return messages
         except Exception as e:
-            logger.error(f"Error getting recent messages: {e}")
+            logger.exception(f"Error getting recent messages: {e!s}", stack_info=True)
             return []
 
 @lru_cache(maxsize=1)

@@ -1,5 +1,5 @@
 import json
-from app.processor.query_processor.nodes.node_search_embedding_hyde import NodeSearchEmbeddingHyde
+from app.workflows.query.nodes.node_search_embedding_hyde import NodeSearchEmbeddingHyde
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     logger.info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
-(knowledge-base) D:\knowledge-base>python -m app.test.processor.query_processor.nodes.node_search_embedding_hyde
+(knowledge-base) D:\knowledge-base>python -m app.test.workflows.query.nodes.node_search_embedding_hyde
 2026-07-23 17:15:19 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-23 17:15:19 - import.node_search_embedding_hyde - INFO - --- node_search_embedding_hyde started ---
 2026-07-23 17:15:19 - app.services.llm_service - DEBUG - Getting LangChain ChatOpenAI None client instance...

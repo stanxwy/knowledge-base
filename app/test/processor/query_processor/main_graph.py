@@ -1,4 +1,4 @@
-from app.processor.query_processor.main_graph import KBQueryWorkflow
+from app.workflows.query.main_graph import KBQueryWorkflow
 from app.utils.logger import setup_logging
 
 # ===================== 用法示例 =====================
@@ -12,7 +12,7 @@ if __name__ == "__main__":
     workflow.graph.get_graph().print_ascii()
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.test.processor.query_processor.main_graph
+(knowledge-base) PS D:\knowledge-base> python -m app.test.workflows.query.main_graph
                                                              +-----------+
                                                              | __start__ |
                                                              +-----------+

@@ -3,20 +3,19 @@ from functools import lru_cache
 
 from FlagEmbedding import FlagReranker
 
-from app.config.reranker_config import RerankerConfig, load_reranker_config
+from app.infra.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 class Reranker:
-    
-    def __init__(self, reranker_config: RerankerConfig = load_reranker_config()):
-        self._reranker_config = reranker_config
+    def __init__(self, settings: Settings):
+        self._settings = settings
         self._model = None
 
     def _get_reranker_model(self) -> FlagReranker:
         if self._model is None:
             try:
-                config = self._reranker_config
+                config = self._settings
                 logger.info(f"Initializing Reranker...\n{config}")
                 self._model = FlagReranker(
                     model_name_or_path=config.bge_rerank_model,

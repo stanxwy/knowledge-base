@@ -3,7 +3,7 @@ from functools import lru_cache
 
 from agents.mcp import MCPServerStreamableHttp
 
-from app.config.mcp_config import DashScopeMcpConfig, load_dashscope_mcp_config
+from app.infra.config.settings import Settings
 
 _MCP_TIME_OUT = 10
 _MCP_MAX_RETRY_ATTEMPTS = 3
@@ -12,7 +12,7 @@ _MCP_QUERY_RESULT_COUNT = 5
 logger = logging.getLogger(__name__)
 
 class MCPSearchService:
-    def __init__(self, mcp_config: DashScopeMcpConfig = load_dashscope_mcp_config()):
+    def __init__(self, mcp_config: Settings):
         self._mcp_config = mcp_config
         self._mcp_client = None
 

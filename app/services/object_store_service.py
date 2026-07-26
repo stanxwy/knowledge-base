@@ -6,7 +6,7 @@ from functools import lru_cache
 from minio import Minio
 from minio.deleteobjects import DeleteObject
 
-from app.config.minio_config import MinIOConfig, load_minio_config
+from app.infra.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
@@ -25,7 +25,7 @@ _EXTENSION_TO_CONTENT_TYPE = {
 
 class ObjectStoreService:
 
-    def __init__(self, minio_config: MinIOConfig = load_minio_config()):
+    def __init__(self, minio_config: Settings):
         self._minio_config = minio_config
         self._minio_client = None
         protocol = "https://" if minio_config.secure else "http://"

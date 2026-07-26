@@ -1,5 +1,5 @@
 import json
-from app.processor.query_processor.nodes.node_search_embedding import NodeSearchEmbedding
+from app.workflows.query.nodes.node_search_embedding import NodeSearchEmbedding
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":
@@ -13,7 +13,7 @@ if __name__ == "__main__":
     logger.info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
-(knowledge-base) D:\code\atguigu\knowledge-base>python -m app.test.processor.query_processor.nodes.node_search_embedding
+(knowledge-base) D:\code\atguigu\knowledge-base>python -m app.test.workflows.query.nodes.node_search_embedding
 2026-07-23 17:08:48 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-23 17:08:48 - import.node_search_embedding - INFO - --- node_search_embedding started ---
 2026-07-23 17:08:48 - datasets - DEBUG - PyTorch version 2.13.0 available.

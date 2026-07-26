@@ -2,7 +2,7 @@ from dotenv import load_dotenv
 load_dotenv(override=True)
 
 from app.utils.logger import setup_logging
-from app.processor.query_processor.nodes.node_web_search_mcp import NodeWebSearchMcp
+from app.workflows.query.nodes.node_web_search_mcp import NodeWebSearchMcp
 
 if __name__ == "__main__":
     logger = setup_logging("DEBUG")
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     result = node_web_search_mcp(init_state)
 
 """
-(knowledge-base) D:\knowledge-base>python -m app.test.processor.query_processor.nodes.node_web_search_mcp
+(knowledge-base) D:\knowledge-base>python -m app.test.workflows.query.nodes.node_web_search_mcp
 2026-07-23 19:40:27 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-23 19:40:27 - import.node_web_search_mcp - INFO - --- node_web_search_mcp started ---
 2026-07-23 19:40:27 - asyncio - DEBUG - Using proactor: IocpProactor

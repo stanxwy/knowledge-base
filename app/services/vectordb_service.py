@@ -1,13 +1,12 @@
 import json
 import logging
 from functools import lru_cache
-from typing import Dict, List
 
 from pymilvus import AnnSearchRequest, DataType, MilvusClient, WeightedRanker
 
-from app.config.milvus_config import MilvusConfig, load_milvus_config
-from app.workflows.ingestion.exceptions import VectorDBError
+from app.infra.config.settings import Settings
 from app.services.embedding_service import EmbeddingService, get_embedding_service
+from app.workflows.ingestion.exceptions import VectorDBError
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +18,8 @@ ITEM_NAME_SEARCH_LIMIT = 5
 CHUNK_SEARCH_LIMIT = 10
 
 class VectorDBService():
-    def __init__(self, milvus_config: MilvusConfig = load_milvus_config(), embedding_service: EmbeddingService = get_embedding_service()):
-        self._milvus_config = milvus_config
+    def __init__(self, settings: Settings, embedding_service: EmbeddingService = get_embedding_service()):
+        self._milvus_config = settings
         self._milvus_client = None
         self._embedding_service = embedding_service
 
@@ -75,7 +74,7 @@ class VectorDBService():
             logger.info(f"Hybrid searching collection [{collection_name}] found {len(res[0])} results")
             return res
         except Exception as e:
-            logger.error(f"Error hybrid searching collection [{collection_name}]: {str(e)}", exc_info=True)
+            logger.exception(f"Error hybrid searching collection [{collection_name}]: {e!s}", stack_info=True)
             return None
 
 
@@ -125,7 +124,7 @@ class ItemNameVectorDBService(VectorDBService):
             index_params=index_params
         )
 
-    def insert_into_item_name_collection(self, data: Dict):
+    def insert_into_item_name_collection(self, data: dict):
         result = self._get_milvus_client().insert(collection_name=self._milvus_config.item_name_collection, data=[data])
         logger.info(f"Inserted count {result.get('insert_count', 0)}")
         return result
@@ -140,7 +139,7 @@ class ItemNameVectorDBService(VectorDBService):
             logger.error(f"Error deleting data from vector db: {str(e)}")
             raise VectorDBError(f"Error deleting data from vector db: {str(e)}")
 
-    def hybrid_search_item_name(self, item_names: List[str]) -> List[Dict]:
+    def hybrid_search_item_name(self, item_names: list[str]) -> list[dict]:
         results = []
         # generate embeddings for all item names for better performance
         embeddings = self._embedding_service.generate_embeddings(item_names)
@@ -231,15 +230,15 @@ class ChunksVectorDBService(VectorDBService):
             logger.debug(f"Deleted count {result.get('delete_count', 0)}")
             return result
         except Exception as e:
-            logger.error(f"Error deleting data from vector db: {str(e)}")
-            raise VectorDBError(f"Error deleting data from vector db: {str(e)}")
+            logger.exception(f"Error deleting data from vector db: {e!s}", stack_info=True)
+            raise VectorDBError(f"Error deleting data from vector db: {e!s}")
         
-    def insert_into_chunks_collection(self, data: List[Dict]):
+    def insert_into_chunks_collection(self, data: list[dict]):
         result = self._get_milvus_client().insert(collection_name=self._milvus_config.chunks_collection, data=data)
         logger.info(f"Inserted count {result.get('insert_count', 0)}")
         return result
 
-    def hybrid_search_chunks(self, input_text: str, item_names: List[str]) -> List[Dict]:
+    def hybrid_search_chunks(self, input_text: str, item_names: list[str]) -> list[dict]:
         try:
             embeddings = self._embedding_service.generate_embeddings([input_text])
             dense_vec = embeddings.get("dense")[0]

@@ -4,25 +4,23 @@ from functools import lru_cache
 
 import dashscope
 
-from app.config.reranker_config import RerankerConfig, load_reranker_config
+from app.infra.config.settings import Settings
 
 logger = logging.getLogger(__name__)
 
 class Reranker:
-
-    def __init__(self, reranker_config: RerankerConfig = load_reranker_config()):
-        self._reranker_config = reranker_config
+    def __init__(self, settings: Settings):
+        self._settings = settings
 
     def rerank_documents(self, query: str, documents: list[str]) -> list[float]:
-        config = self._reranker_config
-        dashscope.api_key = config.text_rerank_api_key
+        dashscope.api_key = self._settings.text_rerank_api_key
         response = dashscope.TextReRank.call(
-            model = config.text_rerank_model,
+            model = self._settings.text_rerank_model,
             query = query,
             documents = documents,
             top_n = len(documents),
             return_documents = False,
-            instruct=config.text_rerank_instruct,
+            instruct=self._settings.text_rerank_instruct,
         )
         logger.info(f"DashScope rerank response: \n{json.dumps(response, ensure_ascii=False, indent=2)}")
 

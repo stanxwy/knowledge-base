@@ -1,13 +1,12 @@
 from functools import lru_cache
-from typing import Dict, List
 
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
-from app.config.embedding_config import EmbeddingConfig, load_embedding_config
+from app.infra.config.settings import Settings
 
 
 class EmbeddingService:
-    def __init__(self, config: EmbeddingConfig = load_embedding_config()):
+    def __init__(self, config: Settings):
         self._config = config
         self._model = None
 
@@ -20,7 +19,7 @@ class EmbeddingService:
             )
         return self._model
 
-    def generate_embeddings(self, texts: list[str]) -> Dict[str, List]:
+    def generate_embeddings(self, texts: list[str]) -> dict[str, list]:
         model = self._get_model()
         embeddings = model.encode_documents(texts)
         processed_sparse = []
