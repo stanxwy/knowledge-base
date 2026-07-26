@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from app.utils.logger import setup_logging
-from app.processor.import_processor.nodes.node_md_img import NodeMDImg
+from app.workflows.ingestion.nodes.node_md_img import NodeMDImg
 
 if __name__ == "__main__":
     load_dotenv(override=True)
@@ -17,7 +17,7 @@ if __name__ == "__main__":
     node_md_img(init_state)
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_md_img
+(knowledge-base) PS D:\knowledge-base> python -m app.workflows.ingestion.nodes.node_md_img
 config loaded True...
 ImportConfig instance not found...
 creating ImportConfig instance...

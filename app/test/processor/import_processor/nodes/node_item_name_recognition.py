@@ -1,5 +1,5 @@
 import json
-from app.processor.import_processor.nodes.node_item_name_recognition import NodeItemNameRecognition
+from app.workflows.ingestion.nodes.node_item_name_recognition import NodeItemNameRecognition
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     logger.info(json.dumps(result, ensure_ascii=False, indent=4))
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_item_name_recognition
+(knowledge-base) PS D:\knowledge-base> python -m app.workflows.ingestion.nodes.node_item_name_recognition
 config loaded True...
 ImportConfig instance not found...
 creating ImportConfig instance...

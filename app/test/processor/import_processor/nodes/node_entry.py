@@ -1,5 +1,5 @@
 import json
-from app.processor.import_processor.nodes.node_entry import NodeEntry
+from app.workflows.ingestion.nodes.node_entry import NodeEntry
 
 if __name__ == "__main__":
     init_state = {"import_file_path": "./test_data/kb/B3-211H.pdf"}

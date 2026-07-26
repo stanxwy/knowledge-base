@@ -1,4 +1,4 @@
-from app.processor.import_processor.exceptions import ValidationError
+from app.workflows.ingestion.exceptions import ValidationError
 
 try:
     # 可能失败的操作
@@ -14,7 +14,7 @@ except Exception as e:
 # Traceback (most recent call last):                                                                                                                          
 #   File "\knowledge-base\app\test\03_exception_handling.py", line 5, in <module>
 #     raise ValidationError("数据类型不匹配")
-# app.processor.import_processor.exceptions.ValidationError: 数据类型不匹配
+# app.workflows.ingestion.exceptions.ValidationError: 数据类型不匹配
 
 # During handling of the above exception, another exception occurred:
 
@@ -23,4 +23,4 @@ except Exception as e:
 #   File "<frozen runpy>", line 88, in _run_code
 #   File "\knowledge-base\app\test\03_exception_handling.py", line 7, in <module>
 #     raise ValidationError(
-# app.processor.import_processor.exceptions.ValidationError: [import_milvus] 向量写入失败 (原因: 数据类型不匹配)
+# app.workflows.ingestion.exceptions.ValidationError: [import_milvus] 向量写入失败 (原因: 数据类型不匹配)

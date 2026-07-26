@@ -8,7 +8,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from app.config.lm_config import LLMConfig, get_lm_config
-from app.processor.import_processor.prompt import (
+from app.workflows.ingestion.prompt import (
     IMAGE_CAPTION_PROMPT,
     ITEM_NAME_SYSTEM_PROMPT,
     ITEM_NAME_USER_PROMPT_TEMPLATE,

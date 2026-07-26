@@ -1,4 +1,4 @@
-from app.processor.import_processor.main_graph import KBImportWorkflow
+from app.workflows.ingestion.main_graph import KBImportWorkflow
 from app.utils.logger import setup_logging
 from dotenv import load_dotenv
 
@@ -23,7 +23,7 @@ if __name__ == "__main__":
     # workflow.graph.get_graph().print_ascii()
 
 """
-(knowledge-base) D:\knowledge-base>python -m app.test.processor.import_processor.main_graph
+(knowledge-base) D:\knowledge-base>python -m app.test.workflows.ingestion.main_graph
 2026-07-23 15:38:01 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-23 15:38:01 - root - DEBUG - ImportConfig instance not found...
 2026-07-23 15:38:01 - root - DEBUG - creating ImportConfig instance...

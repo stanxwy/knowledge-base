@@ -8,7 +8,7 @@ from pathlib import Path
 import requests
 
 from app.config.mineru_config import MineruConfig, load_mineru_config
-from app.processor.import_processor.exceptions import PdfConversionError
+from app.workflows.ingestion.exceptions import PdfConversionError
 
 POST_TIMEOUT = 10       # request for upload url
 PUT_TIMEOUT = (10, 30)  # upload file

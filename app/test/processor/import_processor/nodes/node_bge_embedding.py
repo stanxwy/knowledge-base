@@ -1,5 +1,5 @@
 import json
-from app.processor.import_processor.nodes.node_bge_embedding import NodeBGEEmbedding
+from app.workflows.ingestion.nodes.node_bge_embedding import NodeBGEEmbedding
 from app.services.embedding_service import get_embedding_service
 from app.utils.logger import setup_logging
 
@@ -21,7 +21,7 @@ if __name__ == "__main__":
     logger.info(result)
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_bge_embedding
+(knowledge-base) PS D:\knowledge-base> python -m app.workflows.ingestion.nodes.node_bge_embedding
 config loaded True...
 ImportConfig instance not found...
 creating ImportConfig instance...

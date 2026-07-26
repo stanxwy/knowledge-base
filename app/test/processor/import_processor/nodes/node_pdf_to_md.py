@@ -1,6 +1,6 @@
 from dotenv import load_dotenv
 from app.utils.logger import setup_logging
-from app.processor.import_processor.nodes.node_pdf_to_md import NodePDFToMD
+from app.workflows.ingestion.nodes.node_pdf_to_md import NodePDFToMD
 
 if __name__ == "__main__":
     load_dotenv(override=True)
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     node_pdf_to_md(init_state)
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.test.processor.import_processor.nodes.node_pdf_to_md
+(knowledge-base) PS D:\knowledge-base> python -m app.test.workflows.ingestion.nodes.node_pdf_to_md
 2026-07-22 11:40:40 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-22 11:40:40 - root - DEBUG - ImportConfig instance not found...
 2026-07-22 11:40:40 - root - DEBUG - creating ImportConfig instance...

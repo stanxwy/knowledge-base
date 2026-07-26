@@ -1,7 +1,7 @@
 import json
 from dotenv import load_dotenv
 from app.utils.logger import setup_logging
-from app.processor.import_processor.nodes.node_document_split import NodeDocumentSplit
+from app.workflows.ingestion.nodes.node_document_split import NodeDocumentSplit
 
 if __name__ == "__main__":
     load_dotenv(override=True)
@@ -22,7 +22,7 @@ if __name__ == "__main__":
     print(json.dumps(result["chunks"], ensure_ascii=False, indent=4))
 
 """
-(knowledge-base) PS D:\knowledge-base> python -m app.processor.import_processor.nodes.node_document_split
+(knowledge-base) PS D:\knowledge-base> python -m app.workflows.ingestion.nodes.node_document_split
 config loaded True...
 ImportConfig instance not found...
 creating ImportConfig instance...

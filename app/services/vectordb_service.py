@@ -6,7 +6,7 @@ from typing import Dict, List
 from pymilvus import AnnSearchRequest, DataType, MilvusClient, WeightedRanker
 
 from app.config.milvus_config import MilvusConfig, load_milvus_config
-from app.processor.import_processor.exceptions import VectorDBError
+from app.workflows.ingestion.exceptions import VectorDBError
 from app.services.embedding_service import EmbeddingService, get_embedding_service
 
 logger = logging.getLogger(__name__)

@@ -1,5 +1,5 @@
 import json
-from app.processor.import_processor.nodes.node_import_milvus import NodeImportMilvus
+from app.workflows.ingestion.nodes.node_import_milvus import NodeImportMilvus
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":
@@ -19,7 +19,7 @@ if __name__ == "__main__":
     node_import_milvus(init_state)
 
 """
-(knowledge-base) D:\knowledge-base>python -m app.test.processor.import_processor.nodes.node_import_milvus
+(knowledge-base) D:\knowledge-base>python -m app.test.workflows.ingestion.nodes.node_import_milvus
 2026-07-22 20:07:48 - root - INFO - logging initialized: ./logs\knowledge_base.log
 2026-07-22 20:07:48 - root - DEBUG - ImportConfig instance not found...
 2026-07-22 20:07:48 - root - DEBUG - creating ImportConfig instance...

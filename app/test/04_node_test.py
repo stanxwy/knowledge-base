@@ -1,7 +1,7 @@
 import logging
 from typing import Dict
-from app.processor.import_processor.base import BaseNode
-from app.processor.import_processor.exceptions import ImportProcessError
+from app.workflows.ingestion.base import BaseNode
+from app.workflows.ingestion.exceptions import ImportProcessError
 
 # --- 定义测试节点 (继承 BaseNode) ---
 class NodeTest(BaseNode):
