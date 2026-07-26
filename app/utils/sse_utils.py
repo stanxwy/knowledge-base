@@ -14,6 +14,8 @@ class SSEEvent:
     PROGRESS = "progress"
     DELTA = "delta" 
     FINAL = "final"
+    ERROR = "error"
+    CLOSE = "__close__"
 
 
 _task_stream: Dict[str, queue.Queue] = {}
@@ -21,7 +23,6 @@ _task_stream: Dict[str, queue.Queue] = {}
 
 def get_sse_queue(task_id: str) -> Optional[queue.Queue]:
     return _task_stream.get(task_id)
-
 
 def create_sse_queue(task_id: str) -> queue.Queue:
     q = queue.Queue()
@@ -75,6 +76,10 @@ async def sse_generator(task_id: str, request: Request) -> AsyncGenerator[str, N
             # 8. 解析队列中获取到的消息体
             event = msg.get("event")
             data = msg.get("data")
+            if event == SSEEvent.CLOSE:
+                logger.info("close event received...")
+                break
+
             # 9. 将正常的事件和数据打包成标准 SSE 格式，并通过 yield 推送给前端客户端
             yield _sse_pack(event, data)
 
