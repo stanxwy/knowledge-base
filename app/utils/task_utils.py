@@ -6,7 +6,7 @@ _tasks_running_list: Dict[str, List[str]] = defaultdict(list)
 _tasks_done_list: Dict[str, List[str]] = defaultdict(list)
 
 # init with {} if key not exist
-_tasks_result: Dict[str, Dict[str, str]] = defaultdict(Dict)
+_tasks_result: Dict[str, Dict[str, str]] = defaultdict(dict)
 
 _tasks_status: Dict[str, str] = {}
 

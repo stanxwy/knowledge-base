@@ -6,10 +6,12 @@ from pathlib import Path
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.core.config import settings
+from app.middleware.cors import setup_cors
+from app.middleware.request_logger import request_logger_middleware
 from app.processor.query_processor.main_graph import KBQueryWorkflow
 from app.services.mongo_service import get_mongo_service
 from app.utils.logger import setup_logging
@@ -36,13 +38,8 @@ app = FastAPI(
     title="Knowledge Base Query API",
     description="This document describes the API of the Knowledge Base Query Workflow",
 )
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.middleware("http")(request_logger_middleware)
+setup_cors(app, settings.BACKEND_CORS_ORIGINS)
 
 class QueryRequest(BaseModel):
     query: str = Field(..., description="user query")

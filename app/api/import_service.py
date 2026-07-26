@@ -9,9 +9,11 @@ from typing import Any, Dict, List
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
-from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 
+from app.core.config import settings
+from app.middleware.cors import setup_cors
+from app.middleware.request_logger import request_logger_middleware
 from app.processor.import_processor.main_graph import KBImportWorkflow
 from app.services.object_store_service import get_object_store_service
 from app.utils.logger import setup_logging
@@ -35,13 +37,10 @@ app = FastAPI(
     title="Knowledge Base Import Workflow API",
     description="This document describes the API of the Knowledge Base Import Workflow",
 )
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
+app.middleware("http")(request_logger_middleware)
+setup_cors(app, settings.BACKEND_CORS_ORIGINS)
+
+
 
 @app.get("/import.html")
 async def get_import_page():
