@@ -11,9 +11,9 @@ from dotenv import load_dotenv
 from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
+from app.api.middleware.cors import setup_cors
+from app.api.middleware.request_logger import request_logger_middleware
 from app.core.config import settings
-from app.middleware.cors import setup_cors
-from app.middleware.request_logger import request_logger_middleware
 from app.processor.import_processor.main_graph import KBImportWorkflow
 from app.services.object_store_service import get_object_store_service
 from app.utils.logger import setup_logging
@@ -23,6 +23,7 @@ from app.utils.task_utils import (
     TASK_STATUS_PROCESSING,
     add_done_task,
     add_running_task,
+    clear_task,
     get_done_task_list,
     get_running_task_list,
     get_task_status,
@@ -83,6 +84,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: List[UploadFile
     
         for file in files:
             task_id = str(uuid.uuid4())
+            clear_task(task_id)
             task_ids.append(task_id)
             add_running_task(task_id, "upload_file")
             logger.info(f"[{task_id}] start processing upload file: {file.filename}, file type: {file.content_type}")
@@ -101,7 +103,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: List[UploadFile
                 
                 logger.info(f"[{task_id}] file uploaded, url: {url}")
             except Exception as e:
-                logger.warning(f"[{task_id}] error uploading file: {str(e)}", exc_info=True)
+                logger.warning(f"[{task_id}] error uploading file: {e!s}", stack_info=True)
     
             add_done_task(task_id, "upload_file")
     

@@ -9,9 +9,9 @@ from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
+from app.api.middleware.cors import setup_cors
+from app.api.middleware.request_logger import request_logger_middleware
 from app.core.config import settings
-from app.middleware.cors import setup_cors
-from app.middleware.request_logger import request_logger_middleware
 from app.processor.query_processor.main_graph import KBQueryWorkflow
 from app.services.mongo_service import get_mongo_service
 from app.utils.logger import setup_logging
@@ -25,6 +25,7 @@ from app.utils.task_utils import (
     TASK_STATUS_COMPLETED,
     TASK_STATUS_FAILED,
     TASK_STATUS_PROCESSING,
+    clear_task,
     get_done_task_list,
     get_task_result,
     update_task_status,
@@ -58,6 +59,7 @@ async def chat():
 async def query(background_tasks: BackgroundTasks, request: QueryRequest):
     user_query = request.query
     session_id = request.session_id if request.session_id else str(uuid.uuid4())
+    clear_task(session_id)
 
     is_stream = request.is_stream
     if is_stream:

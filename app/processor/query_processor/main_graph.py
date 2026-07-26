@@ -1,5 +1,4 @@
 import logging
-from typing import List, Optional
 
 from langgraph.constants import END
 from langgraph.graph import StateGraph
@@ -19,6 +18,11 @@ from app.processor.query_processor.nodes.node_search_embedding_hyde import (
 )
 from app.processor.query_processor.nodes.node_web_search_mcp import NodeWebSearchMcp
 from app.processor.query_processor.state import QueryGraphState
+from app.services.llm_service import get_llm_service
+from app.services.mcp_search_service import get_mcp_search_service
+from app.services.mongo_service import get_mongo_service
+from app.services.reranker_http import get_reranker
+from app.services.vectordb_service import get_chunks_vector_db, get_item_name_vector_db
 
 logger = logging.getLogger(__name__)
 
@@ -29,16 +33,23 @@ class KBQueryWorkflow:
         self._init_nodes()
         self._register_nodes()
         self._setup_routes()
-        self.__compiled_graph: Optional[CompiledStateGraph] = None
+        self.__compiled_graph: CompiledStateGraph | None = None
 
     def _init_nodes(self):
-        self.node_item_name_confirm = NodeItemNameConfirm()
-        self.node_search_embedding = NodeSearchEmbedding()
-        self.node_search_embedding_hyde = NodeSearchEmbeddingHyde()
-        self.node_web_search_mcp = NodeWebSearchMcp()
+        llm_service = get_llm_service()
+        mongo_service = get_mongo_service()
+        item_name_vector_db = get_item_name_vector_db()
+        chunks_vector_db = get_chunks_vector_db()
+        mcp_service = get_mcp_search_service()
+        reranker_service = get_reranker()
+
+        self.node_item_name_confirm = NodeItemNameConfirm(mongo_service, llm_service, item_name_vector_db)
+        self.node_search_embedding = NodeSearchEmbedding(chunks_vector_db)
+        self.node_search_embedding_hyde = NodeSearchEmbeddingHyde(llm_service, chunks_vector_db)
+        self.node_web_search_mcp = NodeWebSearchMcp(mcp_service)
         self.node_rrf = NodeRrf()
-        self.node_rerank = NodeRerank()
-        self.node_answer_output = NodeAnswerOutput()
+        self.node_rerank = NodeRerank(reranker_service)
+        self.node_answer_output = NodeAnswerOutput(mongo_service, llm_service)
 
     def _register_nodes(self):
         self.__graph.add_node("node_item_name_confirm", self.node_item_name_confirm)
@@ -49,7 +60,7 @@ class KBQueryWorkflow:
         self.__graph.add_node("node_rerank", self.node_rerank)
         self.__graph.add_node("node_answer_output", self.node_answer_output)
 
-    def _route_after_item_name_confirm(self, state: QueryGraphState) -> str | List[str]:
+    def _route_after_item_name_confirm(self, state: QueryGraphState) -> str | list[str]:
         if state.get("answer"):
             return "node_answer_output"
         return ["node_search_embedding", "node_search_embedding_hyde", "node_web_search_mcp"]

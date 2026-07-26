@@ -185,6 +185,7 @@ class NodeAnswerOutput(NodeBase):
         reranked_docs = state.get("reranked_docs")
         answer = state.get("answer")
         is_stream = state.get("is_stream")
+        image_urls = []
 
         if answer:
             if is_stream:

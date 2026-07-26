@@ -94,4 +94,4 @@ def clear_task(task_id: str):
     _tasks_running_list.pop(task_id, None)
     _tasks_done_list.pop(task_id, None)
     _tasks_status.pop(task_id, None)
-    # _tasks_result.pop(task_id, None)
+    _tasks_result.pop(task_id, None)
