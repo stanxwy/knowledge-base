@@ -13,14 +13,14 @@ def test_milvus():
     """测试 Milvus 连接"""
     print("测试 Milvus 连接...")
     try:
-        from pymilvus import connections, utility
-        connections.connect(
-            alias="default",
-            uri=os.getenv("MILVUS_URL", "http://localhost:19530")
-        )
-        version = utility.get_server_version()
+        from pymilvus import MilvusClient
+        client = MilvusClient(
+            uri=os.getenv("MILVUS_URL", "http://localhost:19530"))
+        version = client.get_server_version()
         print(f"  ✓ Milvus 连接成功，版本: {version}")
-        connections.disconnect("default")
+        databases = client.list_databases()
+        print(f"  ✓ Milvus 数据库列表: {databases}")
+        client.close()
         return True
     except Exception as e:
         print(f"  ✗ Milvus 连接失败: {e}")
@@ -58,9 +58,10 @@ def test_mongodb():
             serverSelectionTimeoutMS=5000
         )
         # 触发实际连接
-        client.admin.command('ping')
+        pong = client.admin.command('ping')
+        print(f"  ✓ MongoDB 连接成功，返回: {pong}")
         db_names = client.list_database_names()
-        print(f"  ✓ MongoDB 连接成功，数据库列表: {db_names}")
+        print(f"  ✓ MongoDB 数据库列表: {db_names}")
         client.close()
         return True
     except Exception as e:
