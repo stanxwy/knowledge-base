@@ -1,23 +1,22 @@
 from collections import defaultdict
-from typing import Dict, List
 
 from app.utils.sse_utils import SSEEvent, push_sse_event
 
 # init with [] if key not exist
-_tasks_running_list: Dict[str, List[str]] = defaultdict(list)
-_tasks_done_list: Dict[str, List[str]] = defaultdict(list)
+_tasks_running_list: dict[str, list[str]] = defaultdict(list)
+_tasks_done_list: dict[str, list[str]] = defaultdict(list)
 
 # init with {} if key not exist
-_tasks_result: Dict[str, Dict[str, str]] = defaultdict(dict)
+_tasks_result: dict[str, dict[str, str]] = defaultdict(dict)
 
-_tasks_status: Dict[str, str] = {}
+_tasks_status: dict[str, str] = {}
 
 TASK_STATUS_PENDING = "pending"
 TASK_STATUS_PROCESSING = "processing"
 TASK_STATUS_COMPLETED = "completed"
 TASK_STATUS_FAILED = "failed"
 
-_NODE_NAME_TO_CN: Dict[str, str] = {
+_NODE_NAME_TO_CN: dict[str, str] = {
     "upload_file": "上传文件",
     "node_entry": "检查文件",
     "node_pdf_to_md": "PDF转Markdown",
@@ -60,10 +59,10 @@ def add_done_task(task_id: str, node_name: str) -> None:
         done.append(node_name)
 
 
-def get_running_task_list(task_id: str) -> List[str]:
+def get_running_task_list(task_id: str) -> list[str]:
     return [_to_cn(n) for n in _tasks_running_list.get(task_id, [])]
 
-def get_done_task_list(task_id: str) -> List[str]:
+def get_done_task_list(task_id: str) -> list[str]:
     return [_to_cn(n) for n in _tasks_done_list.get(task_id, [])]
 
 

@@ -3,7 +3,7 @@ import json
 import logging
 import queue
 from collections.abc import AsyncGenerator
-from typing import Any, Dict, Optional
+from typing import Any
 
 from fastapi import Request
 
@@ -18,10 +18,10 @@ class SSEEvent:
     CLOSE = "__close__"
 
 
-_task_stream: Dict[str, queue.Queue] = {}
+_task_stream: dict[str, queue.Queue] = {}
 
 
-def get_sse_queue(task_id: str) -> Optional[queue.Queue]:
+def get_sse_queue(task_id: str) -> queue.Queue | None:
     return _task_stream.get(task_id)
 
 def create_sse_queue(task_id: str) -> queue.Queue:
@@ -33,7 +33,7 @@ def remove_sse_queue(task_id: str):
     _task_stream.pop(task_id, None)
 
 
-def _sse_pack(event: str, data: Dict[str, Any]) -> str:
+def _sse_pack(event: str, data: dict[str, Any]) -> str:
     payload = json.dumps(data, ensure_ascii=False)
     return f"event: {event}\ndata: {payload}\n\n"
 
