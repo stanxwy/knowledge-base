@@ -6,16 +6,16 @@ from app.infra.config.settings import Settings
 
 
 class EmbeddingService:
-    def __init__(self, config: Settings):
-        self._config = config
+    def __init__(self, settings: Settings):
+        self._settings = settings
         self._model = None
 
     def _get_model(self):
         if self._model is None:
             self._model = BGEM3EmbeddingFunction(
-                model_name=self._config.bge_m3_path,
-                device=self._config.bge_device,
-                use_fp16=self._config.bge_fp16
+                model_name=self._settings.bge_m3_path,
+                device=self._settings.bge_device,
+                use_fp16=self._settings.bge_fp16
             )
         return self._model
 

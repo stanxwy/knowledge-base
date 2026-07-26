@@ -25,12 +25,12 @@ _DEFAULT_IMAGE_CAPTION = "alt text"
 
 class LLMService:
     def __init__(self, settings: Settings):
-        self._config = settings
+        self._settings = settings
         self._llm_client_cache = {}
 
     def get_llm_client(self, model: str | None = None, json_mode: bool = False) -> ChatOpenAI:
         logger.debug(f"Getting LangChain ChatOpenAI {model} client instance...")
-        m = model or self._config.default_model
+        m = model or self._settings.default_model
 
         key = (m, json_mode)
         if key in self._llm_client_cache:
@@ -44,9 +44,9 @@ class LLMService:
 
         llm: ChatOpenAI = ChatOpenAI(
             model=m,
-            api_key=self._config.api_key,
-            base_url=self._config.base_url,
-            temperature=self._config.llm_temperature,
+            api_key=self._settings.api_key,
+            base_url=self._settings.base_url,
+            temperature=self._settings.llm_temperature,
             extra_body=extra_body,
             model_kwargs=model_kwargs
         )
@@ -58,7 +58,7 @@ class LLMService:
         with open(image_path, "rb") as img_file:
             base64_image = base64.b64encode(img_file.read()).decode("utf-8")
         try:
-            chat_model = self.get_llm_client(self._config.vl_model)
+            chat_model = self.get_llm_client(self._settings.vl_model)
             user_prompt = IMAGE_CAPTION_PROMPT.format(
                 doc_stem=doc_stem,
                 pre_context=image_context[0],
@@ -127,7 +127,7 @@ class LLMService:
                 SystemMessage(content=ITEM_NAME_EXTRACT_SYSTEM_PROMPT),
                 HumanMessage(content=user_prompt)
             ]
-            chat_model = self.get_llm_client(model=self._config.item_model, json_mode=True)
+            chat_model = self.get_llm_client(model=self._settings.item_model, json_mode=True)
             response = chat_model.invoke(messages)
             content = response.content
             logger.info(f"LLM response: \n{response}")

@@ -7,7 +7,7 @@ from pathlib import Path
 
 import requests
 
-from app.config.mineru_config import MineruConfig, load_mineru_config
+from app.infra.config.settings import Settings
 from app.workflows.ingestion.exceptions import PdfConversionError
 
 POST_TIMEOUT = 10       # request for upload url
@@ -21,15 +21,15 @@ logger = logging.getLogger(__name__)
 
 class MineruService:
     
-    def __init__(self, config: MineruConfig = load_mineru_config()):
-        self._config = config
-        self._file_url = f"{config.base_url}/file-urls/batch"
-        self._poll_url = f"{config.base_url}/extract-results/batch"
+    def __init__(self, settings: Settings):
+        self._settings = settings
+        self._file_url = f"{settings.base_url}/file-urls/batch"
+        self._poll_url = f"{settings.base_url}/extract-results/batch"
 
     def _build_header(self) -> dict:
         return {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self._config.api_token}",
+            "Authorization": f"Bearer {self._settings.api_token}",
             "Accept": "*/*"
         }
 

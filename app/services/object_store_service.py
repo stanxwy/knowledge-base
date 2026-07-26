@@ -25,15 +25,15 @@ _EXTENSION_TO_CONTENT_TYPE = {
 
 class ObjectStoreService:
 
-    def __init__(self, minio_config: Settings):
-        self._minio_config = minio_config
+    def __init__(self, settings: Settings):
+        self._settings = settings
         self._minio_client = None
-        protocol = "https://" if minio_config.secure else "http://"
-        self._base_url = f"{protocol}{minio_config.endpoint}/{minio_config.bucket_name}"
+        protocol = "https://" if settings.secure else "http://"
+        self._base_url = f"{protocol}{settings.endpoint}/{settings.bucket_name}"
         
 
     def _get_minio_client(self):
-        minio_config = self._minio_config
+        minio_config = self._settings
         if self._minio_client is None:
             try:
                 logger.debug("Minio client initializing...")
@@ -62,45 +62,45 @@ class ObjectStoreService:
                 logger.debug("MinIO client initialized")
                 self._minio_client = minio_client
             except Exception as e:
-                logger.error(f"Minio init failed:{e}")
+                logger.exception(f"Minio init failed:{e!s}", stack_info=True)
         return self._minio_client
 
     def clean_dir(self, dir_path: str) -> None:
         try:
             minio_client = self._get_minio_client()
             objects_to_delete = minio_client.list_objects(
-                self._minio_config.bucket_name, 
+                self._settings.bucket_name, 
                 prefix=dir_path, 
                 recursive=True)
             
             delete_list = [DeleteObject(obj.object_name) for obj in objects_to_delete]
             if delete_list:
-                errors = minio_client.remove_objects(self._minio_config.bucket_name, delete_list)
+                errors = minio_client.remove_objects(self._settings.bucket_name, delete_list)
                 for error in errors:
                     logger.error(f"Error deleting object: {error}")
         except Exception as e:
-            logger.error(f"Failed to clean directory {dir_path}: {e}")
+            logger.exception(f"Failed to clean directory {dir_path}: {e!s}", stack_info=True)
 
     def upload(self, local_path: str, object_name: str, content_type: str | None = None) -> str | None:
         try:
             # for multi-dot extensions, only the final suffix is split, e.g. test.tar.gz -> ("test.tar", ".gz")
             ext = os.path.splitext(local_path)[1][1:]
             self._get_minio_client().fput_object(
-                bucket_name=self._minio_config.bucket_name,
+                bucket_name=self._settings.bucket_name,
                 object_name=object_name,
                 file_path=local_path,
                 content_type=content_type or _EXTENSION_TO_CONTENT_TYPE.get(ext)
             )
             return f"{self._base_url}/{object_name}"
         except Exception as e:
-            logger.error(f"Error uploading file {local_path}, message: {e!s}")
+            logger.exception(f"Error uploading file {local_path}, message: {e!s}", stack_info=True)
 
     def clean_img_dir(self, doc_stem: str) -> None:
-        img_dir = f"{self._minio_config.img_dir}/{doc_stem}"
+        img_dir = f"{self._settings.img_dir}/{doc_stem}"
         self.clean_dir(img_dir)
 
     def upload_img(self, local_path: str, object_name: str, content_type: str = None) -> str | None:
-        return self.upload(local_path, f"{self._minio_config.img_dir}/{object_name}", content_type)
+        return self.upload(local_path, f"{self._settings.img_dir}/{object_name}", content_type)
 
 @lru_cache(maxsize=1)
 def get_object_store_service() -> ObjectStoreService:

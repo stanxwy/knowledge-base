@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 class MCPSearchService:
     def __init__(self, mcp_config: Settings):
-        self._mcp_config = mcp_config
+        self._settings = mcp_config
         self._mcp_client = None
 
     def get_mcp_client(self):
@@ -21,8 +21,8 @@ class MCPSearchService:
             self._mcp_client = MCPServerStreamableHttp(
                 name="search_mcp",
                 params={
-                    "url": self._mcp_config.mcp_base_url,
-                    "headers": {"Authorization": f"Bearer {self._mcp_config.api_key}"},
+                    "url": self._settings.mcp_dashscope_base_url,
+                    "headers": {"Authorization": f"Bearer {self._settings.openai_api_key}"},
                     "timeout": _MCP_TIME_OUT,
                 },
                 cache_tools_list=True,
