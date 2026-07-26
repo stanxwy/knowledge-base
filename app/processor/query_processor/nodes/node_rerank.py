@@ -108,7 +108,7 @@ class NodeRerank(NodeBase):
                 reverse=True
             )
         except Exception as e:
-            self.logger.error(f"Error reranking docs: {str(e)}")
+            self.logger.exception(f"Error reranking docs: {e!s}", stack_info=True)
             # Graceful fallback: return unsorted docs with no score
             return [{**doc, "score": None} for doc in merged_multi_docs]
         

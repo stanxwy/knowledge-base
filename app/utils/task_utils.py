@@ -1,6 +1,8 @@
 from collections import defaultdict
 from typing import Dict, List
 
+from app.utils.sse_utils import SSEEvent, push_sse_event
+
 # init with [] if key not exist
 _tasks_running_list: Dict[str, List[str]] = defaultdict(list)
 _tasks_done_list: Dict[str, List[str]] = defaultdict(list)
@@ -27,7 +29,7 @@ _NODE_NAME_TO_CN: Dict[str, str] = {
     # "knowledge_graph_node": "导入知识图谱",
     "__end__": "处理完成",
 
-    "noed_item_name_confirm": "确认问题产品",
+    "node_item_name_confirm": "确认问题产品",
     "node_web_search_mcp": "网络搜索",
     "node_search_embedding": "切片搜索",
     "node_search_embedding_hyde": "切片搜索(假设性文档)",
@@ -70,7 +72,16 @@ def get_task_status(task_id: str) -> str:
 
 def update_task_status(task_id: str, status_name: str, is_stream: bool = False) -> None:
     _tasks_status[task_id] = status_name
-
+    if is_stream:
+        push_sse_event(
+            task_id, 
+            SSEEvent.PROGRESS, 
+            {
+                "status": get_task_status(task_id),
+                "running_list": get_running_task_list(task_id),
+                "done_list": get_done_task_list(task_id),
+            }
+        )
 
 def set_task_result(task_id: str, key: str, value: str) -> None:
     _tasks_result[task_id][key] = value

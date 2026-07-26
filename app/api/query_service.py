@@ -100,7 +100,7 @@ def run_query_graph(session_id: str, user_query: str, is_stream: bool = True):
         logger.info(f"[{session_id}] Query Workflow task completed")
         update_task_status(session_id, TASK_STATUS_COMPLETED, is_stream)
     except Exception as e:
-        logger.error(f"[{session_id}] error running Query Workflow task: {e!s}", exc_info=True)
+        logger.exception(f"[{session_id}] error running Query Workflow task: {e!s}", stack_info=True)
         update_task_status(session_id, TASK_STATUS_FAILED, is_stream)
         if is_stream:
             push_sse_event(session_id, SSEEvent.ERROR, {"error": str(e)})

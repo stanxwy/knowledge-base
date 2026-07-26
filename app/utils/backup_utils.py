@@ -1,11 +1,10 @@
 import json
 import logging
 from pathlib import Path
-from typing import Dict, List
 
 logger = logging.getLogger(__name__)
 
-def backup_json(file_path: Path, json_data: Dict | List ) -> None:
+def backup_json(file_path: Path, json_data: dict | list ) -> None:
     try:
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump(
@@ -18,7 +17,7 @@ def backup_json(file_path: Path, json_data: Dict | List ) -> None:
             )
         logger.debug(f"Successfully backed up json: {file_path}")
     except Exception as e:
-        logger.error(f"Error backing up json: {str(e)}", exc_info=False)
+        logger.exception(f"Error backing up json: {e!s}", stack_info=True)
 
 def backup_file(file_path: Path, content: str) -> None:
     try:
@@ -26,4 +25,4 @@ def backup_file(file_path: Path, content: str) -> None:
             f.write(content)
         logger.debug(f"Successfully backed up file: {file_path}")
     except Exception as e:
-        logger.error(f"Error backing up file: {str(e)}", exc_info=False)
+        logger.exception(f"Error backing up file: {e!s}", stack_info=True)

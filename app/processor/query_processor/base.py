@@ -27,7 +27,7 @@ class NodeBase(ABC):
             return result
 
         except Exception as e:
-            self.logger.error(f"Error running node {self.name}: {e}")
+            self.logger.exception(f"Error running node {self.name}: {e!s}", stack_info=True)
             raise
 
     @abstractmethod

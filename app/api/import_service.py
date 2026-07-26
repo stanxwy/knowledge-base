@@ -69,7 +69,7 @@ def run_graph_task(task_id: str, output_file_dir: str, import_file_path: str):
         update_task_status(task_id, TASK_STATUS_COMPLETED)
 
     except Exception as e:
-        logger.error(f"[{task_id}] error running ImportWorkflow: {e!s}", exc_info=True)
+        logger.exception(f"[{task_id}] error running ImportWorkflow: {e!s}", stack_info=True)
         update_task_status(task_id, TASK_STATUS_FAILED)
 
 
@@ -115,7 +115,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: List[UploadFile
             "task_ids": task_ids
         }
     except Exception as e:
-        logger.error(f"Error uploading files: {e!s}", exc_info=True)
+        logger.exception(f"Error uploading files: {e!s}", stack_info=True)
         raise HTTPException(status_code=500, detail=str(e))
 
 

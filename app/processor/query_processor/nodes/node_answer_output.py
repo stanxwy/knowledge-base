@@ -117,7 +117,7 @@ class NodeAnswerOutput(NodeBase):
                         push_sse_event(session_id, SSEEvent.DELTA, {"delta": delta})
                 self.logger.info(f"Streaming completed, content length: {len(final_text)}")
             except Exception as e:
-                self.logger.exception(f"Error streaming LLM: {e}", stack_info=True)
+                self.logger.exception(f"Error streaming LLM: {e!s}", stack_info=True)
                 push_sse_event(session_id, SSEEvent.ERROR, {"error": str(e)})
             return final_text
         else:
@@ -173,7 +173,7 @@ class NodeAnswerOutput(NodeBase):
                     message_id=None
                 )
         except Exception as e:
-            self.logger.error(f"Error saving chat message: {e}")
+            self.logger.exception(f"Error saving chat message: {e!s}", stack_info=True)
     
     def process(self, state: QueryGraphState) -> QueryGraphState:
         self._validate_input_state(state)
