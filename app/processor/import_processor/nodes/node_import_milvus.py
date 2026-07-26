@@ -3,14 +3,14 @@ from typing import Any, Dict, List
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
-from app.services.vectordb_service import ChunksVectorDBService, get_chunks_vector_db
+from app.services.vectordb_service import ChunksVectorDBService
 
 
 class NodeImportMilvus(BaseNode):
 
     name: str = "node_import_milvus"
     
-    def __init__(self, chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
+    def __init__(self, chunks_vector_db: ChunksVectorDBService):
         super().__init__()
         self._chunks_vector_db = chunks_vector_db
     

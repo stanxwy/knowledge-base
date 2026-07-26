@@ -2,7 +2,7 @@ from typing import Any, Dict, List, Tuple
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-from app.services.reranker_http import Reranker, get_reranker
+from app.services.reranker_http import Reranker
 from app.utils.json_format_utils import format_json
 
 # -----------------------------
@@ -28,7 +28,7 @@ class NodeRerank(NodeBase):
     """
     name: str = "node_rerank"
 
-    def __init__(self, reranker: Reranker = get_reranker()):
+    def __init__(self, reranker: Reranker):
         super().__init__()
         self._reranker = reranker
 

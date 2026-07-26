@@ -3,7 +3,7 @@ from typing import Dict, List
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
-from app.services.embedding_service import EmbeddingService, get_embedding_service
+from app.services.embedding_service import EmbeddingService
 
 BATCH_SIZE = 5
 
@@ -11,7 +11,7 @@ class NodeBGEEmbedding(BaseNode):
 
     name: str = "node_bge_embedding"
 
-    def __init__(self, embedding_service: EmbeddingService = get_embedding_service()):
+    def __init__(self, embedding_service: EmbeddingService):
         super().__init__()
         self._embedding_service = embedding_service
 

@@ -1,7 +1,7 @@
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-from app.services.llm_service import LLMService, get_llm_service
-from app.services.vectordb_service import ChunksVectorDBService, get_chunks_vector_db
+from app.services.llm_service import LLMService
+from app.services.vectordb_service import ChunksVectorDBService
 
 
 class NodeSearchEmbeddingHyde(NodeBase):
@@ -9,8 +9,8 @@ class NodeSearchEmbeddingHyde(NodeBase):
     name: str = "node_search_embedding_hyde"
 
     def __init__(self, 
-                 llm_service: LLMService = get_llm_service(),
-                 chunks_vector_db: ChunksVectorDBService = get_chunks_vector_db()):
+                 llm_service: LLMService,
+                 chunks_vector_db: ChunksVectorDBService):
         super().__init__()
         self._llm_service = llm_service
         self._chunks_vector_db = chunks_vector_db

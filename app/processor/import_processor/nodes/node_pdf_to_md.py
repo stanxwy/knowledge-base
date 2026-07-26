@@ -6,14 +6,14 @@ from app.processor.import_processor.exceptions import (
     StateFieldError,
 )
 from app.processor.import_processor.state import ImportGraphState
-from app.services.mineru_service import MineruService, get_mineru_service
+from app.services.mineru_service import MineruService
 
 
 class NodePDFToMD(BaseNode):
     
     name: str = "node_pdf_to_md"
 
-    def __init__(self, mineru: MineruService = get_mineru_service()):
+    def __init__(self, mineru: MineruService):
         super().__init__()
         self._mineru = mineru
     

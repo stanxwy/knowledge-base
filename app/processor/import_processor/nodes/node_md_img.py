@@ -10,11 +10,8 @@ from app.processor.import_processor.exceptions import (
     StateFieldError,
 )
 from app.processor.import_processor.state import ImportGraphState
-from app.services.llm_service import LLMService, get_llm_service
-from app.services.object_store_service import (
-    ObjectStoreService,
-    get_object_store_service,
-)
+from app.services.llm_service import LLMService
+from app.services.object_store_service import ObjectStoreService
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.backup_utils import backup_file
 
@@ -25,8 +22,8 @@ class NodeMDImg(BaseNode):
     name: str = "node_md_img"
 
     def __init__(self, 
-                 llm_service: LLMService = get_llm_service(),
-                 object_store: ObjectStoreService = get_object_store_service()):
+                 llm_service: LLMService,
+                 object_store: ObjectStoreService):
         super().__init__()
         self._llm_service = llm_service
         self._object_store = object_store

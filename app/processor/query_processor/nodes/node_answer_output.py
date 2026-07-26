@@ -5,8 +5,8 @@ from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.exceptions import StateFieldError
 from app.processor.query_processor.prompt import ANSWER_PROMPT
 from app.processor.query_processor.state import QueryGraphState
-from app.services.llm_service import LLMService, get_llm_service
-from app.services.mongo_service import MongoService, get_mongo_service
+from app.services.llm_service import LLMService
+from app.services.mongo_service import MongoService
 from app.utils.sse_utils import SSEEvent, push_sse_event
 from app.utils.task_utils import set_task_result
 
@@ -22,8 +22,8 @@ class NodeAnswerOutput(NodeBase):
 
     name: str = "node_answer_output"
 
-    def __init__(self, mongo: MongoService = get_mongo_service(),
-                 llm_service: LLMService = get_llm_service()):
+    def __init__(self, mongo: MongoService,
+                 llm_service: LLMService):
         super().__init__()
         self._mongo = mongo
         self._llm_service = llm_service

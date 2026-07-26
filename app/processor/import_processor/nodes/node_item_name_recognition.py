@@ -3,12 +3,9 @@ from typing import Dict, List, Tuple
 from app.processor.import_processor.base import BaseNode
 from app.processor.import_processor.exceptions import StateFieldError
 from app.processor.import_processor.state import ImportGraphState
-from app.services.embedding_service import EmbeddingService, get_embedding_service
-from app.services.llm_service import LLMService, get_llm_service
-from app.services.vectordb_service import (
-    ItemNameVectorDBService,
-    get_item_name_vector_db,
-)
+from app.services.embedding_service import EmbeddingService
+from app.services.llm_service import LLMService
+from app.services.vectordb_service import ItemNameVectorDBService
 
 
 class NodeItemNameRecognition(BaseNode):
@@ -16,9 +13,9 @@ class NodeItemNameRecognition(BaseNode):
     name: str = "node_item_name_recognition"
 
     def __init__(self, 
-                 llm_service: LLMService = get_llm_service(),
-                 embedding_service: EmbeddingService = get_embedding_service(), 
-                 item_name_vector_db: ItemNameVectorDBService = get_item_name_vector_db()):
+                 llm_service: LLMService,
+                 embedding_service: EmbeddingService, 
+                 item_name_vector_db: ItemNameVectorDBService):
         super().__init__()
         self._llm_service = llm_service
         self._embedding_service = embedding_service

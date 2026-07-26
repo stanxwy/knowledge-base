@@ -3,7 +3,7 @@ import json
 
 from app.processor.query_processor.base import NodeBase
 from app.processor.query_processor.state import QueryGraphState
-from app.services.mcp_search_service import MCPSearchService, get_mcp_search_service
+from app.services.mcp_search_service import MCPSearchService
 from app.utils.json_format_utils import format_json
 
 
@@ -11,7 +11,7 @@ class NodeWebSearchMcp(NodeBase):
 
     name: str = "node_web_search_mcp"
 
-    def __init__(self, mcp: MCPSearchService = get_mcp_search_service()):
+    def __init__(self, mcp: MCPSearchService):
         super().__init__()
         self._mcp = mcp
     
