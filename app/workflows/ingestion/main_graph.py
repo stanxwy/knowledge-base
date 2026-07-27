@@ -9,7 +9,7 @@ from app.deps.infra import (
     get_item_name_vector_db,
     get_object_store,
 )
-from app.deps.services import get_embedding_service, get_llm_service, get_mineru_service
+from app.deps.services import get_embedder, get_llm_service, get_pdf_parser
 from app.workflows.ingestion.nodes.node_bge_embedding import NodeBGEEmbedding
 from app.workflows.ingestion.nodes.node_document_split import NodeDocumentSplit
 from app.workflows.ingestion.nodes.node_entry import NodeEntry
@@ -32,15 +32,15 @@ class KBImportWorkflow:
         self._compiled_graph: CompiledStateGraph | None = None
         
     def _register_nodes(self):
-        mineru_service = get_mineru_service()
+        pdf_parser = get_pdf_parser()
         llm_service = get_llm_service()
         object_store = get_object_store()
-        embedding_service = get_embedding_service()
+        embedding_service = get_embedder()
         item_name_vector_db = get_item_name_vector_db()
         chunks_vector_db = get_chunks_vector_db()
 
         self._graph.add_node("node_entry", NodeEntry())
-        self._graph.add_node("node_pdf_to_md", NodePDFToMD(mineru_service))
+        self._graph.add_node("node_pdf_to_md", NodePDFToMD(pdf_parser))
         self._graph.add_node("node_md_img", NodeMDImg(llm_service, object_store))
         self._graph.add_node("node_document_split", NodeDocumentSplit())
         self._graph.add_node("node_item_name_recognition", NodeItemNameRecognition(llm_service, embedding_service, item_name_vector_db))

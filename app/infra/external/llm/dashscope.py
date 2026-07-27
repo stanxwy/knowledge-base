@@ -6,8 +6,8 @@ from typing import Any
 from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
+from app.domain.ports.llm import LLMPort
 from app.infra.config.settings import Settings
-from app.infra.external.llm.base import LLMPort
 from app.workflows.ingestion.prompt import (
     IMAGE_CAPTION_PROMPT,
     ITEM_NAME_SYSTEM_PROMPT,

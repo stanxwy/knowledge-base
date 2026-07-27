@@ -1,5 +1,5 @@
-from app.infra.external.embedder.embedding import EmbeddingService
-from app.infra.external.llm.base import LLMPort
+from app.domain.ports.embedder import Embedder
+from app.domain.ports.llm import LLMPort
 from app.infra.persistence.vectordb import ItemNameVectorDBService
 from app.workflows.ingestion.base import BaseNode
 from app.workflows.ingestion.exceptions import StateFieldError
@@ -12,7 +12,7 @@ class NodeItemNameRecognition(BaseNode):
 
     def __init__(self, 
                  llm_service: LLMPort,
-                 embedding_service: EmbeddingService, 
+                 embedding_service: Embedder, 
                  item_name_vector_db: ItemNameVectorDBService):
         super().__init__()
         self._llm_service = llm_service

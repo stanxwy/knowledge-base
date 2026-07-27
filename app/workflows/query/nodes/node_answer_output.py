@@ -1,6 +1,6 @@
 import re
 
-from app.infra.external.llm.base import LLMPort
+from app.domain.ports.llm import LLMPort
 from app.infra.persistence.mongo import MongoService
 from app.utils.sse_utils import SSEEvent, push_sse_event
 from app.utils.task_utils import set_task_result

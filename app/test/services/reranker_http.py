@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from app.infra.external.reranker.base import get_reranker
+from app.domain.ports.reranker import get_reranker
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":

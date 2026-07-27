@@ -2,8 +2,8 @@ import logging
 
 from FlagEmbedding import FlagReranker
 
+from app.domain.ports.reranker import Reranker
 from app.infra.config.settings import Settings
-from app.infra.external.reranker.base import Reranker
 
 logger = logging.getLogger(__name__)
 

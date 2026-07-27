@@ -2,6 +2,7 @@ import logging
 
 from agents.mcp import MCPServerStreamableHttp
 
+from app.domain.ports.web_search import WebSearch
 from app.infra.config.settings import Settings
 
 _MCP_TIME_OUT = 10
@@ -10,7 +11,7 @@ _MCP_QUERY_RESULT_COUNT = 5
 
 logger = logging.getLogger(__name__)
 
-class MCPSearchService:
+class MCPSearchService(WebSearch):
     def __init__(self, mcp_config: Settings):
         self._settings = mcp_config
         self._mcp_client = None

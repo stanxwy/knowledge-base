@@ -1,4 +1,4 @@
-from app.infra.external.llm.base import LLMPort
+from app.domain.ports.llm import LLMPort
 from app.infra.persistence.mongo import MongoService
 from app.infra.persistence.vectordb import ItemNameVectorDBService
 from app.workflows.query.base import NodeBase

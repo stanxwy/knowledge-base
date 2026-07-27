@@ -136,7 +136,7 @@ async def history(session_id: str, limit: int = 50, mongo_service: MongoService 
     try:
         records = mongo_service.get_recent_messages(session_id, limit=limit)
         items = []
-        for r in records:
+        for r in reversed(records):
             items.append({
                 "_id": str(r.get("_id")) if r.get("_id") is not None else "",
                 "session_id": r.get("session_id", ""),

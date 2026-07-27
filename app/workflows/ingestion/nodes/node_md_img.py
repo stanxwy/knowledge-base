@@ -3,7 +3,7 @@ import re
 from collections import deque
 from pathlib import Path
 
-from app.infra.external.llm.base import LLMPort
+from app.domain.ports.llm import LLMPort
 from app.infra.persistence.object_store import ObjectStoreService
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.backup_utils import backup_file

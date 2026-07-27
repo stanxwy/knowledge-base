@@ -6,6 +6,7 @@ from pathlib import Path
 
 import requests
 
+from app.domain.ports.pdf_parser import PDFParser
 from app.infra.config.settings import Settings
 from app.workflows.ingestion.exceptions import PdfConversionError
 
@@ -18,7 +19,7 @@ POLL_INTERVAL = 3
 
 logger = logging.getLogger(__name__)
 
-class MineruService:
+class MineruService(PDFParser):
     
     def __init__(self, settings: Settings):
         self._settings = settings

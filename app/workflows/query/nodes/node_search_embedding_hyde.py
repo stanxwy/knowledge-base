@@ -1,4 +1,4 @@
-from app.infra.external.llm.base import LLMPort
+from app.domain.ports.llm import LLMPort
 from app.infra.persistence.vectordb import ChunksVectorDBService
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState

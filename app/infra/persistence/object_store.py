@@ -5,6 +5,7 @@ import os
 from minio import Minio
 from minio.deleteobjects import DeleteObject
 
+from app.domain.ports.object_store import ObjectStore
 from app.infra.config.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -22,7 +23,7 @@ _EXTENSION_TO_CONTENT_TYPE = {
     ".webp": "image/webp",
 }
 
-class ObjectStoreService:
+class MinIOService(ObjectStore):
 
     def __init__(self, settings: Settings):
         self._settings = settings

@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.infra.external.reranker.base import Reranker
+from app.domain.ports.reranker import Reranker
 from app.utils.json_format_utils import format_json
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState

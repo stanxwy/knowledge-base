@@ -8,13 +8,14 @@ from typing import Any
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, FastAPI, File, HTTPException, UploadFile
+from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
 from fastapi.responses import FileResponse
 
 from app.api.middleware.cors import setup_cors
 from app.api.middleware.request_logger import request_logger_middleware
 from app.core.config import settings
 from app.deps.infra import get_object_store
+from app.domain.ports.object_store import ObjectStore
 from app.utils.logger import setup_logging
 from app.utils.task_utils import (
     TASK_STATUS_COMPLETED,
@@ -75,7 +76,7 @@ def run_graph_task(task_id: str, output_file_dir: str, import_file_path: str):
 
 
 @app.post("/upload", summary="file upload API", description="multiple files upload supported, triggers import workflow")
-async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...)):
+async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...), object_store: ObjectStore = Depends(get_object_store)):
     try:
         data_based_root_dir = os.getenv("DATA_BASED_ROOT_DIR")
         date_str = datetime.now().strftime("%Y%m%d")
@@ -99,7 +100,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
     
             object_name = f"doc/{date_str}/{file.filename}"
             try:
-                url = get_object_store().upload(import_file_path, object_name, file.content_type)
+                url = object_store.upload(import_file_path, object_name, file.content_type)
                 
                 logger.info(f"[{task_id}] file uploaded, url: {url}")
             except Exception as e:

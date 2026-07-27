@@ -1,4 +1,4 @@
-from app.infra.external.embedder.embedding import EmbeddingService
+from app.domain.ports.embedder import Embedder
 from app.workflows.ingestion.base import BaseNode
 from app.workflows.ingestion.exceptions import StateFieldError
 from app.workflows.ingestion.state import ImportGraphState
@@ -9,7 +9,7 @@ class NodeBGEEmbedding(BaseNode):
 
     name: str = "node_bge_embedding"
 
-    def __init__(self, embedding_service: EmbeddingService):
+    def __init__(self, embedding_service: Embedder):
         super().__init__()
         self._embedding_service = embedding_service
 

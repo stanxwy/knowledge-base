@@ -1,7 +1,7 @@
 import asyncio
 import json
 
-from app.infra.external.mcp_search import MCPSearchService
+from app.domain.ports.web_search import WebSearch
 from app.utils.json_format_utils import format_json
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState
@@ -11,7 +11,7 @@ class NodeWebSearchMcp(NodeBase):
 
     name: str = "node_web_search_mcp"
 
-    def __init__(self, mcp: MCPSearchService):
+    def __init__(self, mcp: WebSearch):
         super().__init__()
         self._mcp = mcp
     

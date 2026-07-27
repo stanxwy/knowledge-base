@@ -1,9 +1,10 @@
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
+from app.domain.ports.embedder import Embedder
 from app.infra.config.settings import Settings
 
 
-class EmbeddingService:
+class BgeM3Embedding(Embedder):
     def __init__(self, settings: Settings):
         self._settings = settings
         self._model = None

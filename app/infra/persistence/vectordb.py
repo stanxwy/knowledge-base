@@ -3,8 +3,8 @@ import logging
 
 from pymilvus import AnnSearchRequest, DataType, MilvusClient, WeightedRanker
 
+from app.domain.ports.embedder import Embedder
 from app.infra.config.settings import Settings
-from app.infra.external.embedder.embedding import EmbeddingService
 from app.workflows.ingestion.exceptions import VectorDBError
 
 logger = logging.getLogger(__name__)
@@ -17,7 +17,7 @@ ITEM_NAME_SEARCH_LIMIT = 5
 CHUNK_SEARCH_LIMIT = 10
 
 class VectorDBService():
-    def __init__(self, settings: Settings, embedding_service: EmbeddingService):
+    def __init__(self, settings: Settings, embedding_service: Embedder):
         self._milvus_config = settings
         self._milvus_client = None
         self._embedding_service = embedding_service

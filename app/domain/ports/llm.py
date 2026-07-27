@@ -1,10 +1,7 @@
-import logging
 from abc import ABC, abstractmethod
 from typing import Any
 
 from langchain_openai import ChatOpenAI
-
-logger = logging.getLogger(__name__)
 
 
 class LLMPort(ABC):
