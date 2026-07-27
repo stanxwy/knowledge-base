@@ -27,7 +27,7 @@ app.middleware("http")(request_logger_middleware)
 setup_cors(app, settings.BACKEND_CORS_ORIGINS)
 
 
-STATIC_ROOT = Path(__file__).parent / "app" / "static"
+STATIC_ROOT = Path(__file__).parent / "static"
 app.mount(
     "/static",
     StaticFiles(directory=STATIC_ROOT),

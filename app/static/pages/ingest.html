@@ -339,7 +339,8 @@
     const fileList = document.getElementById('fileList');
 
     // 模拟后端API地址
-    const API_BASE = `${location.protocol}//${location.host}`.includes('http') ? `${location.protocol}//${location.host}` : 'http://127.0.0.1:8000';
+    const HOST = `${location.protocol}//${location.host}`.includes('http') ? `${location.protocol}//${location.host}` : 'http://127.0.0.1:8000';
+    const API_BASE = HOST + "/api/v1";
 
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
