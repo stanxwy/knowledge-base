@@ -12,7 +12,7 @@ from pydantic import BaseModel, Field
 from app.api.middleware.cors import setup_cors
 from app.api.middleware.request_logger import request_logger_middleware
 from app.core.config import settings
-from app.deps.infra import get_mongo_service
+from app.factories.infra import get_mongo_service
 from app.infra.persistence.mongo import MongoService
 from app.utils.logger import setup_logging
 from app.utils.sse_utils import (

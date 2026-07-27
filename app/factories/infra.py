@@ -1,7 +1,7 @@
 from functools import lru_cache
 
-from app.deps.services import get_embedder
 from app.domain.ports.object_store import ObjectStore
+from app.factories.services import get_embedder
 from app.infra.config.settings import Settings, get_settings
 from app.infra.persistence.mongo import MongoService
 from app.infra.persistence.object_store import MinIOService

@@ -4,12 +4,12 @@ from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from app.deps.infra import (
+from app.factories.infra import (
     get_chunks_vector_db,
     get_item_name_vector_db,
     get_mongo_service,
 )
-from app.deps.services import get_llm_service, get_mcp_search_service, get_reranker
+from app.factories.services import get_llm_service, get_mcp_search_service, get_reranker
 from app.workflows.query.nodes.node_answer_output import NodeAnswerOutput
 from app.workflows.query.nodes.node_item_name_confirm import (
     NodeItemNameConfirm,
