@@ -8,8 +8,8 @@ from app.infra.persistence.milvus import (
     ChunksVectorDBService,
     ItemNameVectorDBService,
 )
+from app.infra.persistence.minio import MinIOService
 from app.infra.persistence.mongo import MongoService
-from app.infra.persistence.object_store import MinIOService
 
 
 @lru_cache(maxsize=1)

@@ -3,8 +3,8 @@ from fastapi import Depends
 from app.domain.ports.doc_store import DocumentStore
 from app.domain.ports.object_store import ObjectStore
 from app.infra.config.settings import Settings, get_settings
+from app.infra.persistence.minio import MinIOService
 from app.infra.persistence.mongo import MongoService
-from app.infra.persistence.object_store import MinIOService
 
 
 def get_settings_dep() -> Settings:

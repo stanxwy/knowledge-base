@@ -6,7 +6,7 @@ from app.utils.logger import setup_logging
 
 load_dotenv(override=True)
 if __name__ == "__main__":
-    from app.infra.persistence.object_store import get_object_store_service
+    from app.infra.persistence.minio import get_object_store_service
     logger = setup_logging("DEBUG")
 
     local_path = "./docs/images/Docker访问原理图.png"

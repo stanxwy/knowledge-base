@@ -4,7 +4,7 @@ from collections import deque
 from pathlib import Path
 
 from app.domain.ports.llm import LLMPort
-from app.infra.persistence.object_store import ObjectStore
+from app.domain.ports.object_store import ObjectStore
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.backup_utils import backup_file
 from app.workflows.ingestion.base import BaseNode
