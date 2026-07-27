@@ -60,7 +60,7 @@ class Settings(PydanticBaseSettings):
 
     # ===== MinIO =====
     minio_endpoint: str = Field(..., env="MINIO_ENDPOINT")
-    minio_secure: bool = Field(True, env="MINIO_SECURE")
+    minio_secure: bool = Field(False, env="MINIO_SECURE")
     minio_access_key: str = Field(..., env="MINIO_ACCESS_KEY")
     minio_secret_key: str = Field(..., env="MINIO_SECRET_KEY")
     minio_bucket_name: str = Field(..., env="MINIO_BUCKET_NAME")

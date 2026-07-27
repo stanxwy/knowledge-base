@@ -5,7 +5,7 @@ from agents.mcp import MCPServerStreamableHttp
 from app.domain.ports.web_search import WebSearch
 from app.infra.config.settings import Settings
 
-_MCP_TIME_OUT = 10
+_MCP_TIME_OUT = 60
 _MCP_MAX_RETRY_ATTEMPTS = 3
 _MCP_QUERY_RESULT_COUNT = 5
 

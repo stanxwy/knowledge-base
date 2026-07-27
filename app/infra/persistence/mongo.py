@@ -96,7 +96,7 @@ class MongoService(DocumentStore):
         try:
             query = {"session_id": session_id} if session_id else {}
             cursor = self._get_mongo_client().chat_message.find(query).sort("ts", DESCENDING).limit(limit)
-            messages = reversed(list(cursor))
+            messages = list(cursor)[::-1]
             for m in messages:
                 logger.debug(f'{datetime.fromtimestamp(m["ts"]).strftime("%Y-%m-%d %H:%M:%S")} - {m["role"]}: {m["text"]}')
             return messages

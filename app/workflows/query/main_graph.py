@@ -6,8 +6,8 @@ from langgraph.graph.state import CompiledStateGraph
 
 from app.factories.infra import (
     get_chunks_vector_db,
+    get_doc_store,
     get_item_name_vector_db,
-    get_mongo_service,
 )
 from app.factories.services import get_llm_service, get_mcp_search_service, get_reranker
 from app.workflows.query.nodes.node_answer_output import NodeAnswerOutput
@@ -38,7 +38,7 @@ class KBQueryWorkflow:
 
     def _init_nodes(self):
         llm_service = get_llm_service()
-        mongo_service = get_mongo_service()
+        mongo_service = get_doc_store()
         item_name_vector_db = get_item_name_vector_db()
         chunks_vector_db = get_chunks_vector_db()
         mcp_service = get_mcp_search_service()
