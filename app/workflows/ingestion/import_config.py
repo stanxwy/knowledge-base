@@ -23,36 +23,6 @@ class ImportConfig:
         default_factory=lambda: {".jpg", ".jpeg", ".png", ".gif", ".bmp", ".webp"}
     )
 
-    # ==================== Milvus 配置 ====================
-    milvus_url: str = field(
-        default_factory=lambda: os.getenv("MILVUS_URL", "")
-    )
-    chunks_collection: str = field(
-        default_factory=lambda: os.getenv("CHUNKS_COLLECTION", "")
-    )
-    item_name_collection: str = field(
-        default_factory=lambda: os.getenv("ITEM_NAME_COLLECTION", "")
-    )
-    entity_name_collection: str = field(
-        default_factory=lambda: os.getenv("ENTITY_NAME_COLLECTION", "")
-    )
-
-
-    # ==================== MinIO 配置 ====================
-    minio_endpoint: str = field(
-        default_factory=lambda: os.getenv("MINIO_ENDPOINT", "")
-    )
-    minio_access_key: str = field(
-        default_factory=lambda: os.getenv("MINIO_ACCESS_KEY", "")
-    )
-    minio_secret_key: str = field(
-        default_factory=lambda: os.getenv("MINIO_SECRET_KEY", "")
-    )
-    minio_bucket: str = field(
-        default_factory=lambda: os.getenv("MINIO_BUCKET_NAME", "")
-    )
-    minio_secure: bool = False
-
     # ==================== 向量配置 ====================
     embedding_dim: int = field(
         default_factory=lambda: int(os.getenv("EMBEDDING_DIM", "1024"))
@@ -64,15 +34,7 @@ class ImportConfig:
 
     @classmethod
     def from_env(cls) -> "ImportConfig":
-        """从环境变量加载配置"""
-        logging.getLogger().debug("creating ImportConfig instance...")
         return cls()
-
-    # http://192.168.200.130:9000/
-    def get_minio_base_url(self):
-        base_protocol = "https://" if self.minio_secure else "http://"
-        return base_protocol + f"{self.minio_endpoint}"
-
 
 # ==================== 全局单例 ====================
 _config: ImportConfig | None = None
@@ -82,7 +44,5 @@ def get_config() -> ImportConfig:
     """获取配置单例"""
     global _config
     if _config is None:
-        logging.getLogger().debug("ImportConfig instance not found...")
         _config = ImportConfig.from_env()
-    logging.getLogger().debug(f"ImportConfig instance loaded {_config}")
     return _config

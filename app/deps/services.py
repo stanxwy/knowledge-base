@@ -2,7 +2,8 @@ from functools import lru_cache
 
 from app.infra.config.settings import Settings, get_settings
 from app.services.embedding import EmbeddingService
-from app.services.llm import LLMService
+from app.services.llm import DashScopeService
+from app.services.llm_base import LLMService
 from app.services.mcp_search import MCPSearchService
 from app.services.mineru import MineruService
 from app.services.reranker_http import Reranker
@@ -17,7 +18,7 @@ def get_reranker(settings: Settings | None = None) -> Reranker:
 @lru_cache(maxsize=1)
 def get_llm_service(settings: Settings | None = None) -> LLMService:
     settings = settings or get_settings()
-    return LLMService(settings)
+    return DashScopeService(settings)
 
 
 @lru_cache(maxsize=1)
