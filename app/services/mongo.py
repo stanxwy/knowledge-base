@@ -1,6 +1,5 @@
 import logging
 from datetime import datetime
-from functools import lru_cache
 from typing import Any
 
 from bson import ObjectId
@@ -27,12 +26,13 @@ class MongoDBClient:
 
 
 class MongoService:
-    def __init__(self):
+    def __init__(self, settings: Settings):
+        self._settings = settings
         self._mongo_client = None
 
     def _get_mongo_client(self):
         if self._mongo_client is None:
-            self._mongo_client = MongoDBClient()
+            self._mongo_client = MongoDBClient(self._settings)
         return self._mongo_client
 
     def clear_history(self, session_id: str) -> int:
@@ -102,7 +102,3 @@ class MongoService:
         except Exception as e:
             logger.exception(f"Error getting recent messages: {e!s}", stack_info=True)
             return []
-
-@lru_cache(maxsize=1)
-def get_mongo_service() -> MongoService:
-    return MongoService()

@@ -4,11 +4,12 @@ from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from app.services.embedding_service import get_embedding_service
-from app.services.llm_service import get_llm_service
-from app.services.mineru_service import get_mineru_service
-from app.services.object_store_service import get_object_store_service
-from app.services.vectordb_service import get_chunks_vector_db, get_item_name_vector_db
+from app.deps.infra import (
+    get_chunks_vector_db,
+    get_item_name_vector_db,
+    get_object_store,
+)
+from app.deps.services import get_embedding_service, get_llm_service, get_mineru_service
 from app.workflows.ingestion.nodes.node_bge_embedding import NodeBGEEmbedding
 from app.workflows.ingestion.nodes.node_document_split import NodeDocumentSplit
 from app.workflows.ingestion.nodes.node_entry import NodeEntry
@@ -33,7 +34,7 @@ class KBImportWorkflow:
     def _register_nodes(self):
         mineru_service = get_mineru_service()
         llm_service = get_llm_service()
-        object_store = get_object_store_service()
+        object_store = get_object_store()
         embedding_service = get_embedding_service()
         item_name_vector_db = get_item_name_vector_db()
         chunks_vector_db = get_chunks_vector_db()

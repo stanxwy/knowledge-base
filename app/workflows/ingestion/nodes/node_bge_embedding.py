@@ -1,4 +1,4 @@
-from app.services.embedding_service import EmbeddingService
+from app.services.embedding import EmbeddingService
 from app.workflows.ingestion.base import BaseNode
 from app.workflows.ingestion.exceptions import StateFieldError
 from app.workflows.ingestion.state import ImportGraphState

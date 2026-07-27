@@ -3,8 +3,8 @@ import re
 from collections import deque
 from pathlib import Path
 
-from app.services.llm_service import LLMService
-from app.services.object_store_service import ObjectStoreService
+from app.services.llm import LLMService
+from app.services.object_store import ObjectStoreService
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.backup_utils import backup_file
 from app.workflows.ingestion.base import BaseNode

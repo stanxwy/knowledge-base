@@ -1,7 +1,6 @@
 import base64
 import json
 import logging
-from functools import lru_cache
 from typing import Any
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -30,7 +29,7 @@ class LLMService:
 
     def get_llm_client(self, model: str | None = None, json_mode: bool = False) -> ChatOpenAI:
         logger.debug(f"Getting LangChain ChatOpenAI {model} client instance...")
-        m = model or self._settings.default_model
+        m = model or self._settings.llm_default_model
 
         key = (m, json_mode)
         if key in self._llm_client_cache:
@@ -44,8 +43,8 @@ class LLMService:
 
         llm: ChatOpenAI = ChatOpenAI(
             model=m,
-            api_key=self._settings.api_key,
-            base_url=self._settings.base_url,
+            api_key=self._settings.openai_api_key,
+            base_url=self._settings.openai_api_base,
             temperature=self._settings.llm_temperature,
             extra_body=extra_body,
             model_kwargs=model_kwargs
@@ -157,7 +156,3 @@ class LLMService:
         except Exception as e:
             logger.exception(f"Error generating Hyde document: {e!s}", stack_info=True)
             raise e
-
-@lru_cache(maxsize=1)
-def get_llm_service() -> LLMService:
-    return LLMService()

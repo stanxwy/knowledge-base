@@ -22,16 +22,23 @@ class Settings(PydanticBaseSettings):
     bge_device: str = Field("cuda:0", env="BGE_DEVICE")
     bge_fp16: bool = Field(True, env="BGE_FP16")
 
-    # ===== Reranker =====
-    text_rerank_api_key: str = Field(..., env="OPENAI_API_KEY")
+    # ===== Reranker REMOTE =====
+    @property
+    def text_rerank_api_key(self) -> str:
+        return self.openai_api_key
     text_rerank_model: str = Field(..., env="TEXT_RERANK_MODEL")
     text_rerank_instruct: str | None = Field(None, env="TEXT_RERANK_INSTRUCT")
-    bge_rerank_model: str = Field(..., env="BGE_RERANKER_LARGE")
+
+    # ===== Reranker Local =====
+    bge_rerank_model: str = Field("", env="BGE_RERANKER_LARGE")
     bge_rerank_device: str = Field("cuda:0", env="BGE_RERANKER_DEVICE")
     bge_rerank_fp16: bool = Field(True, env="BGE_RERANKER_FP16")
 
     # ===== MCP / DashScope =====
     mcp_dashscope_base_url: str = Field(..., env="MCP_DASHSCOPE_BASE_URL")
+    @property
+    def mcp_dashscope_api_key(self) -> str:
+        return self.openai_api_key
 
     # ===== Milvus =====
     milvus_url: str = Field(..., env="MILVUS_URL")
@@ -56,7 +63,7 @@ class Settings(PydanticBaseSettings):
 
     class Config:
         env_file = ".env"
-        env_prefix = "APP_"
+        env_prefix = "" # env_prefix = "KB_"
 
 
 @lru_cache(maxsize=1)

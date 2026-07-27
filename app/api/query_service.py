@@ -12,7 +12,8 @@ from pydantic import BaseModel, Field
 from app.api.middleware.cors import setup_cors
 from app.api.middleware.request_logger import request_logger_middleware
 from app.core.config import settings
-from app.services.mongo_service import get_mongo_service
+from app.deps.infra import get_mongo_service
+from app.infra.config.settings import get_settings
 from app.utils.logger import setup_logging
 from app.utils.sse_utils import (
     SSEEvent,
@@ -57,34 +58,38 @@ async def chat():
 
 @app.post("/query")
 async def query(background_tasks: BackgroundTasks, request: QueryRequest):
-    user_query = request.query
-    session_id = request.session_id if request.session_id else str(uuid.uuid4())
-    clear_task(session_id)
-
-    is_stream = request.is_stream
-    if is_stream:
-        create_sse_queue(session_id)
-
-    update_task_status(session_id, TASK_STATUS_PROCESSING, is_stream)
-    logger.info(f"Starting Query Workflow task {session_id}, query: {user_query}, is_stream: {is_stream}")
-
-    if is_stream:
-        # 如果是流式，则返回一个流式响应，过程不断地推送
-        background_tasks.add_task(run_query_graph, session_id, user_query, is_stream)
-        logger.info(f"[{session_id}] Query Workflow task submitted to background executor")
-        return {
-            "message": "Task started",
-            "session_id": session_id
-        }
-    else:
-        run_query_graph(session_id, user_query, is_stream)
-        answer = get_task_result(session_id, "answer", "")
-        return {
-            "message": "Task completed",
-            "session_id": session_id,
-            "answer": answer,
-            "done_list": get_done_task_list(session_id)
-        }
+    try:
+        user_query = request.query
+        session_id = request.session_id if request.session_id else str(uuid.uuid4())
+        clear_task(session_id)
+    
+        is_stream = request.is_stream
+        if is_stream:
+            create_sse_queue(session_id)
+    
+        update_task_status(session_id, TASK_STATUS_PROCESSING, is_stream)
+        logger.info(f"Starting Query Workflow task {session_id}, query: {user_query}, is_stream: {is_stream}")
+    
+        if is_stream:
+            # 如果是流式，则返回一个流式响应，过程不断地推送
+            background_tasks.add_task(run_query_graph, session_id, user_query, is_stream)
+            logger.info(f"[{session_id}] Query Workflow task submitted to background executor")
+            return {
+                "message": "Task started",
+                "session_id": session_id
+            }
+        else:
+            run_query_graph(session_id, user_query, is_stream)
+            answer = get_task_result(session_id, "answer", "")
+            return {
+                "message": "Task completed",
+                "session_id": session_id,
+                "answer": answer,
+                "done_list": get_done_task_list(session_id)
+            }
+    except Exception as e:
+        logger.exception(f"Error running Query Workflow task: {e!s}", stack_info=True)
+        raise HTTPException(status_code=500, detail=f"Error running Query Workflow task: {e}")
 
 
 def run_query_graph(session_id: str, user_query: str, is_stream: bool = True):
@@ -143,6 +148,7 @@ async def history(session_id: str, limit: int = 50):
             })
         return {"session_id": session_id, "items": items}
     except Exception as e:
+        logger.exception(f"history error: {e!s}", stack_info=True)
         raise HTTPException(status_code=500, detail=f"history error: {e}")
     
 

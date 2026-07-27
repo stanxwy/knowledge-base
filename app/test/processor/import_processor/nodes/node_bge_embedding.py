@@ -1,6 +1,6 @@
 import json
 from app.workflows.ingestion.nodes.node_bge_embedding import NodeBGEEmbedding
-from app.services.embedding_service import get_embedding_service
+from app.services.embedding import get_embedding_service
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":

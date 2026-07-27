@@ -1,6 +1,5 @@
 import json
 import logging
-from functools import lru_cache
 
 import dashscope
 
@@ -36,7 +35,3 @@ class Reranker:
             score = item.get("relevance_score")
             scores[int(index)] = float(score)
         return scores
-    
-@lru_cache(maxsize=1)
-def get_reranker():
-    return Reranker()

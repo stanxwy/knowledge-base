@@ -1,5 +1,5 @@
-from app.services.embedding_service import EmbeddingService
-from app.services.llm_service import LLMService
+from app.services.embedding import EmbeddingService
+from app.services.llm import LLMService
 from app.services.vectordb_service import ItemNameVectorDBService
 from app.workflows.ingestion.base import BaseNode
 from app.workflows.ingestion.exceptions import StateFieldError

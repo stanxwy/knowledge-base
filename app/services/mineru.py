@@ -2,7 +2,6 @@ import logging
 import shutil
 import time
 import zipfile
-from functools import lru_cache
 from pathlib import Path
 
 import requests
@@ -152,8 +151,3 @@ class MineruService:
         target_md_file.rename(new_md_path)
         logger.info(f"{target_md_file} renamed to {pdf_stem}.md")
         return str(new_md_path.absolute())
-
-
-@lru_cache(maxsize=1)
-def get_mineru_service() -> MineruService:
-    return MineruService()

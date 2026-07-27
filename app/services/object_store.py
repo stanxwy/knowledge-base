@@ -1,7 +1,6 @@
 import json
 import logging
 import os
-from functools import lru_cache
 
 from minio import Minio
 from minio.deleteobjects import DeleteObject
@@ -101,7 +100,3 @@ class ObjectStoreService:
 
     def upload_img(self, local_path: str, object_name: str, content_type: str = None) -> str | None:
         return self.upload(local_path, f"{self._settings.img_dir}/{object_name}", content_type)
-
-@lru_cache(maxsize=1)
-def get_object_store_service() -> ObjectStoreService:
-    return ObjectStoreService()

@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from app.services.mineru_service import MineruService
+from app.services.mineru import MineruService
 from app.workflows.ingestion.base import BaseNode
 from app.workflows.ingestion.exceptions import (
     FileProcessingError,

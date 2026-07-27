@@ -14,7 +14,8 @@ from fastapi.responses import FileResponse
 from app.api.middleware.cors import setup_cors
 from app.api.middleware.request_logger import request_logger_middleware
 from app.core.config import settings
-from app.services.object_store_service import get_object_store_service
+from app.deps.infra import get_object_store
+from app.infra.config.settings import get_settings
 from app.utils.logger import setup_logging
 from app.utils.task_utils import (
     TASK_STATUS_COMPLETED,
@@ -99,7 +100,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
     
             object_name = f"doc/{date_str}/{file.filename}"
             try:
-                url = get_object_store_service().upload(import_file_path, object_name, file.content_type)
+                url = get_object_store(get_settings()).upload(import_file_path, object_name, file.content_type)
                 
                 logger.info(f"[{task_id}] file uploaded, url: {url}")
             except Exception as e:

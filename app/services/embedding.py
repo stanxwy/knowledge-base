@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from pymilvus.model.hybrid import BGEM3EmbeddingFunction
 
 from app.infra.config.settings import Settings
@@ -34,11 +32,3 @@ class EmbeddingService:
             "sparse": processed_sparse,
             "dense": [emb.tolist() for emb in embeddings["dense"]]
         }
-
-@lru_cache(maxsize=1)
-def get_embedding_service() -> EmbeddingService:
-    return EmbeddingService()
-
-if __name__ == '__main__':
-    embeddings = get_embedding_service().generate_embeddings(["hello","world"])
-    print(embeddings)

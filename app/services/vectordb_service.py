@@ -1,11 +1,10 @@
 import json
 import logging
-from functools import lru_cache
 
 from pymilvus import AnnSearchRequest, DataType, MilvusClient, WeightedRanker
 
 from app.infra.config.settings import Settings
-from app.services.embedding_service import EmbeddingService, get_embedding_service
+from app.services.embedding import EmbeddingService
 from app.workflows.ingestion.exceptions import VectorDBError
 
 logger = logging.getLogger(__name__)
@@ -18,7 +17,7 @@ ITEM_NAME_SEARCH_LIMIT = 5
 CHUNK_SEARCH_LIMIT = 10
 
 class VectorDBService():
-    def __init__(self, settings: Settings, embedding_service: EmbeddingService = get_embedding_service()):
+    def __init__(self, settings: Settings, embedding_service: EmbeddingService):
         self._milvus_config = settings
         self._milvus_client = None
         self._embedding_service = embedding_service
@@ -271,11 +270,3 @@ class ChunksVectorDBService(VectorDBService):
         except Exception as e:
             logger.exception(f"Error searching chunks: {e}")
             return []
-
-@lru_cache(maxsize=1)
-def get_item_name_vector_db() -> ItemNameVectorDBService:
-    return ItemNameVectorDBService()
-
-@lru_cache(maxsize=1)
-def get_chunks_vector_db() -> ChunksVectorDBService:
-    return ChunksVectorDBService()

@@ -1,5 +1,4 @@
 import logging
-from functools import lru_cache
 
 from FlagEmbedding import FlagReranker
 
@@ -32,8 +31,3 @@ class Reranker:
     def rerank_documents(self, query: str, documents: list[str]) -> list[float]:
         pairs = [(query, doc) for doc in documents]
         return self._get_reranker_model().compute_score(pairs)
-    
-
-@lru_cache(maxsize=1)
-def get_reranker():
-    return Reranker()

@@ -1,5 +1,4 @@
 import logging
-from functools import lru_cache
 
 from agents.mcp import MCPServerStreamableHttp
 
@@ -22,7 +21,7 @@ class MCPSearchService:
                 name="search_mcp",
                 params={
                     "url": self._settings.mcp_dashscope_base_url,
-                    "headers": {"Authorization": f"Bearer {self._settings.openai_api_key}"},
+                    "headers": {"Authorization": f"Bearer {self._settings.mcp_dashscope_api_key}"},
                     "timeout": _MCP_TIME_OUT,
                 },
                 cache_tools_list=True,
@@ -42,7 +41,3 @@ class MCPSearchService:
             return result
         finally:
             await client.cleanup()
-
-@lru_cache(maxsize=1)
-def get_mcp_search_service() -> MCPSearchService:
-    return MCPSearchService()
