@@ -22,13 +22,13 @@ class MineruService:
     
     def __init__(self, settings: Settings):
         self._settings = settings
-        self._file_url = f"{settings.base_url}/file-urls/batch"
-        self._poll_url = f"{settings.base_url}/extract-results/batch"
+        self._file_url = f"{settings.mineru_base_url}/file-urls/batch"
+        self._poll_url = f"{settings.mineru_base_url}/extract-results/batch"
 
     def _build_header(self) -> dict:
         return {
             "Content-Type": "application/json",
-            "Authorization": f"Bearer {self._settings.api_token}",
+            "Authorization": f"Bearer {self._settings.mineru_api_token}",
             "Accept": "*/*"
         }
 

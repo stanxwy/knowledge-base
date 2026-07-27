@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 class ImportConfig:
     # ==================== 文档处理配置 ====================
     max_content_length: int = 2000  # 切片最大长度
+    min_image_size: int = 1024 * 10 # 图片最小尺寸
     img_content_length: int = 200  # 图片上下文最大长度
     min_content_length: int = 500  # 合并短内容的最小长度
     overlap_sentences: int = 1  # 句子级切分时的重叠句数

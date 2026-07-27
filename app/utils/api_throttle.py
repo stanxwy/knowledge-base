@@ -1,6 +1,6 @@
 import logging
 import time
-from typing import Deque
+from collections import deque
 
 logger = logging.getLogger(__name__)
 
@@ -8,7 +8,7 @@ API_QUEUE_SIZE = 10
 API_WINDOW_SIZE = 60
 
 def apply_api_rate_limit(
-    request_times: Deque[float],
+    request_times: deque[float],
     max_requests: int = API_QUEUE_SIZE,
     window_seconds: int = API_WINDOW_SIZE
 ) -> None:
@@ -45,7 +45,7 @@ def apply_api_rate_limit(
         # calculate the time to wait (window total time - elapsed time of the earliest request)
         sleep_duration = window_seconds - (current_time - request_times[0])
         if sleep_duration > 0:
-            logger.info(f"Triggered API rate limit, window {window_seconds}s has a maximum of {max_requests} requests, need to wait: {sleep_duration:.2f}s")
+            logger.warning(f"Triggered API rate limit, window {window_seconds}s has a maximum of {max_requests} requests, need to wait: {sleep_duration:.2f}s")
             time.sleep(sleep_duration)
             # clear expired requests on wakeup
             current_time = time.time()

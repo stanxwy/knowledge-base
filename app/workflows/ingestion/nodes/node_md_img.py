@@ -53,6 +53,10 @@ class NodeMDImg(BaseNode):
             if file_ext not in self.config.image_extensions:
                 self.logger.info(f"Image extension not supported, skip：{image_file}")
                 continue
+
+            if Path(image_file).len() < self.config.min_image_size:
+                self.logger.info(f"Image too small, skip：{image_file}")
+                continue
             
             context = self._extract_image_context(md_content, image_file)
             if not context:
