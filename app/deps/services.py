@@ -1,11 +1,11 @@
 from functools import lru_cache
 
 from app.infra.config.settings import Settings, get_settings
+from app.infra.external.llm.dashscope import DashScopeService
+from app.infra.external.llm.llm_base import LLMService
+from app.infra.external.mcp_search import MCPSearchService
+from app.infra.external.mineru import MineruService
 from app.services.embedding import EmbeddingService
-from app.services.llm import DashScopeService
-from app.services.llm_base import LLMService
-from app.services.mcp_search import MCPSearchService
-from app.services.mineru import MineruService
 from app.services.reranker_http import Reranker
 
 

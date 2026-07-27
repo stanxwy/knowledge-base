@@ -1,5 +1,5 @@
-from app.services.llm import LLMService
-from app.services.vectordb_service import ChunksVectorDBService
+from app.infra.external.llm.llm_base import LLMService
+from app.infra.persistence.vectordb import ChunksVectorDBService
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState
 

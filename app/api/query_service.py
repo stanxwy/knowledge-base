@@ -5,7 +5,7 @@ from pathlib import Path
 
 import uvicorn
 from dotenv import load_dotenv
-from fastapi import BackgroundTasks, FastAPI, HTTPException, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import FileResponse, StreamingResponse
 from pydantic import BaseModel, Field
 
@@ -13,6 +13,7 @@ from app.api.middleware.cors import setup_cors
 from app.api.middleware.request_logger import request_logger_middleware
 from app.core.config import settings
 from app.deps.infra import get_mongo_service
+from app.infra.persistence.mongo import MongoService
 from app.utils.logger import setup_logging
 from app.utils.sse_utils import (
     SSEEvent,
@@ -126,14 +127,14 @@ async def stream(session_id: str, request: Request):
     )
 
 @app.delete("/history/{session_id}")
-async def clear_chat_history(session_id: str):
-    count = get_mongo_service().clear_history(session_id)
+async def clear_chat_history(session_id: str, mongo_service: MongoService = Depends(get_mongo_service)):
+    count = mongo_service.clear_history(session_id)
     return {"message": "Message history cleared", "deleted_count": count}
 
 @app.get("/history/{session_id}")
-async def history(session_id: str, limit: int = 50):
+async def history(session_id: str, limit: int = 50, mongo_service: MongoService = Depends(get_mongo_service)):
     try:
-        records = get_mongo_service().get_recent_messages(session_id, limit=limit)
+        records = mongo_service.get_recent_messages(session_id, limit=limit)
         items = []
         for r in records:
             items.append({

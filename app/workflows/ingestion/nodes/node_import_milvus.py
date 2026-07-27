@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.services.vectordb_service import ChunksVectorDBService
+from app.infra.persistence.vectordb import ChunksVectorDBService
 from app.workflows.ingestion.base import BaseNode
 from app.workflows.ingestion.exceptions import StateFieldError
 from app.workflows.ingestion.state import ImportGraphState

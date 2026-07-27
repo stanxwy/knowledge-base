@@ -1,5 +1,6 @@
 import json
-from app.services.vectordb_service import ItemNameVectorDBService
+
+from app.infra.persistence.vectordb import ItemNameVectorDBService
 
 if __name__ == '__main__':
     item_names = ["烫金机", "电脑"]

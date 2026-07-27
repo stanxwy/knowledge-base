@@ -1,5 +1,6 @@
 from dotenv import load_dotenv
-from app.services.mongo import get_mongo_service
+
+from app.infra.persistence.mongo import get_mongo_service
 
 if __name__ == "__main__":
     load_dotenv()

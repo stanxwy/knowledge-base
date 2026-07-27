@@ -1,7 +1,7 @@
 import re
 
-from app.services.llm import LLMService
-from app.services.mongo import MongoService
+from app.infra.external.llm.llm_base import LLMService
+from app.infra.persistence.mongo import MongoService
 from app.utils.sse_utils import SSEEvent, push_sse_event
 from app.utils.task_utils import set_task_result
 from app.workflows.query.base import NodeBase

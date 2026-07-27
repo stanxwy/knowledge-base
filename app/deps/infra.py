@@ -2,9 +2,12 @@ from functools import lru_cache
 
 from app.deps.services import get_embedding_service
 from app.infra.config.settings import Settings, get_settings
-from app.services.mongo import MongoService
-from app.services.object_store import ObjectStoreService
-from app.services.vectordb_service import ChunksVectorDBService, ItemNameVectorDBService
+from app.infra.persistence.mongo import MongoService
+from app.infra.persistence.object_store import ObjectStoreService
+from app.infra.persistence.vectordb import (
+    ChunksVectorDBService,
+    ItemNameVectorDBService,
+)
 
 
 @lru_cache(maxsize=1)
