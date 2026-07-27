@@ -1,6 +1,6 @@
 import re
 
-from app.infra.external.llm.base import LLMService
+from app.infra.external.llm.base import LLMPort
 from app.infra.persistence.mongo import MongoService
 from app.utils.sse_utils import SSEEvent, push_sse_event
 from app.utils.task_utils import set_task_result
@@ -22,7 +22,7 @@ class NodeAnswerOutput(NodeBase):
     name: str = "node_answer_output"
 
     def __init__(self, mongo: MongoService,
-                 llm_service: LLMService):
+                 llm_service: LLMPort):
         super().__init__()
         self._mongo = mongo
         self._llm_service = llm_service

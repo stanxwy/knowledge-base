@@ -7,7 +7,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_openai import ChatOpenAI
 
 from app.infra.config.settings import Settings
-from app.infra.external.llm.base import LLMService
+from app.infra.external.llm.base import LLMPort
 from app.workflows.ingestion.prompt import (
     IMAGE_CAPTION_PROMPT,
     ITEM_NAME_SYSTEM_PROMPT,
@@ -23,7 +23,7 @@ logger = logging.getLogger(__name__)
 
 _DEFAULT_IMAGE_CAPTION = "alt text"
 
-class DashScopeService(LLMService):
+class DashScopeService(LLMPort):
     def __init__(self, settings: Settings):
         self._settings = settings
         self._llm_client_cache = {}

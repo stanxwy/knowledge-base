@@ -3,7 +3,7 @@ import re
 from collections import deque
 from pathlib import Path
 
-from app.infra.external.llm.base import LLMService
+from app.infra.external.llm.base import LLMPort
 from app.infra.persistence.object_store import ObjectStoreService
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.backup_utils import backup_file
@@ -21,7 +21,7 @@ class NodeMDImg(BaseNode):
     name: str = "node_md_img"
 
     def __init__(self, 
-                 llm_service: LLMService,
+                 llm_service: LLMPort,
                  object_store: ObjectStoreService):
         super().__init__()
         self._llm_service = llm_service

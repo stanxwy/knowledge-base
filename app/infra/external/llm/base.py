@@ -1,18 +1,13 @@
 import logging
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from typing import Any
 
 from langchain_openai import ChatOpenAI
 
-from app.infra.config.settings import Settings
-
 logger = logging.getLogger(__name__)
 
 
-class LLMService:
-    def __init__(self, settings: Settings):
-        self._settings = settings
-        self._llm_client_cache = {}
+class LLMPort(ABC):
 
     @abstractmethod
     def get_llm_client(self, model: str | None = None, json_mode: bool = False) -> ChatOpenAI: ...

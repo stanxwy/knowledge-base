@@ -1,4 +1,4 @@
-from app.infra.external.llm.base import LLMService
+from app.infra.external.llm.base import LLMPort
 from app.infra.persistence.mongo import MongoService
 from app.infra.persistence.vectordb import ItemNameVectorDBService
 from app.workflows.query.base import NodeBase
@@ -12,7 +12,7 @@ class NodeItemNameConfirm(NodeBase):
     
     def __init__(self,
                  mongo: MongoService, 
-                 llm_service: LLMService,
+                 llm_service: LLMPort,
                  item_name_vector_db: ItemNameVectorDBService):
         super().__init__()
         self._mongo = mongo

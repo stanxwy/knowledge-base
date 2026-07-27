@@ -1,4 +1,4 @@
-from app.infra.external.llm.base import LLMService
+from app.infra.external.llm.base import LLMPort
 from app.infra.persistence.vectordb import ChunksVectorDBService
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState
@@ -9,7 +9,7 @@ class NodeSearchEmbeddingHyde(NodeBase):
     name: str = "node_search_embedding_hyde"
 
     def __init__(self, 
-                 llm_service: LLMService,
+                 llm_service: LLMPort,
                  chunks_vector_db: ChunksVectorDBService):
         super().__init__()
         self._llm_service = llm_service
