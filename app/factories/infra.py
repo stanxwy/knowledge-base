@@ -4,12 +4,12 @@ from app.domain.ports.doc_store import DocumentStore
 from app.domain.ports.object_store import ObjectStore
 from app.factories.services import get_embedder
 from app.infra.config.settings import Settings, get_settings
-from app.infra.persistence.mongo import MongoService
-from app.infra.persistence.object_store import MinIOService
-from app.infra.persistence.vectordb import (
+from app.infra.persistence.milvus import (
     ChunksVectorDBService,
     ItemNameVectorDBService,
 )
+from app.infra.persistence.mongo import MongoService
+from app.infra.persistence.object_store import MinIOService
 
 
 @lru_cache(maxsize=1)

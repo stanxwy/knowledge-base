@@ -1,5 +1,5 @@
 
-from app.infra.persistence.vectordb import ChunksVectorDBService
+from app.infra.persistence.milvus import ChunksVectorDBService
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState
 
