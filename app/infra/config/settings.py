@@ -5,8 +5,17 @@ from pydantic_settings import BaseSettings as PydanticBaseSettings
 
 
 class Settings(PydanticBaseSettings):
+    APP_NAME: str = "Knowledge Base RAG"
+    VERSION: str = "0.1.0"
+    DEBUG: bool = False
+    API_V1_STR: str = "/api/v1"
+    BACKEND_CORS_ORIGINS: list[str] = ["*"] # ["http://localhost:8000"]
+    APP_HOST: str = "0.0.0.0"
+    APP_PORT: int = 8000
+
     # ===== Environment =====
     env: str = Field("prod", env="APP_ENV")
+    log_level: str = Field("INFO", env="LOG_LEVEL")
 
     # ===== LLM =====
     openai_api_key: str = Field(..., env="OPENAI_API_KEY")
