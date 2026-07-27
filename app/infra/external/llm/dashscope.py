@@ -113,7 +113,7 @@ class DashScopeService(LLMPort):
     def resolve_item_name_and_rewrite_query(self, query: str, history: list[dict[str, Any]]) -> tuple[list[str], str]:
         try:
             history_text = ""
-            for msg in reversed(history):
+            for msg in history:
                 role = msg.get("role")
                 content = msg.get("text")
                 history_text += f"{role}: {content}\n"
