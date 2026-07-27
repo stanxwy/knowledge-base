@@ -10,7 +10,7 @@
 
     <script>
         // ✅ 核心：创建EventSource连接SSE接口
-        const eventSource = new EventSource("http://127.0.0.1:8001/simple_stream");
+        const eventSource = new EventSource("/simple_stream");
         const resultDom = document.getElementById("result");
 
         // 监听SSE消息（实时接收）

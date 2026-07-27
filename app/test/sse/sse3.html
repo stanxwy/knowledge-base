@@ -21,7 +21,7 @@
             const sessionId = document.getElementById("sessionIdInput").value
 
             //promise：响应式
-            let response = await fetch(`http://127.0.0.1:8001/submit/${sessionId}`)
+            let response = await fetch(`/submit/${sessionId}`)
 
             const resultDom = document.getElementById("result")
             if(response.ok){
@@ -31,7 +31,7 @@
 
             // 创建一个EventSource对象
             // 如果没有收到[END]消息，不会自动关闭，请求会一直pending
-            const eventSource = new EventSource(`http://127.0.0.1:8001/stream/${sessionId}`)
+            const eventSource = new EventSource(`/stream/${sessionId}`)
 
             // 监听结果
             eventSource.onmessage = function (event){
