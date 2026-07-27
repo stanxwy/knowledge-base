@@ -91,7 +91,7 @@ class MongoService:
             logger.error(f"Error updating history item_names: {e}")
             return 0
 
-    def get_recent_messages(self, session_id: str = None, limit: int = 10) -> list[dict[str, Any]]:
+    def get_recent_messages(self, session_id: str | None = None, limit: int = 10) -> list[dict[str, Any]]:
         try:
             query = {"session_id": session_id} if session_id else {}
             cursor = self._get_mongo_client().chat_message.find(query).sort("ts", DESCENDING).limit(limit)

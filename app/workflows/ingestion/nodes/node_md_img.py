@@ -4,7 +4,7 @@ from collections import deque
 from pathlib import Path
 
 from app.domain.ports.llm import LLMPort
-from app.infra.persistence.object_store import ObjectStoreService
+from app.infra.persistence.object_store import ObjectStore
 from app.utils.api_throttle import apply_api_rate_limit
 from app.utils.backup_utils import backup_file
 from app.workflows.ingestion.base import BaseNode
@@ -22,7 +22,7 @@ class NodeMDImg(BaseNode):
 
     def __init__(self, 
                  llm_service: LLMPort,
-                 object_store: ObjectStoreService):
+                 object_store: ObjectStore):
         super().__init__()
         self._llm_service = llm_service
         self._object_store = object_store
@@ -54,7 +54,7 @@ class NodeMDImg(BaseNode):
                 self.logger.info(f"Image extension not supported, skip：{image_file}")
                 continue
 
-            if Path(image_file).len() < self.config.min_image_size:
+            if (images_dir_obj / image_file).stat().st_size < self.config.min_image_size:
                 self.logger.info(f"Image too small, skip：{image_file}")
                 continue
             
@@ -86,9 +86,11 @@ class NodeMDImg(BaseNode):
         captions = {}
         request_deque = deque()
 
+        count = 0
         for img_file, img_local_path, context in target_images:
             apply_api_rate_limit(request_deque)
             captions[img_file] = self._llm_service.generate_image_caption(img_local_path, doc_stem, context)
+            self.logger.info(f"{count := count + 1} image caption generated")
         return captions
     
     def _upload_images_batch(self, doc_stem: str, target_images: list[tuple]) -> dict[str, str]:
