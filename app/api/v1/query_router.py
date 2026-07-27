@@ -1,19 +1,11 @@
 import logging
-import os
 import uuid
-from pathlib import Path
 
-import uvicorn
-from dotenv import load_dotenv
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request
-from fastapi.responses import FileResponse, StreamingResponse
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
+from fastapi.responses import StreamingResponse
 from pydantic import BaseModel, Field
 
-from app.api.middleware.cors import setup_cors
-from app.api.middleware.request_logger import request_logger_middleware
 from app.api.v1.deps import DocumentStore, get_doc_store
-from app.core.config import settings
-from app.utils.logger import setup_logging
 from app.utils.sse_utils import (
     SSEEvent,
     create_sse_queue,
@@ -31,31 +23,17 @@ from app.utils.task_utils import (
 )
 from app.workflows.query.main_graph import KBQueryWorkflow
 
-load_dotenv(override=True)
-setup_logging(os.getenv("LOG_LEVEL", logging.INFO))
 logger = logging.getLogger(__name__)
 
-app = FastAPI(
-    title="Knowledge Base Query API",
-    description="This document describes the API of the Knowledge Base Query Workflow",
-)
-app.middleware("http")(request_logger_middleware)
-setup_cors(app, settings.BACKEND_CORS_ORIGINS)
+router = APIRouter(tags=["query"])
 
 class QueryRequest(BaseModel):
     query: str = Field(..., description="user query")
     session_id: str = Field(None, description="session id for query")
     is_stream: bool = Field(False, description="whether use stream mode")
 
-@app.get("/chat.html")
-async def chat():
-    current_dir_parent_path = Path(__file__).absolute().parent.parent
-    html_path = current_dir_parent_path / "pages" / "chat.html"
-    if not html_path.exists():
-        raise HTTPException(status_code=404, detail=f"Page not found: {html_path}")
-    return FileResponse(html_path)
 
-@app.post("/query")
+@router.post("/query")
 async def query(background_tasks: BackgroundTasks, request: QueryRequest):
     try:
         user_query = request.query
@@ -111,7 +89,7 @@ def run_query_graph(session_id: str, user_query: str, is_stream: bool = True):
         if is_stream:
             push_sse_event(session_id, SSEEvent.ERROR, {"error": str(e)})
 
-@app.get("/stream/{session_id}")
+@router.get("/stream/{session_id}")
 async def stream(session_id: str, request: Request):
     logger.info(f"{session_id} started streaming...")
     logger.info(request)
@@ -125,12 +103,12 @@ async def stream(session_id: str, request: Request):
         }
     )
 
-@app.delete("/history/{session_id}")
+@router.delete("/history/{session_id}")
 async def clear_chat_history(session_id: str, docStore: DocumentStore = Depends(get_doc_store)):
     count = docStore.clear_history(session_id)
     return {"message": "Message history cleared", "deleted_count": count}
 
-@app.get("/history/{session_id}")
+@router.get("/history/{session_id}")
 async def history(session_id: str, limit: int = 50, docStore: DocumentStore = Depends(get_doc_store)):
     try:
         records = docStore.get_recent_messages(session_id, limit=limit)
@@ -149,11 +127,3 @@ async def history(session_id: str, limit: int = 50, docStore: DocumentStore = De
     except Exception as e:
         logger.exception(f"history error: {e!s}", stack_info=True)
         raise HTTPException(status_code=500, detail=f"history error: {e}")
-    
-
-@app.get("/health")
-async def health():
-    return {"ok": True}
-
-if __name__ == "__main__":
-    uvicorn.run(app, host="127.0.0.1", port=8001)

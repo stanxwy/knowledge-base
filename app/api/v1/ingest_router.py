@@ -3,19 +3,18 @@ import os
 import shutil
 import uuid
 from datetime import datetime
-from pathlib import Path
 from typing import Any
 
-import uvicorn
-from dotenv import load_dotenv
-from fastapi import BackgroundTasks, Depends, FastAPI, File, HTTPException, UploadFile
-from fastapi.responses import FileResponse
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    File,
+    HTTPException,
+    UploadFile,
+)
 
-from app.api.middleware.cors import setup_cors
-from app.api.middleware.request_logger import request_logger_middleware
 from app.api.v1.deps import ObjectStore, get_object_store
-from app.core.config import settings
-from app.utils.logger import setup_logging
 from app.utils.task_utils import (
     TASK_STATUS_COMPLETED,
     TASK_STATUS_FAILED,
@@ -30,26 +29,10 @@ from app.utils.task_utils import (
 )
 from app.workflows.ingestion.main_graph import KBImportWorkflow
 
-load_dotenv(override=True)
-setup_logging(os.getenv("LOG_LEVEL", logging.INFO))
 logger = logging.getLogger(__name__)
 
-app = FastAPI(
-    title="Knowledge Base Import Workflow API",
-    description="This document describes the API of the Knowledge Base Import Workflow",
-)
-app.middleware("http")(request_logger_middleware)
-setup_cors(app, settings.BACKEND_CORS_ORIGINS)
+router = APIRouter(tags=["ingest"])
 
-
-
-@app.get("/import.html")
-async def get_import_page():
-    current_dir_parent_path = Path(__file__).absolute().parent.parent
-    html_path = current_dir_parent_path / "pages" / "import.html"
-    if not html_path.exists():
-        raise HTTPException(status_code=404, detail=f"Page not found: {html_path}")
-    return FileResponse(html_path)
 
 def run_graph_task(task_id: str, output_file_dir: str, import_file_path: str):
     try:
@@ -74,7 +57,7 @@ def run_graph_task(task_id: str, output_file_dir: str, import_file_path: str):
         update_task_status(task_id, TASK_STATUS_FAILED)
 
 
-@app.post("/upload", summary="file upload API", description="multiple files upload supported, triggers import workflow")
+@router.post("/upload", summary="file upload API", description="multiple files upload supported, triggers import workflow")
 async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile] = File(...), object_store: ObjectStore = Depends(get_object_store)):
     try:
         data_based_root_dir = os.getenv("DATA_BASED_ROOT_DIR")
@@ -121,7 +104,7 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.get("/status/{task_id}", summary="query task status", description="query task status with steps running/done by task_id")
+@router.get("/status/{task_id}", summary="query task status", description="query task status with steps running/done by task_id")
 async def get_task_progress(task_id: str):
     task_status_info: dict[str, Any] = {
         "code": 200,
@@ -133,6 +116,3 @@ async def get_task_progress(task_id: str):
     logger.info(
         f"[{task_id}] task status {task_status_info['status']}, steps done: {task_status_info['done_list']}")
     return task_status_info
-
-if __name__ == "__main__":
-    uvicorn.run(app=app,host="127.0.0.1",port=8000)

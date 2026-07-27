@@ -1,5 +1,3 @@
-from functools import lru_cache
-
 from fastapi import Depends
 
 from app.domain.ports.doc_store import DocumentStore
