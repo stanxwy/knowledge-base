@@ -1,5 +1,5 @@
+from app.domain.ports.doc_store import DocumentStore
 from app.domain.ports.llm import LLMPort
-from app.infra.persistence.mongo import MongoService
 from app.infra.persistence.vectordb import ItemNameVectorDBService
 from app.workflows.query.base import NodeBase
 from app.workflows.query.exceptions import StateFieldError
@@ -11,7 +11,7 @@ class NodeItemNameConfirm(NodeBase):
     name: str = "node_item_name_confirm"
     
     def __init__(self,
-                 mongo: MongoService, 
+                 mongo: DocumentStore, 
                  llm_service: LLMPort,
                  item_name_vector_db: ItemNameVectorDBService):
         super().__init__()

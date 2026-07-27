@@ -1,5 +1,6 @@
 from functools import lru_cache
 
+from app.domain.ports.doc_store import DocumentStore
 from app.domain.ports.object_store import ObjectStore
 from app.factories.services import get_embedder
 from app.infra.config.settings import Settings, get_settings
@@ -30,6 +31,6 @@ def get_chunks_vector_db(settings: Settings | None = None) -> ChunksVectorDBServ
 
 
 @lru_cache(maxsize=1)
-def get_mongo_service(settings: Settings | None = None) -> MongoService:
+def get_doc_store(settings: Settings | None = None) -> DocumentStore:
     settings = settings or get_settings()
     return MongoService(settings)

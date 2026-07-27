@@ -1,7 +1,7 @@
 import re
 
+from app.domain.ports.doc_store import DocumentStore
 from app.domain.ports.llm import LLMPort
-from app.infra.persistence.mongo import MongoService
 from app.utils.sse_utils import SSEEvent, push_sse_event
 from app.utils.task_utils import set_task_result
 from app.workflows.query.base import NodeBase
@@ -21,7 +21,7 @@ class NodeAnswerOutput(NodeBase):
 
     name: str = "node_answer_output"
 
-    def __init__(self, mongo: MongoService,
+    def __init__(self, mongo: DocumentStore,
                  llm_service: LLMPort):
         super().__init__()
         self._mongo = mongo

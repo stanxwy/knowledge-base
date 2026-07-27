@@ -5,6 +5,7 @@ from typing import Any
 from bson import ObjectId
 from pymongo import DESCENDING, MongoClient
 
+from app.domain.ports.doc_store import DocumentStore
 from app.infra.config.settings import Settings
 
 logger = logging.getLogger(__name__)
@@ -25,7 +26,7 @@ class MongoDBClient:
             raise
 
 
-class MongoService:
+class MongoService(DocumentStore):
     def __init__(self, settings: Settings):
         self._settings = settings
         self._mongo_client = None
