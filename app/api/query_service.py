@@ -11,9 +11,8 @@ from pydantic import BaseModel, Field
 
 from app.api.middleware.cors import setup_cors
 from app.api.middleware.request_logger import request_logger_middleware
+from app.api.v1.deps import DocumentStore, get_doc_store
 from app.core.config import settings
-from app.domain.ports.doc_store import DocumentStore
-from app.factories.infra import get_doc_store
 from app.utils.logger import setup_logging
 from app.utils.sse_utils import (
     SSEEvent,

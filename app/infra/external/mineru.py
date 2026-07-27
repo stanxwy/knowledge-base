@@ -10,8 +10,8 @@ from app.domain.ports.pdf_parser import PDFParser
 from app.infra.config.settings import Settings
 from app.workflows.ingestion.exceptions import PdfConversionError
 
-POST_TIMEOUT = 10       # request for upload url
-PUT_TIMEOUT = (10, 30)  # upload file
+POST_TIMEOUT = 30       # request for upload url
+PUT_TIMEOUT = (30, 60)  # upload file
 GET_TIMEOUT = 10        # poll task status, download zip
 
 POLL_TIMEOUT = 600
