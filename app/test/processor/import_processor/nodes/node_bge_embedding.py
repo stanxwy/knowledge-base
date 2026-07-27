@@ -1,7 +1,7 @@
 import json
-from app.workflows.ingestion.nodes.node_bge_embedding import NodeBGEEmbedding
-from app.services.embedding import get_embedding_service
+
 from app.utils.logger import setup_logging
+from app.workflows.ingestion.nodes.node_bge_embedding import NodeBGEEmbedding
 
 if __name__ == "__main__":
     logger = setup_logging()
@@ -16,7 +16,7 @@ if __name__ == "__main__":
         "output_file_dir": "./test_data/output"
     }
     
-    node_bge_embedding = NodeBGEEmbedding(get_embedding_service())
+    node_bge_embedding = NodeBGEEmbedding()
     result = node_bge_embedding(init_state)
     logger.info(result)
 

@@ -3,10 +3,11 @@ import logging
 from FlagEmbedding import FlagReranker
 
 from app.infra.config.settings import Settings
+from app.infra.external.reranker.base import Reranker
 
 logger = logging.getLogger(__name__)
 
-class Reranker:
+class BGEReranker(Reranker):
     def __init__(self, settings: Settings):
         self._settings = settings
         self._model = None

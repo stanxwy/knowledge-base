@@ -4,10 +4,11 @@ import logging
 import dashscope
 
 from app.infra.config.settings import Settings
+from app.infra.external.reranker.base import Reranker
 
 logger = logging.getLogger(__name__)
 
-class Reranker:
+class DashScopeReranker(Reranker):
     def __init__(self, settings: Settings):
         self._settings = settings
 

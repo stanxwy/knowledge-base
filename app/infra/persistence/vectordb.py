@@ -4,7 +4,7 @@ import logging
 from pymilvus import AnnSearchRequest, DataType, MilvusClient, WeightedRanker
 
 from app.infra.config.settings import Settings
-from app.services.embedding import EmbeddingService
+from app.infra.external.embedder.embedding import EmbeddingService
 from app.workflows.ingestion.exceptions import VectorDBError
 
 logger = logging.getLogger(__name__)

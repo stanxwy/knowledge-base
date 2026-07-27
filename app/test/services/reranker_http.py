@@ -1,8 +1,10 @@
 import json
+
 from dotenv import load_dotenv
+
 load_dotenv()
 
-from app.services.reranker_http import get_reranker
+from app.infra.external.reranker.base import get_reranker
 from app.utils.logger import setup_logging
 
 if __name__ == "__main__":
