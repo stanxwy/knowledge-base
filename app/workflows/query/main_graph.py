@@ -4,12 +4,6 @@ from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from app.factories.infra import (
-    get_chunks_vector_db,
-    get_doc_store,
-    get_item_name_vector_db,
-)
-from app.factories.services import get_llm_service, get_mcp_search_service, get_reranker
 from app.workflows.query.nodes.node_answer_output import NodeAnswerOutput
 from app.workflows.query.nodes.node_item_name_confirm import (
     NodeItemNameConfirm,
@@ -29,28 +23,29 @@ logger = logging.getLogger(__name__)
 
 class KBQueryWorkflow:
     
-    def __init__(self):
+    def __init__(
+        self, *, 
+        node_item_name_confirm: NodeItemNameConfirm,
+        node_search_embedding: NodeSearchEmbedding,
+        node_search_embedding_hyde: NodeSearchEmbeddingHyde,
+        node_web_search_mcp: NodeWebSearchMcp,
+        node_rrf: NodeRrf,
+        node_rerank: NodeRerank,
+        node_answer_output: NodeAnswerOutput,
+    ):
         self._graph = StateGraph(QueryGraphState)
-        self._init_nodes()
+
+        self.node_item_name_confirm = node_item_name_confirm
+        self.node_search_embedding = node_search_embedding
+        self.node_search_embedding_hyde = node_search_embedding_hyde
+        self.node_web_search_mcp = node_web_search_mcp
+        self.node_rrf = node_rrf
+        self.node_rerank = node_rerank
+        self.node_answer_output = node_answer_output
+
         self._register_nodes()
         self._setup_routes()
         self._compiled_graph: CompiledStateGraph | None = None
-
-    def _init_nodes(self):
-        llm_service = get_llm_service()
-        mongo_service = get_doc_store()
-        item_name_vector_db = get_item_name_vector_db()
-        chunks_vector_db = get_chunks_vector_db()
-        mcp_service = get_mcp_search_service()
-        reranker_service = get_reranker()
-
-        self.node_item_name_confirm = NodeItemNameConfirm(mongo_service, llm_service, item_name_vector_db)
-        self.node_search_embedding = NodeSearchEmbedding(chunks_vector_db)
-        self.node_search_embedding_hyde = NodeSearchEmbeddingHyde(llm_service, chunks_vector_db)
-        self.node_web_search_mcp = NodeWebSearchMcp(mcp_service)
-        self.node_rrf = NodeRrf()
-        self.node_rerank = NodeRerank(reranker_service)
-        self.node_answer_output = NodeAnswerOutput(mongo_service, llm_service)
 
     def _register_nodes(self):
         self._graph.add_node("node_item_name_confirm", self.node_item_name_confirm)

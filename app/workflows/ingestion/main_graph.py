@@ -4,12 +4,6 @@ from langgraph.constants import END
 from langgraph.graph import StateGraph
 from langgraph.graph.state import CompiledStateGraph
 
-from app.factories.infra import (
-    get_chunks_vector_db,
-    get_item_name_vector_db,
-    get_object_store,
-)
-from app.factories.services import get_embedder, get_llm_service, get_pdf_parser
 from app.workflows.ingestion.nodes.node_bge_embedding import NodeBGEEmbedding
 from app.workflows.ingestion.nodes.node_document_split import NodeDocumentSplit
 from app.workflows.ingestion.nodes.node_entry import NodeEntry
@@ -25,27 +19,39 @@ logger = logging.getLogger(__name__)
 
 class KBImportWorkflow:
 
-    def __init__(self):
+    def __init__(
+        self,
+        *,
+        node_entry: NodeEntry,
+        node_pdf_to_md: NodePDFToMD,
+        node_md_img: NodeMDImg,
+        node_document_split: NodeDocumentSplit,
+        node_item_name_recognition: NodeItemNameRecognition,
+        node_bge_embedding: NodeBGEEmbedding,
+        node_import_milvus: NodeImportMilvus
+    ):
         self._graph = StateGraph(ImportGraphState)
+
+        self.node_entry = node_entry
+        self.node_pdf_to_md = node_pdf_to_md
+        self.node_md_img = node_md_img
+        self.node_document_split = node_document_split
+        self.node_item_name_recognition = node_item_name_recognition
+        self.node_bge_embedding = node_bge_embedding
+        self.node_import_milvus = node_import_milvus
+
         self._register_nodes()
         self._setup_routes()
         self._compiled_graph: CompiledStateGraph | None = None
         
     def _register_nodes(self):
-        pdf_parser = get_pdf_parser()
-        llm_service = get_llm_service()
-        object_store = get_object_store()
-        embedding_service = get_embedder()
-        item_name_vector_db = get_item_name_vector_db()
-        chunks_vector_db = get_chunks_vector_db()
-
-        self._graph.add_node("node_entry", NodeEntry())
-        self._graph.add_node("node_pdf_to_md", NodePDFToMD(pdf_parser))
-        self._graph.add_node("node_md_img", NodeMDImg(llm_service, object_store))
-        self._graph.add_node("node_document_split", NodeDocumentSplit())
-        self._graph.add_node("node_item_name_recognition", NodeItemNameRecognition(llm_service, embedding_service, item_name_vector_db))
-        self._graph.add_node("node_bge_embedding", NodeBGEEmbedding(embedding_service))
-        self._graph.add_node("node_import_milvus", NodeImportMilvus(chunks_vector_db))
+        self._graph.add_node("node_entry", self.node_entry)
+        self._graph.add_node("node_pdf_to_md", self.node_pdf_to_md)
+        self._graph.add_node("node_md_img", self.node_md_img)
+        self._graph.add_node("node_document_split", self.node_document_split)
+        self._graph.add_node("node_item_name_recognition", self.node_item_name_recognition)
+        self._graph.add_node("node_bge_embedding", self.node_bge_embedding)
+        self._graph.add_node("node_import_milvus", self.node_import_milvus)
 
     def route_after_entry(self, state: ImportGraphState) -> str:
         if state.get("is_pdf_read_enabled"):

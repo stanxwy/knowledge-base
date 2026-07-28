@@ -20,8 +20,10 @@ from app.workflows.query.main_graph import KBQueryWorkflow
 logger = logging.getLogger(__name__)
 
 class QueryService:
-    def __init__(self, docStore: DocumentStore):
+    def __init__(self, docStore: DocumentStore,
+                 queryWorkflow: KBQueryWorkflow):
         self._docStore = docStore
+        self._queryWorkflow = queryWorkflow
 
     def generate_session_id(self) -> str:
         return str(uuid.uuid4())
@@ -44,7 +46,7 @@ class QueryService:
                 "task_id": task_id,
                 "is_stream": is_stream,
             }
-            KBQueryWorkflow().invoke(default_state)
+            self._queryWorkflow.run(default_state)
         except Exception as e:
             logger.error(f"查询流程执行失败: {e}", exc_info=True)
         finally:

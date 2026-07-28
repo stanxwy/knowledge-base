@@ -1,43 +1,21 @@
 from functools import lru_cache
 
-from app.domain.ports.embedder import Embedder
-from app.domain.ports.llm import LLMPort
-from app.domain.ports.pdf_parser import PDFParser
-from app.domain.ports.reranker import Reranker
-from app.domain.ports.web_search import WebSearch
-from app.infra.config.settings import Settings, get_settings
-from app.infra.external.embedder.bge_m3 import BgeM3Embedding
-from app.infra.external.llm.dashscope import DashScopeService
-from app.infra.external.mcp_search import MCPSearchService
-from app.infra.external.mineru import MineruService
-from app.infra.external.reranker.dashscope import DashScopeReranker
+from app.factories.infra import get_doc_store, get_object_store
+from app.factories.workflows import create_ingest_workflow, create_query_workflow
+from app.services.ingestion_service import IngestionService
+from app.services.query_service import QueryService
 
 
-@lru_cache(maxsize=1)
-def get_reranker(settings: Settings | None = None) -> Reranker:
-    settings = settings or get_settings()
-    return DashScopeReranker(settings)
+@lru_cache
+def create_ingest_service() -> IngestionService:
+    return IngestionService(
+        workflow=create_ingest_workflow(),
+        object_store=get_object_store(),
+    )
 
-
-@lru_cache(maxsize=1)
-def get_llm_service(settings: Settings | None = None) -> LLMPort:
-    settings = settings or get_settings()
-    return DashScopeService(settings)
-
-
-@lru_cache(maxsize=1)
-def get_pdf_parser(settings: Settings | None = None) -> PDFParser:
-    settings = settings or get_settings()
-    return MineruService(settings)
-
-
-@lru_cache(maxsize=1)
-def get_embedder(settings: Settings | None = None) -> Embedder:
-    settings = settings or get_settings()
-    return BgeM3Embedding(settings)
-
-
-@lru_cache(maxsize=1)
-def get_mcp_search_service(settings: Settings | None = None) -> WebSearch:
-    settings = settings or get_settings()
-    return MCPSearchService(settings)
+@lru_cache
+def create_query_service() -> QueryService:
+    return QueryService(
+        workflow=create_query_workflow(),
+        doc_store=get_doc_store(),
+    )
