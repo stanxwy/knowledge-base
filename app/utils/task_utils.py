@@ -71,16 +71,16 @@ def get_task_status(task_id: str) -> str:
 
 def update_task_status(task_id: str, status_name: str, is_stream: bool = False) -> None:
     _tasks_status[task_id] = status_name
-    if is_stream:
-        push_sse_event(
-            task_id, 
-            SSEEvent.PROGRESS, 
-            {
-                "status": get_task_status(task_id),
-                "running_list": get_running_task_list(task_id),
-                "done_list": get_done_task_list(task_id),
-            }
-        )
+    # if is_stream:
+    #     push_sse_event(
+    #         task_id, 
+    #         SSEEvent.PROGRESS, 
+    #         {
+    #             "status": get_task_status(task_id),
+    #             "running_list": get_running_task_list(task_id),
+    #             "done_list": get_done_task_list(task_id),
+    #         }
+    #     )
 
 def set_task_result(task_id: str, key: str, value: str) -> None:
     _tasks_result[task_id][key] = value

@@ -38,8 +38,8 @@ def _sse_pack(event: str, data: dict[str, Any]) -> str:
     return f"event: {event}\ndata: {payload}\n\n"
 
 
-def push_sse_event(task_id: str, event: str, data: dict[str, Any]):
-    stream_queue = get_sse_queue(task_id)
+def push_sse_event(session_id: str, event: str, data: dict[str, Any]):
+    stream_queue = get_sse_queue(session_id)
     if stream_queue:
         stream_queue.put({"event": event, "data": data})
 

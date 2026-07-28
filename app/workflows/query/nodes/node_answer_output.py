@@ -176,6 +176,7 @@ class NodeAnswerOutput(NodeBase):
     
     def process(self, state: QueryGraphState) -> QueryGraphState:
         self._validate_input_state(state)
+        task_id = state.get("task_id")
         session_id = state.get("session_id")
         original_query = state.get("original_query")
         rewritten_query = state.get("rewritten_query")
@@ -190,7 +191,7 @@ class NodeAnswerOutput(NodeBase):
             if is_stream:
                 push_sse_event(session_id, SSEEvent.DELTA, {"delta": answer})
             else:
-                set_task_result(session_id, "answer", answer)
+                set_task_result(task_id, "answer", answer)
         else:
             prompt = self._construct_prompt(reranked_docs, history, item_names, original_query, rewritten_query)
 
@@ -199,16 +200,17 @@ class NodeAnswerOutput(NodeBase):
 
             image_urls = self._extract_images_from_docs(reranked_docs)
 
-        self._write_history(session_id, item_names, answer or generated_answer, image_urls)
+        final_answer = answer or generated_answer
+        self._write_history(session_id, item_names, final_answer, image_urls)
 
         self.logger.info(f"Push final event: {image_urls}")
         if is_stream:
             push_sse_event(session_id, SSEEvent.FINAL,
                 {
-                    "answer": answer,
+                    "answer": final_answer,
                     "status": "completed",
                     "image_urls": image_urls
                 })
         return {
-            "answer": answer
+            "answer": final_answer
         }

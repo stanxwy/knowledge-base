@@ -37,17 +37,17 @@ def create_ingest_workflow():
     pdf_parser = get_pdf_parser()
     llm_service = get_llm_service()
     object_store = get_object_store()
-    embedding_service = get_embedder()
+    embedder = get_embedder()
     item_name_vector_db = get_item_name_vector_db()
     chunks_vector_db = get_chunks_vector_db()
 
     # nodes
     node_entry = NodeEntry()
-    node_pdf_to_md = NodePDFToMD(pdf_parser, llm_service, object_store)
+    node_pdf_to_md = NodePDFToMD(pdf_parser)
     node_md_img = NodeMDImg(llm_service, object_store)
-    node_document_split = NodeDocumentSplit(llm_service, object_store)
-    node_item_name_recognition = NodeItemNameRecognition(llm_service, embedding_service, item_name_vector_db)
-    node_bge_embedding = NodeBGEEmbedding(llm_service, embedding_service, chunks_vector_db)
+    node_document_split = NodeDocumentSplit()
+    node_item_name_recognition = NodeItemNameRecognition(llm_service, embedder, item_name_vector_db)
+    node_bge_embedding = NodeBGEEmbedding(embedder)
     node_import_milvus = NodeImportMilvus(chunks_vector_db)
 
     return KBImportWorkflow(
@@ -72,20 +72,20 @@ def create_query_workflow() -> KBQueryWorkflow:
     reranker = get_reranker()
 
     # nodes
-    item_name_confirm = NodeItemNameConfirm(doc_store, llm, item_name_vectordb)
-    search_embedding = NodeSearchEmbedding(chunks_vector_db)
-    search_embedding_hyde = NodeSearchEmbeddingHyde(llm, chunks_vector_db)
-    web_search_mcp = NodeWebSearchMcp(web_search)
-    rrf = NodeRrf()
-    rerank = NodeRerank(reranker)
-    answer_output = NodeAnswerOutput(doc_store, llm)
+    node_item_name_confirm = NodeItemNameConfirm(doc_store, llm, item_name_vectordb)
+    node_search_embedding = NodeSearchEmbedding(chunks_vector_db)
+    node_search_embedding_hyde = NodeSearchEmbeddingHyde(llm, chunks_vector_db)
+    node_web_search_mcp = NodeWebSearchMcp(web_search)
+    node_rrf = NodeRrf()
+    node_rerank = NodeRerank(reranker)
+    node_answer_output = NodeAnswerOutput(doc_store, llm)
 
     return KBQueryWorkflow(
-        item_name_confirm=item_name_confirm,
-        search_embedding=search_embedding,
-        search_embedding_hyde=search_embedding_hyde,
-        web_search_mcp=web_search_mcp,
-        rrf=rrf,
-        rerank=rerank,
-        answer_output=answer_output,
+        node_item_name_confirm=node_item_name_confirm,
+        node_search_embedding=node_search_embedding,
+        node_search_embedding_hyde=node_search_embedding_hyde,
+        node_web_search_mcp=node_web_search_mcp,
+        node_rrf=node_rrf,
+        node_rerank=node_rerank,
+        node_answer_output=node_answer_output
     )

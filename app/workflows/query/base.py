@@ -16,7 +16,7 @@ class NodeBase(ABC):
 
     def __call__(self, state: T) -> T:
         try:
-            task_id = state.get("session_id")
+            task_id = state.get("task_id")
             self.logger.info(f"--- {self.name} started ---")
             add_running_task(task_id, self.name)
 
