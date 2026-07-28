@@ -1,6 +1,6 @@
 from app.domain.ports.doc_store import DocumentStore
 from app.domain.ports.llm import LLMPort
-from app.infra.persistence.vectordb import ItemNameVectorDBService
+from app.infra.persistence.milvus import ItemNameVectorDBService
 from app.workflows.query.base import NodeBase
 from app.workflows.query.exceptions import StateFieldError
 from app.workflows.query.state import QueryGraphState

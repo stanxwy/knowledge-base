@@ -123,8 +123,8 @@ class ItemNameVectorDBService(VectorDBService):
             index_params=index_params
         )
 
-    def insert_into_item_name_collection(self, data: dict):
-        result = self._get_milvus_client().insert(collection_name=self._milvus_config.item_name_collection, data=[data])
+    def insert_into_item_name_collection(self, data: list[dict]):
+        result = self._get_milvus_client().insert(collection_name=self._milvus_config.item_name_collection, data=data)
         logger.info(f"Inserted count {result.get('insert_count', 0)}")
         return result
 
@@ -178,7 +178,7 @@ class ItemNameVectorDBService(VectorDBService):
                     "matches": matches
                 })
             except Exception as e:
-                logger.error(f"Error searching item name '{item_name}': {e}")
+                logger.exception(f"Error searching item name '{item_name}': {e!s}", stack_info=True)
         return results
 
 

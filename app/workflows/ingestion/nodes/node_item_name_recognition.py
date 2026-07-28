@@ -67,7 +67,7 @@ class NodeItemNameRecognition(BaseNode):
             if sparse_vector is not None:
                 data["sparse_vector"] = sparse_vector
 
-            self._item_name_vector_db.insert_into_item_name_collection(data)
+            self._item_name_vector_db.insert_into_item_name_collection([data])
         except Exception as e: # catch exceptions but do not interrupt the flow
             self.logger.warning(f"Error inserting data into vector db: {e!s}", exc_info=True)
 
