@@ -1,5 +1,5 @@
 
-from app.infra.persistence.milvus import ChunksVectorDBService
+from app.domain.ports.vector_db import ChunksVectorDB
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState
 
@@ -8,7 +8,7 @@ class NodeSearchEmbedding(NodeBase):
 
     name: str = "node_search_embedding"
 
-    def __init__(self, chunks_vector_db: ChunksVectorDBService):
+    def __init__(self, chunks_vector_db: ChunksVectorDB):
         super().__init__()
         self._chunks_vector_db = chunks_vector_db
 

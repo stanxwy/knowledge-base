@@ -1,10 +1,10 @@
 import json
 
-from app.infra.persistence.milvus import ItemNameVectorDBService
+from app.infra.persistence.milvus import ItemNameMilvusService
 
 if __name__ == '__main__':
     item_names = ["烫金机", "电脑"]
-    result = ItemNameVectorDBService().hybrid_search_item_name(item_names)
+    result = ItemNameMilvusService().hybrid_search_item_name(item_names)
     print(f"\n{json.dumps(result, ensure_ascii=False, indent=4)}")
 
 """

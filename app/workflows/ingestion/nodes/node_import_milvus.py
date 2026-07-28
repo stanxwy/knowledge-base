@@ -1,6 +1,6 @@
 from typing import Any
 
-from app.infra.persistence.milvus import ChunksVectorDBService
+from app.domain.ports.vector_db import ChunksVectorDB
 from app.workflows.ingestion.base import BaseNode
 from app.workflows.ingestion.exceptions import StateFieldError
 from app.workflows.ingestion.state import ImportGraphState
@@ -10,7 +10,7 @@ class NodeImportMilvus(BaseNode):
 
     name: str = "node_import_milvus"
     
-    def __init__(self, chunks_vector_db: ChunksVectorDBService):
+    def __init__(self, chunks_vector_db: ChunksVectorDB):
         super().__init__()
         self._chunks_vector_db = chunks_vector_db
     
@@ -38,15 +38,15 @@ class NodeImportMilvus(BaseNode):
 
         file_title, chunks_json_data, vector_dimension = self._validate_input_state(state)
 
-        self._chunks_vector_db.create_chunks_collection(vector_dimension)
+        self._chunks_vector_db.create_collection(vector_dimension)
 
-        self._chunks_vector_db.delete_from_chunks_collection(file_title)
+        self._chunks_vector_db.delete_data_by_file_title(file_title)
 
         data_to_insert = [
             {**chunk, "part": chunk.get("part", 0)}
             for chunk in chunks_json_data
         ]
-        insert_result = self._chunks_vector_db.insert_into_chunks_collection(data_to_insert)
+        insert_result = self._chunks_vector_db.insert_data(data_to_insert)
 
         # backfill chunks data with generated ids
         updated_chunks = [

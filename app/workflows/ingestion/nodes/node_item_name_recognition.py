@@ -1,6 +1,6 @@
 from app.domain.ports.embedder import Embedder
 from app.domain.ports.llm import LLMPort
-from app.infra.persistence.milvus import ItemNameVectorDBService
+from app.domain.ports.vector_db import ItemNameVectorDB
 from app.workflows.ingestion.base import BaseNode
 from app.workflows.ingestion.exceptions import StateFieldError
 from app.workflows.ingestion.state import ImportGraphState
@@ -13,7 +13,7 @@ class NodeItemNameRecognition(BaseNode):
     def __init__(self, 
                  llm_service: LLMPort,
                  embedding_service: Embedder, 
-                 item_name_vector_db: ItemNameVectorDBService):
+                 item_name_vector_db: ItemNameVectorDB):
         super().__init__()
         self._llm_service = llm_service
         self._embedding_service = embedding_service
@@ -54,9 +54,9 @@ class NodeItemNameRecognition(BaseNode):
 
     def _save_to_vector_db(self, file_title: str, item_name: str, dense_vector, sparse_vector):
         try:
-            self._item_name_vector_db.create_item_name_collection()
+            self._item_name_vector_db.create_collection()
             # idempotent operation
-            self._item_name_vector_db.delete_from_item_name_collection(file_title)
+            self._item_name_vector_db.delete_data_by_file_title(file_title)
 
             data = {
                 "file_title": file_title,
@@ -67,7 +67,7 @@ class NodeItemNameRecognition(BaseNode):
             if sparse_vector is not None:
                 data["sparse_vector"] = sparse_vector
 
-            self._item_name_vector_db.insert_into_item_name_collection([data])
+            self._item_name_vector_db.insert_data([data])
         except Exception as e: # catch exceptions but do not interrupt the flow
             self.logger.warning(f"Error inserting data into vector db: {e!s}", exc_info=True)
 

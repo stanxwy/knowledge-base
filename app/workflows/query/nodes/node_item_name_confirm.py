@@ -1,6 +1,6 @@
 from app.domain.ports.doc_store import DocumentStore
 from app.domain.ports.llm import LLMPort
-from app.infra.persistence.milvus import ItemNameVectorDBService
+from app.domain.ports.vector_db import ItemNameVectorDB
 from app.workflows.query.base import NodeBase
 from app.workflows.query.exceptions import StateFieldError
 from app.workflows.query.state import QueryGraphState
@@ -13,7 +13,7 @@ class NodeItemNameConfirm(NodeBase):
     def __init__(self,
                  mongo: DocumentStore, 
                  llm_service: LLMPort,
-                 item_name_vector_db: ItemNameVectorDBService):
+                 item_name_vector_db: ItemNameVectorDB):
         super().__init__()
         self._mongo = mongo
         self._llm_service = llm_service

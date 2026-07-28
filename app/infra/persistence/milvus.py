@@ -4,6 +4,7 @@ import logging
 from pymilvus import AnnSearchRequest, DataType, MilvusClient, WeightedRanker
 
 from app.domain.ports.embedder import Embedder
+from app.domain.ports.vector_db import ChunksVectorDB, ItemNameVectorDB, VectorDB
 from app.infra.config.settings import Settings
 from app.workflows.ingestion.exceptions import VectorDBError
 
@@ -16,7 +17,7 @@ RANKER_WEIGHTS = (0.8, 0.2)
 ITEM_NAME_SEARCH_LIMIT = 5
 CHUNK_SEARCH_LIMIT = 10
 
-class VectorDBService():
+class MilvusService(VectorDB):
     def __init__(self, settings: Settings, embedding_service: Embedder):
         self._milvus_config = settings
         self._milvus_client = None
@@ -77,9 +78,9 @@ class VectorDBService():
             return None
 
 
-class ItemNameVectorDBService(VectorDBService):
+class ItemNameMilvusService(MilvusService, ItemNameVectorDB):
 
-    def create_item_name_collection(self):
+    def create_collection(self, vector_dimension: int = VECTOR_DIMENSION_DEFAULT):
         # enable_dynamic_field=True：allow insertion of records with fields not defined in schema
         milvus_client = self._get_milvus_client()
         collection_name = self._milvus_config.item_name_collection
@@ -91,7 +92,7 @@ class ItemNameVectorDBService(VectorDBService):
         schema.add_field(field_name="pk", datatype=DataType.INT64, is_primary=True, auto_id=True)
         schema.add_field(field_name="file_title", datatype=DataType.VARCHAR, max_length=VARCHAR_MAX_LENGTH)
         schema.add_field(field_name="item_name", datatype=DataType.VARCHAR, max_length=VARCHAR_MAX_LENGTH)
-        schema.add_field(field_name="dense_vector", datatype=DataType.FLOAT_VECTOR, dim=VECTOR_DIMENSION_DEFAULT)
+        schema.add_field(field_name="dense_vector", datatype=DataType.FLOAT_VECTOR, dim=vector_dimension)
         schema.add_field(field_name="sparse_vector", datatype=DataType.SPARSE_FLOAT_VECTOR)
 
         index_params = milvus_client.prepare_index_params()
@@ -123,12 +124,12 @@ class ItemNameVectorDBService(VectorDBService):
             index_params=index_params
         )
 
-    def insert_into_item_name_collection(self, data: list[dict]):
+    def insert_data(self, data: list[dict]):
         result = self._get_milvus_client().insert(collection_name=self._milvus_config.item_name_collection, data=data)
         logger.info(f"Inserted count {result.get('insert_count', 0)}")
         return result
 
-    def delete_from_item_name_collection(self, file_title: str):
+    def delete_data_by_file_title(self, file_title: str):
         try:
             safe_file_title = self._escape_milvus_string(file_title)
             result = self._get_milvus_client().delete(collection_name=self._milvus_config.item_name_collection, filter=f'file_title=="{safe_file_title}"')
@@ -182,9 +183,9 @@ class ItemNameVectorDBService(VectorDBService):
         return results
 
 
-class ChunksVectorDBService(VectorDBService):
+class ChunksMilvusService(MilvusService, ChunksVectorDB):
 
-    def create_chunks_collection(self, vector_dimension):
+    def create_collection(self, vector_dimension: int = VECTOR_DIMENSION_DEFAULT):
         milvus_client = self._get_milvus_client()
         collection_name = self._milvus_config.chunks_collection
         if milvus_client.has_collection(collection_name):
@@ -222,7 +223,7 @@ class ChunksVectorDBService(VectorDBService):
             index_params=index_params
         )
 
-    def delete_from_chunks_collection(self, file_title: str):
+    def insert_data(self, file_title: str):
         try:
             file_title = self._escape_milvus_string(file_title)
             result = self._get_milvus_client().delete(collection_name=self._milvus_config.chunks_collection, filter=f"file_title=='{file_title}'")
@@ -232,7 +233,7 @@ class ChunksVectorDBService(VectorDBService):
             logger.exception(f"Error deleting data from vector db: {e!s}", stack_info=True)
             raise VectorDBError(f"Error deleting data from vector db: {e!s}")
         
-    def insert_into_chunks_collection(self, data: list[dict]):
+    def delete_data_by_file_title(self, data: list[dict]):
         result = self._get_milvus_client().insert(collection_name=self._milvus_config.chunks_collection, data=data)
         logger.info(f"Inserted count {result.get('insert_count', 0)}")
         return result
