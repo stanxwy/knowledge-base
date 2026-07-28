@@ -35,11 +35,14 @@ def apply_api_rate_limit(
         None: This implementation handles rate limiting via blocking rather than
             raising exceptions.
     """
+    def clear_expired(current_time):
+        while request_times and current_time - request_times[0] >= window_seconds:
+            request_times.popleft()
+
     current_time = time.time()
 
     # clear expired requests within the window
-    while request_times and current_time - request_times[0] >= window_seconds:
-        request_times.popleft()
+    clear_expired(current_time)
 
     if len(request_times) >= max_requests:
         # calculate the time to wait (window total time - elapsed time of the earliest request)
@@ -49,8 +52,7 @@ def apply_api_rate_limit(
             time.sleep(sleep_duration)
             # clear expired requests on wakeup
             current_time = time.time()
-            while request_times and current_time - request_times[0] >= window_seconds:
-                request_times.popleft()
+            clear_expired(current_time)
 
     request_times.append(current_time)
     logger.info(f"API request time stamp has been recorded, current {window_seconds}s window request count: {len(request_times)}")
