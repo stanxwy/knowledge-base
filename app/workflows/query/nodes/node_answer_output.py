@@ -195,21 +195,22 @@ class NodeAnswerOutput(NodeBase):
         else:
             prompt = self._construct_prompt(reranked_docs, history, item_names, original_query, rewritten_query)
 
-            answer = self._generate_response(session_id, is_stream, prompt)
-            self.logger.debug(f"Generated answer: \n{answer}")
+            generated_answer = self._generate_response(session_id, is_stream, prompt)
+            self.logger.debug(f"Generated answer: \n{generated_answer}")
 
             image_urls = self._extract_images_from_docs(reranked_docs)
 
-        self._write_history(session_id, item_names, answer, image_urls)
+        final_answer = answer or generated_answer
+        self._write_history(session_id, item_names, final_answer, image_urls)
 
         self.logger.info(f"Push final event: {image_urls}")
         if is_stream:
             push_sse_event(session_id, SSEEvent.FINAL,
                 {
-                    "answer": answer,
+                    "answer": final_answer,
                     "status": "completed",
                     "image_urls": image_urls
                 })
         return {
-            "answer": answer
+            "answer": final_answer
         }
