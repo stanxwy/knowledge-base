@@ -3,9 +3,9 @@ import uuid
 
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
 
 from app.api.v1.deps import DocumentStore, get_doc_store
+from app.schema.query_schema import QueryRequest
 from app.utils.sse_utils import (
     SSEEvent,
     create_sse_queue,
@@ -26,11 +26,6 @@ from app.workflows.query.main_graph import KBQueryWorkflow
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["query"])
-
-class QueryRequest(BaseModel):
-    query: str = Field(..., description="user query")
-    session_id: str = Field(None, description="session id for query")
-    is_stream: bool = Field(False, description="whether use stream mode")
 
 
 @router.post("/query")
