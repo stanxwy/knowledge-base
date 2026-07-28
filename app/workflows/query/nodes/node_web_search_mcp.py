@@ -2,7 +2,6 @@ import asyncio
 import json
 
 from app.domain.ports.web_search import WebSearch
-from app.utils.json_format_utils import format_json
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState
 
@@ -27,6 +26,6 @@ class NodeWebSearchMcp(NodeBase):
                     "url": (page.get("url") or "").strip(),
                     "title": (page.get("title") or "").strip()
                 } for page in pages if page.get("snippet")]
-                self.logger.info(f"MCP search result: \n{format_json(docs)}")
+                self.logger.info(f"MCP search result: \n{json.dumps(docs, indent=2, ensure_ascii=False)}")
 
         return { "web_search_docs": docs }

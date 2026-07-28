@@ -1,7 +1,7 @@
+import json
 from typing import Any
 
 from app.domain.ports.reranker import Reranker
-from app.utils.json_format_utils import format_json
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState
 
@@ -188,15 +188,15 @@ class NodeRerank(NodeBase):
 
         # Step 1: Merge multi-source documents
         merged_multi_docs = self._merge_multi_source_docs(rrf_chunks, web_search_docs)
-        self.logger.info(f"Merged {len(merged_multi_docs)} documents: \n{format_json(merged_multi_docs)}")
+        self.logger.info(f"Merged {len(merged_multi_docs)} documents: \n{json.dumps(merged_multi_docs, indent=2, ensure_ascii=False)}")
 
         # Step 2: Cross-Encoder re-ranking
         reranked_docs = self._rerank_merged_docs(rewritten_query, merged_multi_docs)
-        self.logger.info(f"Re-ranked {len(reranked_docs)} documents: \n{format_json(reranked_docs)}")
+        self.logger.info(f"Re-ranked {len(reranked_docs)} documents: \n{json.dumps(reranked_docs, indent=2, ensure_ascii=False)}")
 
         # Step 3: Dynamic TopK truncation via cliff detection
         cutoff_docs = self._cliff_cutoff(reranked_docs)
-        self.logger.info(f"Final reranked documents after cliff cutoff: \n{format_json(cutoff_docs)}")
+        self.logger.info(f"Final reranked documents after cliff cutoff: \n{json.dumps(cutoff_docs, indent=2, ensure_ascii=False)}")
 
         return {
             "reranked_docs": cutoff_docs

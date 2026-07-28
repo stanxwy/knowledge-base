@@ -1,6 +1,6 @@
+import json
 from typing import Any
 
-from app.utils.json_format_utils import format_json
 from app.workflows.query.base import NodeBase
 from app.workflows.query.state import QueryGraphState
 
@@ -22,11 +22,11 @@ class NodeRrf(NodeBase):
                 # RRF formula: score += weight / (k + rank)
                 dict_score[chunk_id] = dict_score.get(chunk_id, 0.0) + weight / (k + rank)
                 dict_doc.setdefault(chunk_id, doc)
-        self.logger.info(f"dict_score: \n{format_json(dict_score)}")
-        self.logger.info(f"dict_doc: \n{format_json(dict_doc)}")
+        self.logger.info(f"dict_score: \n{json.dumps(dict_score, indent=2, ensure_ascii=False)}")
+        self.logger.info(f"dict_doc: \n{json.dumps(dict_doc, indent=2, ensure_ascii=False)}")
 
         unsorted_results = [(dict_doc[chunk_id], score) for chunk_id, score in dict_score.items()]
-        self.logger.info(f"unsorted_results: \n{format_json(unsorted_results)}")
+        self.logger.info(f"unsorted_results: \n{json.dumps(unsorted_results, indent=2, ensure_ascii=False)}")
 
         sorted_results = sorted(
             unsorted_results,
@@ -34,7 +34,7 @@ class NodeRrf(NodeBase):
             key=lambda result_entry: result_entry[1],
             reverse=True
         )
-        self.logger.info(f"sorted_results: \n{format_json(sorted_results)}")
+        self.logger.info(f"sorted_results: \n{json.dumps(sorted_results, indent=2, ensure_ascii=False)}")
         
         return sorted_results[:max_results] if max_results else sorted_results
 
@@ -52,13 +52,13 @@ class NodeRrf(NodeBase):
             (embedding_search_list, _WEIGHT_SEARCH_EMBEDDING),
             (hyde_embedding_search_list, _WEIGHT_HYDE)
         ]
-        self.logger.info(f"rrf_inputs: \n{format_json(rrf_inputs)}")
+        self.logger.info(f"rrf_inputs: \n{json.dumps(rrf_inputs, indent=2, ensure_ascii=False)}")
 
         rrf_merge_results = self._rrf_merge(rrf_inputs)
 
         # discard score
         rrf_chunks = [doc for doc, _ in rrf_merge_results]
-        self.logger.info(f"rrf_chunks: \n{format_json(rrf_chunks)}")
+        self.logger.info(f"rrf_chunks: \n{json.dumps(rrf_chunks, indent=2, ensure_ascii=False)}")
 
         return {
             'rrf_chunks': rrf_chunks
