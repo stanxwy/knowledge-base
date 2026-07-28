@@ -90,7 +90,8 @@ class NodeMDImg(BaseNode):
         for img_file, img_local_path, context in target_images:
             apply_api_rate_limit(request_deque)
             captions[img_file] = self._llm_service.generate_image_caption(img_local_path, doc_stem, context)
-            self.logger.info(f"{count := count + 1} image caption generated")
+            count = count + 1
+            self.logger.info(f"{count} image caption generated")
         return captions
     
     def _upload_images_batch(self, doc_stem: str, target_images: list[tuple]) -> dict[str, str]:

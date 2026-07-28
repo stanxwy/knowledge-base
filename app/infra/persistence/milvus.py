@@ -223,7 +223,12 @@ class ChunksMilvusService(MilvusService, ChunksVectorDB):
             index_params=index_params
         )
 
-    def insert_data(self, file_title: str):
+    def insert_data(self, data: list[dict]):
+        result = self._get_milvus_client().insert(collection_name=self._milvus_config.chunks_collection, data=data)
+        logger.info(f"Inserted count {result.get('insert_count', 0)}")
+        return result
+
+    def delete_data_by_file_title(self, file_title: str):
         try:
             file_title = self._escape_milvus_string(file_title)
             result = self._get_milvus_client().delete(collection_name=self._milvus_config.chunks_collection, filter=f"file_title=='{file_title}'")
@@ -232,11 +237,6 @@ class ChunksMilvusService(MilvusService, ChunksVectorDB):
         except Exception as e:
             logger.exception(f"Error deleting data from vector db: {e!s}", stack_info=True)
             raise VectorDBError(f"Error deleting data from vector db: {e!s}")
-        
-    def delete_data_by_file_title(self, data: list[dict]):
-        result = self._get_milvus_client().insert(collection_name=self._milvus_config.chunks_collection, data=data)
-        logger.info(f"Inserted count {result.get('insert_count', 0)}")
-        return result
 
     def hybrid_search_chunks(self, input_text: str, item_names: list[str]) -> list[dict]:
         try:
