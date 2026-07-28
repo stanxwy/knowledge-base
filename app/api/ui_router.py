@@ -19,7 +19,7 @@ def _html(path: Path):
 
 
 @router.get("/ingest", include_in_schema=False)
-async def import_page():
+async def ingest_page():
     return _html(STATIC_ROOT / "pages" / "ingest.html")
 
 
