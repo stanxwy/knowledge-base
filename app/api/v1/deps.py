@@ -5,6 +5,7 @@ from app.domain.ports.object_store import ObjectStore
 from app.infra.config.settings import Settings, get_settings
 from app.infra.persistence.minio import MinIOService
 from app.infra.persistence.mongo import MongoService
+from app.services.query_service import QueryService
 
 
 def get_settings_dep() -> Settings:
@@ -21,3 +22,7 @@ def get_object_store(
     settings: Settings = Depends(get_settings_dep),
 ) -> ObjectStore:
     return MinIOService(settings)
+
+# TODO
+def get_query_service() -> QueryService:
+    return QueryService()

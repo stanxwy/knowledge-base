@@ -18,7 +18,9 @@ from app.utils.task_utils import (
     TASK_STATUS_PROCESSING,
     clear_task,
     get_done_task_list,
+    get_running_task_list,
     get_task_result,
+    get_task_status,
     update_task_status,
 )
 from app.workflows.query.main_graph import KBQueryWorkflow
@@ -75,7 +77,13 @@ def run_query_graph(session_id: str, user_query: str, is_stream: bool = True):
 
     try:
         workflow = KBQueryWorkflow()
-        workflow.run(init_state, stream=is_stream)
+        workflow.run(init_state) #, stream=is_stream)
+        if is_stream:
+            push_sse_event(session_id, SSEEvent.PROGRESS, {
+                "status": get_task_status(session_id),
+                "done_list": get_done_task_list(session_id),
+                "running_list": get_running_task_list(session_id),
+            })
         logger.info(f"[{session_id}] Query Workflow task completed")
         update_task_status(session_id, TASK_STATUS_COMPLETED, is_stream)
     except Exception as e:
@@ -83,6 +91,7 @@ def run_query_graph(session_id: str, user_query: str, is_stream: bool = True):
         update_task_status(session_id, TASK_STATUS_FAILED, is_stream)
         if is_stream:
             push_sse_event(session_id, SSEEvent.ERROR, {"error": str(e)})
+        
 
 @router.get("/stream/{session_id}")
 async def stream(session_id: str, request: Request):
