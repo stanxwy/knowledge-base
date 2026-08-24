@@ -3,7 +3,7 @@ services:
   minio:
     image: minio/minio:RELEASE.2023-03-20T20-16-18Z
     container_name: kb-minio
-    restart: always
+    restart: unless-stopped
     environment:
       # 管理员账号密码，生产环境请务必修改
       MINIO_ROOT_USER: minioadmin
@@ -32,7 +32,7 @@ services:
   mongodb:
     image: mongo:7.0
     container_name: kb-mongodb
-    restart: always
+    restart: unless-stopped
     environment:
       # 初始化 root 账号，生产环境建议改为强密码
       MONGO_INITDB_ROOT_USERNAME: root
@@ -49,7 +49,7 @@ services:
   neo4j:
     image: neo4j:5.15.0-community
     container_name: kb-neo4j
-    restart: always
+    restart: unless-stopped
     environment:
       # 初始登录账号密码，格式为 用户名/密码
       NEO4J_AUTH: neo4j/123123123
@@ -69,18 +69,21 @@ services:
   # 导入服务：负责文件上传、解析、切分、入库等流程
   kb-import:
     build:
-      # 基于项目根目录上下文构建镜像
+      # 自包含布局：构建上下文为 app/ 服务根目录，Dockerfile 与 pyproject.toml、
+      # uv.lock 等同处 app/，直接以当前目录为上下文即可。
       context: .
       dockerfile: Dockerfile
     # 与查询服务共用同一套镜像，仅启动命令不同
     image: kb-app:latest
     container_name: kb-import
-    restart: always
+    restart: unless-stopped
     env_file:
       # 统一加载生产环境变量
       - .env.prod
-    # 启动导入接口，监听 8000 端口
-    command: ["python", "-m", "uvicorn", "knowledge.api.import_router:create_app", "--factory", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
+    # 启动导入接口，监听 8000 端口。
+    # 入口修正为 app.main:app（原 knowledge.api.import_router:create_app 指向的
+    # import_router / create_app 在当前代码中不存在）。
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]
     ports:
       - "8000:8000"
     volumes:
@@ -99,15 +102,18 @@ services:
   # 查询服务：负责检索、召回、重排和问答接口
   kb-query:
     build:
+      # 自包含布局：构建上下文为 app/ 服务根目录，与 kb-import 保持一致
       context: .
       dockerfile: Dockerfile
     image: kb-app:latest
     container_name: kb-query
-    restart: always
+    restart: unless-stopped
     env_file:
       - .env.prod
-    # 启动查询接口，监听 8001 端口
-    command: ["python", "-m", "uvicorn", "knowledge.api.query_router:create_app", "--factory", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+    # 启动查询接口，监听 8001 端口。
+    # 入口修正为 app.main:app（原 knowledge.api.query_router:create_app 指向的
+    # create_app 工厂在当前代码中不存在，且 query_router 位于 app.api.v1 下）。
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
     ports:
       - "8001:8001"
     volumes:

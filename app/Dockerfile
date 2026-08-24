@@ -1,9 +1,11 @@
+# syntax=docker/dockerfile:1
+
+# Base image matches pyproject.toml: requires-python = ">=3.11"
 FROM python:3.11-slim
 
-# Python 和 pip 环境配置
+# Python / runtime environment
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
-    PIP_ROOT_USER_ACTION=ignore \
     PYTHONPATH=/app \
     PIP_INDEX_URL=https://mirrors.aliyun.com/pypi/simple \
     PIP_DEFAULT_TIMEOUT=300 \
@@ -11,7 +13,9 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
-# 使用腾讯云 Debian 镜像源，并安装系统依赖
+# Use the Tencent Cloud Debian mirror and install system build dependencies.
+# build-essential/git are required to compile some Python wheels (e.g.
+# tokenizers, numpy); libgomp1 is needed by OpenMP-backed libraries.
 RUN sed -i \
         's|http://deb.debian.org/debian|http://mirrors.tencentyun.com/debian|g; \
          s|http://deb.debian.org/debian-security|http://mirrors.tencentyun.com/debian-security|g' \
@@ -24,32 +28,44 @@ RUN sed -i \
         libgomp1 && \
     rm -rf /var/lib/apt/lists/*
 
-# 先复制依赖文件，便于复用 Docker 构建缓存
-COPY requirements.txt /app/requirements.txt
+# Install uv (the project's package manager) via pip using the configured mirror.
+RUN pip install --no-cache-dir --upgrade pip uv
 
-# 使用阿里云镜像源升级 Python 打包工具
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install --upgrade \
-        pip \
-        setuptools \
-        wheel
+# Copy only the dependency manifests first so this layer is cached unless
+# pyproject.toml / uv.lock change. The build context is now the `app/` service
+# root (see docker-compose.yml `build.context: .`), so these files sit next to
+# the Dockerfile.
+COPY pyproject.toml uv.lock ./
 
-# 使用阿里云镜像源安装项目依赖
-RUN --mount=type=cache,target=/root/.cache/pip \
-    pip install \
-        --default-timeout=300 \
-        --retries=10 \
-        -r /app/requirements.txt
+# Install the third-party dependencies declared in pyproject.toml, honoring the
+# exact versions pinned in uv.lock for reproducible builds.
+#   --no-install-project : the application source is copied in separately (as the
+#                          `app` package) and is NOT installed as a distribution,
+#                          so uv never needs to build the project.
+#   --frozen             : do not re-resolve; use uv.lock exactly as committed.
+# The cache mount keeps uv's download cache out of the image layers.
+RUN --mount=type=cache,target=/root/.cache/uv \
+    uv sync --no-install-project --frozen
 
-# 复制项目代码
-COPY app /app/knowledge
+# Activate the uv-managed virtual environment for all subsequent steps and at runtime.
+ENV VIRTUAL_ENV=/app/.venv
+ENV PATH="/app/.venv/bin:$PATH"
 
-# 创建运行过程中使用的临时目录和日志目录
+# Copy the application source. The `app/` directory's modules (api, core, domain,
+# ...) form the importable `app` package — the code uses `from app.api...` /
+# `from app.workflows...` — so we place them under /app/app and rely on
+# PYTHONPATH=/app to make `import app` resolve to /app/app (a namespace package).
+# Only the runtime package directories are copied; dev-only files (pyproject.toml,
+# uv.lock, Dockerfile, docker-compose.yml, .env, test/, tree.ps1) stay out of the
+# image because they are not in this COPY list (and .dockerignore excludes caches).
+COPY api core domain factories infra main.py schema scripts services static utils workflows /app/app/
+
+# Runtime directories used by the import/query services.
 RUN mkdir -p /app/temp-files /app/logs
 
-# 导入服务使用 8000，查询服务使用 8001
+# Import service listens on 8000, query service on 8001.
 EXPOSE 8000 8001
 
-# 默认启动查询服务
-# Compose 中的 kb-import 会通过 command 覆盖此命令
-CMD ["python", "-m", "uvicorn", "knowledge.api.query_router:create_app", "--factory", "--host", "0.0.0.0", "--port", "8001", "--workers", "1"]
+# Default: start the application (serves all routers: health / ui / ingest /
+# query / task). docker-compose.yml overrides this per service with the target port.
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8001"]
