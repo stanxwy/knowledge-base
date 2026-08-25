@@ -18,7 +18,7 @@ services:
       - "9001:9001"
     volumes:
       # 持久化对象文件
-      - ./volumes/minio:/minio_data
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/minio:/minio_data
     healthcheck:
       # 检查 MinIO 服务是否存活
       test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
@@ -33,17 +33,15 @@ services:
     image: mongo:7.0
     container_name: kb-mongodb
     restart: unless-stopped
-    environment:
-      # 初始化 root 账号，生产环境建议改为强密码
-      MONGO_INITDB_ROOT_USERNAME: root
-      MONGO_INITDB_ROOT_PASSWORD: 123123
     ports:
-      - "27017:27017"
+      - 27017:27017
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: admin
+      MONGO_INITDB_ROOT_PASSWORD: password
     volumes:
-      # 持久化 MongoDB 数据
-      - ./volumes/mongo:/data/db
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/mongo:/data/db
     networks:
-      - kb-net
+    - kb-net
 
   # Neo4j 用于保存图谱关系数据
   neo4j:
@@ -59,10 +57,10 @@ services:
       - "7687:7687"
     volumes:
       # 分别持久化数据、日志、配置和插件目录
-      - ./volumes/neo4j/data:/data
-      - ./volumes/neo4j/logs:/logs
-      - ./volumes/neo4j/conf:/conf
-      - ./volumes/neo4j/plugins:/plugins
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/neo4j/data:/data
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/neo4j/logs:/logs
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/neo4j/conf:/conf
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/neo4j/plugins:/plugins
     networks:
       - kb-net
 
@@ -88,16 +86,24 @@ services:
       - "8000:8000"
     volumes:
       # 挂载临时文件和日志目录，便于宿主机查看与持久化
-      - ./temp-files:/app/temp-files
-      - ./logs:/app/logs
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/kb-import/temp-files:/app/temp-files
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/kb-import/logs:/app/logs
     depends_on:
-      # 导入流程依赖对象存储、向量库、图数据库和文档库
-      - minio
-      - milvus
-      - neo4j
-      - mongodb
+      # 业务依赖（均在本 compose 内）：对象存储、图数据库、文档库。
+      minio:
+        condition: service_started
+      neo4j:
+        condition: service_started
+      mongodb:
+        condition: service_started
+      # 向量库 Milvus 来自 infra compose；经根 docker-compose.yml 的 include 合并为
+      # 同一项目后，可按服务名 milvus-standalone 访问，且需等其健康后再启动本服务。
+      milvus-standalone:
+        condition: service_healthy
     networks:
+      # kb-net 连通业务依赖；milvus 网络用于按服务名访问 Milvus（milvus-standalone）。
       - kb-net
+      - milvus
 
   # 查询服务：负责检索、召回、重排和问答接口
   kb-query:
@@ -117,13 +123,17 @@ services:
     ports:
       - "8001:8001"
     volumes:
-      - ./temp-files:/app/temp-files
-      - ./logs:/app/logs
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/kb-query/temp-files:/app/temp-files
+      - ${DOCKER_VOLUME_DIRECTORY:-.}/volumes/kb-query/logs:/app/logs
     depends_on:
-      - minio
-      - milvus
-      - neo4j
-      - mongodb
+      minio:
+        condition: service_started
+      neo4j:
+        condition: service_started
+      mongodb:
+        condition: service_started
+      milvus-standalone:
+        condition: service_healthy
     healthcheck:
       # 通过健康检查接口确认查询服务已经可用
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8001/health')"]
@@ -132,6 +142,7 @@ services:
       retries: 3
     networks:
       - kb-net
+      - milvus
 
 networks:
   # 自定义桥接网络，保证各容器可以通过服务名互相访问
