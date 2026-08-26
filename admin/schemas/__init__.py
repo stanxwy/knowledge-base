@@ -37,6 +37,7 @@ from admin.schemas.knowledge import (
     CheckPermissionsRequest,
     CheckPermissionsResponse,
 )
+from admin.schemas.import_task import ImportTaskStatus, ImportTaskFileResult
 
 __all__ = [
     # auth
@@ -74,4 +75,6 @@ __all__ = [
     "UnitPermissionsReplace",
     "CheckPermissionsRequest",
     "CheckPermissionsResponse",
+    "ImportTaskStatus",
+    "ImportTaskFileResult",
 ]

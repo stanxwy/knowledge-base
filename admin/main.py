@@ -15,7 +15,7 @@ from fastapi.responses import JSONResponse
 
 from admin.api.v1 import auth, health
 from admin.api.v1.org import departments, roles, users
-from admin.api.v1.knowledge import units as knowledge_units
+from admin.api.v1.knowledge import import_router, units as knowledge_units
 from admin.core.config import get_settings
 from admin.core.exceptions import KBMSError
 from admin.core.logging import setup_logging
@@ -61,6 +61,7 @@ def create_app() -> FastAPI:
     app.include_router(roles.permission_router)
     app.include_router(users.router)
     app.include_router(knowledge_units.router)
+    app.include_router(import_router.router)
 
     @app.on_event("startup")
     async def on_startup() -> None:
