@@ -10,21 +10,28 @@ from datetime import datetime, timedelta, timezone
 from typing import Any
 
 import jwt
-from passlib.context import CryptContext
+import bcrypt
 
 from admin.core.config import get_settings
 
-_pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto", bcrypt__rounds=12)
+# bcrypt 5.x enforces a 72-byte password limit and raises on overflow.
+# Mirror the legacy silent truncation so hashing and verification stay consistent.
+_BCRYPT_ROUNDS = 12
+_BCRYPT_MAX_BYTES = 72
+
+
+def _encode_password(plain: str) -> bytes:
+    return plain.encode("utf-8")[:_BCRYPT_MAX_BYTES]
 
 
 def hash_password(plain: str) -> str:
-    return _pwd_context.hash(plain)
+    return bcrypt.hashpw(_encode_password(plain), bcrypt.gensalt(rounds=_BCRYPT_ROUNDS)).decode("utf-8")
 
 
 def verify_password(plain: str, hashed: str) -> bool:
     try:
-        return _pwd_context.verify(plain, hashed)
-    except Exception:
+        return bcrypt.checkpw(_encode_password(plain), hashed.encode("utf-8"))
+    except (ValueError, TypeError):
         return False
 
 
