@@ -7,6 +7,15 @@ from admin.domain.user import User
 from admin.domain.department import Department
 from admin.domain.role import Role, UserRole
 from admin.domain.permission import Permission, RolePermission
+from admin.domain.knowledge_unit import KnowledgeUnit
+from admin.domain.unit_permission import (
+    UnitPermission,
+    TARGET_GLOBAL,
+    TARGET_DEPARTMENT,
+    TARGET_ROLE,
+    TARGET_USER,
+    VALID_TARGET_TYPES,
+)
 
 __all__ = [
     "User",
@@ -15,4 +24,11 @@ __all__ = [
     "Permission",
     "UserRole",
     "RolePermission",
+    "KnowledgeUnit",
+    "UnitPermission",
+    "TARGET_GLOBAL",
+    "TARGET_DEPARTMENT",
+    "TARGET_ROLE",
+    "TARGET_USER",
+    "VALID_TARGET_TYPES",
 ]

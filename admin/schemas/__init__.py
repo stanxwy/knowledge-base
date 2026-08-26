@@ -24,6 +24,19 @@ from admin.schemas.org import (
     UserListQuery,
     PageResult,
 )
+from admin.schemas.knowledge import (
+    KnowledgeUnitCreate,
+    KnowledgeUnitUpdate,
+    KnowledgeUnitOut,
+    KnowledgeUnitDetail,
+    KnowledgeUnitListQuery,
+    BatchDeleteRequest,
+    UnitPermissionOut,
+    UnitPermissionSpec,
+    UnitPermissionsReplace,
+    CheckPermissionsRequest,
+    CheckPermissionsResponse,
+)
 
 __all__ = [
     # auth
@@ -49,4 +62,16 @@ __all__ = [
     "UserPasswordResetResponse",
     "UserListQuery",
     "PageResult",
+    # knowledge
+    "KnowledgeUnitCreate",
+    "KnowledgeUnitUpdate",
+    "KnowledgeUnitOut",
+    "KnowledgeUnitDetail",
+    "KnowledgeUnitListQuery",
+    "BatchDeleteRequest",
+    "UnitPermissionOut",
+    "UnitPermissionSpec",
+    "UnitPermissionsReplace",
+    "CheckPermissionsRequest",
+    "CheckPermissionsResponse",
 ]
