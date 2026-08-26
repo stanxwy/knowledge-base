@@ -69,7 +69,13 @@ export const Departments: React.FC = () => {
     }
   };
 
-  const renderTreeNodes = (data: DepartmentNode[]) =>
+  type TreeNode = {
+    key: number;
+    title: React.ReactNode;
+    children?: TreeNode[];
+  };
+
+  const renderTreeNodes = (data: DepartmentNode[]): TreeNode[] =>
     data.map((n) => ({
       key: n.id,
       title: (

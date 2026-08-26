@@ -1,10 +1,26 @@
 from functools import lru_cache
+from pathlib import Path
 
-from pydantic import Field
+from pydantic import ConfigDict, Field
 from pydantic_settings import BaseSettings as PydanticBaseSettings
 
 
+# Resolve .env relative to this file so ``uvicorn`` can be launched from
+# either the repo root (``uvicorn app.main:app``) or from ``app/``
+# (``uvicorn app.main:app`` after ``cd app``). Defaults still load the
+# expected ``app/.env`` in both cases.
+_ENV_FILE = Path(__file__).resolve().parent.parent.parent / ".env"
+
+
 class Settings(PydanticBaseSettings):
+    # Allow stray keys in .env so we don't fail when the operator adds
+    # custom entries (e.g. legacy ``DATA_BASED_ROOT_DIR`` or ``MY_KEY``).
+    model_config = ConfigDict(
+        env_file=str(_ENV_FILE),
+        env_prefix="",
+        case_sensitive=False,
+        extra="ignore",
+    )
     APP_NAME: str = "Knowledge Base RAG"
     VERSION: str = "0.1.0"
     DEBUG: bool = False
@@ -69,10 +85,6 @@ class Settings(PydanticBaseSettings):
     # ===== MongoDB =====
     mongo_url: str = Field(..., env="MONGO_URL")
     mongo_db_name: str = Field(..., env="MONGO_DB_NAME")
-
-    class Config:
-        env_file = ".env"
-        env_prefix = "" # env_prefix = "KB_"
 
 
 @lru_cache(maxsize=1)

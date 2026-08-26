@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Form, Input, message, Modal, Popconfirm, Switch as ASwitch, Table, Tag } from 'antd';
+import { Button, Form, Input, message, Modal, Popconfirm, Select, Switch as ASwitch, Table, Tag } from 'antd';
 import { PageResult, UserDetail, createUser, deleteUser, listRoles, listUsers, resetPassword, toggleUserStatus, updateUser } from '../../api/org';
 import { extractErrorMessage } from '../../api/client';
 import type { Role } from '../../api/org';
@@ -248,5 +248,6 @@ export const Users: React.FC = () => {
   );
 };
 
-import { Select } from 'antd';
-const SelectMulti = Select<{ value: number; label: string }[]>.mode;
+const SelectMulti = (props: React.ComponentProps<typeof Select>) => (
+  <Select {...props} mode="multiple" />
+);

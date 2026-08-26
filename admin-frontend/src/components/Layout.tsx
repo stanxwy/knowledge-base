@@ -46,7 +46,8 @@ const MENUS: MenuConfig[] = [
 export const Layout: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, permissions, is_superuser, clear } = useAuthStore();
+  const { user, permissions, clear } = useAuthStore();
+  const is_superuser = user?.is_superuser ?? false;
 
   const items = MENUS.filter((m) => {
     if (!m.permission) return true;

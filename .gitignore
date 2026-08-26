@@ -219,6 +219,8 @@ __marimo__/
 # Streamlit
 .streamlit/secrets.toml
 
+node_modules
+volumes
 ~*.docx
 kb/
 output/
