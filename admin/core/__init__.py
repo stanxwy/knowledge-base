@@ -1,0 +1,1 @@
+"""KBMS admin — core package (config, security, exceptions, logging)."""

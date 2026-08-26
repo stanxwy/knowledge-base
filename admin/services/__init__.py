@@ -1,0 +1,1 @@
+"""Services package — pure business logic, no FastAPI coupling."""
