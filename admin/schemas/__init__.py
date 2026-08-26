@@ -38,6 +38,7 @@ from admin.schemas.knowledge import (
     CheckPermissionsResponse,
 )
 from admin.schemas.import_task import ImportTaskStatus, ImportTaskFileResult
+from admin.schemas.ai import ChatRequest, ChatMessage, SessionSummary
 
 __all__ = [
     # auth
@@ -77,4 +78,8 @@ __all__ = [
     "CheckPermissionsResponse",
     "ImportTaskStatus",
     "ImportTaskFileResult",
+    # ai
+    "ChatRequest",
+    "ChatMessage",
+    "SessionSummary",
 ]

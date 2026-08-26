@@ -37,7 +37,8 @@ class QueryService:
         if is_stream:
             create_sse_queue(session_id)
 
-    def run_graph_task(self, task_id: str, session_id: str, user_query: str, is_stream: bool):
+    def run_graph_task(self, task_id: str, session_id: str, user_query: str, is_stream: bool,
+                      focus_file_titles: list[str] | None = None):
         logger.info(f"[{task_id} | {session_id}] Query Workflow started: {user_query}")
         try:
             init_state = {
@@ -45,6 +46,7 @@ class QueryService:
                 "session_id": session_id,
                 "task_id": task_id,
                 "is_stream": is_stream,
+                "focus_file_titles": focus_file_titles or [],
             }
             self._workflow.run(init_state)
 

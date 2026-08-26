@@ -24,17 +24,30 @@ async def query(background_tasks: BackgroundTasks, request: QueryRequest, servic
         service.init_task(task_id, session_id, is_stream)
 
         if is_stream:
-            background_tasks.add_task(service.run_graph_task, task_id, session_id, user_query, is_stream)
+            background_tasks.add_task(
+                service.run_graph_task,
+                task_id,
+                session_id,
+                user_query,
+                is_stream,
+                request.focus_file_titles,
+            )
             logger.info(f"[{task_id} | {session_id}] Query Workflow task submitted to background executor")
 
             return StreamSubmitResponse(
                 message="Task submitted", session_id=session_id, task_id=task_id
             )
         else:
-            service.run_graph_task(task_id, session_id, user_query, is_stream)
+            service.run_graph_task(
+                task_id,
+                session_id,
+                user_query,
+                is_stream,
+                request.focus_file_titles,
+            )
             return QueryResponse(
-                message="Task completed", 
-                session_id=session_id, 
+                message="Task completed",
+                session_id=session_id,
                 answer=service.get_answer(task_id)
             )
     except Exception as e:

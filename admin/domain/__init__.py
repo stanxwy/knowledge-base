@@ -16,6 +16,8 @@ from admin.domain.unit_permission import (
     TARGET_USER,
     VALID_TARGET_TYPES,
 )
+from admin.domain.ai_session import AISession
+from admin.domain.qa_access_log import QAAccessLog
 
 __all__ = [
     "User",
@@ -31,4 +33,6 @@ __all__ = [
     "TARGET_ROLE",
     "TARGET_USER",
     "VALID_TARGET_TYPES",
+    "AISession",
+    "QAAccessLog",
 ]

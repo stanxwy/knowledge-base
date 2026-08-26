@@ -27,3 +27,4 @@ class QueryGraphState(KBGraphState):
     rewritten_query: str  # 改写后的问题
     history: list  # 历史对话记录
     is_stream: bool  # 是否流式输出
+    focus_file_titles: list[str]  # KBMS admin 透传的鉴权后白名单(仅记录/观测,默认不强制过滤)
