@@ -92,7 +92,6 @@ export interface ImportTaskStatus {
 }
 
 export async function importFiles(files: File[]): Promise<ImportTaskStatus> {
-export async function importFiles(files: File[]): Promise<ImportTaskStatus> {
   const form = new FormData();
   for (const f of files) form.append('files', f);
   const r = await api.post<ImportTaskStatus>('/api/knowledge/import', form, {

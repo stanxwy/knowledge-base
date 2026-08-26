@@ -27,11 +27,7 @@ interface MenuConfig {
 
 const MENUS: MenuConfig[] = [
   { key: '/admin/dashboard', label: '数据看板', icon: <DashboardOutlined />, permission: 'dashboard:read' },
-  {
-    key: 'org',
-    label: '组织与权限',
-    icon: <TeamOutlined />,
-  },
+  { key: '/admin/org', label: '组织与权限', icon: <TeamOutlined /> },
   { key: '/admin/org/users', label: '用户管理', icon: <UserOutlined />, permission: 'user:read' },
   { key: '/admin/org/departments', label: '部门管理', icon: <ApartmentOutlined />, permission: 'org:read' },
   { key: '/admin/org/roles', label: '角色权限', icon: <SafetyCertificateOutlined />, permission: 'role:read' },

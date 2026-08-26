@@ -16,10 +16,6 @@ export default defineConfig({
                     });
                 },
             },
-            '/admin': {
-                target: 'http://localhost:8002',
-                changeOrigin: true,
-            },
         },
     },
     build: {

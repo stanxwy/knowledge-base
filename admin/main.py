@@ -18,6 +18,7 @@ from fastapi.responses import JSONResponse
 from admin.api.v1 import auth, health
 from admin.api.v1.org import departments, roles, users
 from admin.api.v1.knowledge import import_router, units as knowledge_units
+from admin.api.v1.knowledge.import_router import rag_status_router
 from admin.api.v1.ai import chat as ai_chat
 from admin.api.v1.dashboard import stats as dashboard_stats
 from admin.api.v1.settlement import faqs as settlement_faqs, gaps as settlement_gaps
@@ -104,6 +105,7 @@ def create_app() -> FastAPI:
     app.include_router(users.router)
     app.include_router(knowledge_units.router)
     app.include_router(import_router.router)
+    app.include_router(rag_status_router)
     app.include_router(ai_chat.router)
     app.include_router(dashboard_stats.router)
     app.include_router(settlement_faqs.router)

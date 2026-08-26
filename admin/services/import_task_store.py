@@ -195,77 +195,73 @@ async def _poll_rag_tasks(
         retry_count += 1
 
         all_done = True
-        db = None
 
         try:
-            db = await db_factory()
+            async with db_factory() as db:
+                for filename, rag_task_id in rag_tasks.items():
+                    try:
+                        # Reuse task_router's /status/{task_id} endpoint
+                        # Returns: {task_id, status, done_list, running_list}
+                        progress = await rag_client.get_task_status(rag_task_id)
+                        status = progress.get("status", "unknown")
+                        done_list = progress.get("done_list", [])
+                        running_list = progress.get("running_list", [])
 
-            for filename, rag_task_id in rag_tasks.items():
-                try:
-                    # Reuse task_router's /status/{task_id} endpoint
-                    # Returns: {task_id, status, done_list, running_list}
-                    progress = await rag_client.get_task_status(rag_task_id)
-                    status = progress.get("status", "unknown")
-                    done_list = progress.get("done_list", [])
-                    running_list = progress.get("running_list", [])
+                        if status == "completed":
+                            # Update KnowledgeUnit status
+                            mapping = get_rag_task_mapping(task_id, filename)
+                            if mapping:
+                                unit_id, _ = mapping
+                                await db.execute(
+                                    update(KnowledgeUnit)
+                                    .where(KnowledgeUnit.id == unit_id)
+                                    .values(status="published")
+                                )
+                                await db.commit()
+                                record_file_done(
+                                    task_id,
+                                    filename,
+                                    unit_ids=[unit_id],
+                                    unit_codes=[],
+                                    status="done",
+                                    message="RAG processing completed",
+                                )
+                                logger.info(f"[{task_id}] File {filename} processing completed")
 
-                    if status == "completed":
-                        # Update KnowledgeUnit status
-                        mapping = get_rag_task_mapping(task_id, filename)
-                        if mapping:
-                            unit_id, _ = mapping
-                            await db.execute(
-                                update(KnowledgeUnit)
-                                .where(KnowledgeUnit.id == unit_id)
-                                .values(status="published")
-                            )
-                            await db.commit()
-                            record_file_done(
+                        elif status == "failed":
+                            mapping = get_rag_task_mapping(task_id, filename)
+                            if mapping:
+                                unit_id, _ = mapping
+                                await db.execute(
+                                    update(KnowledgeUnit)
+                                    .where(KnowledgeUnit.id == unit_id)
+                                    .values(status="failed")
+                                )
+                                await db.commit()
+                            record_file_failed(
                                 task_id,
                                 filename,
-                                unit_ids=[unit_id],
-                                unit_codes=[],
-                                status="done",
-                                message="RAG processing completed",
+                                "RAG processing failed",
                             )
-                            logger.info(f"[{task_id}] File {filename} processing completed")
+                            logger.warning(f"[{task_id}] File {filename} processing failed")
 
-                    elif status == "failed":
-                        mapping = get_rag_task_mapping(task_id, filename)
-                        if mapping:
-                            unit_id, _ = mapping
-                            await db.execute(
-                                update(KnowledgeUnit)
-                                .where(KnowledgeUnit.id == unit_id)
-                                .values(status="failed")
+                        else:
+                            # Still processing - update progress
+                            all_done = False
+                            update_file_progress(
+                                task_id,
+                                filename,
+                                status="processing",
+                                done_list=done_list,
+                                running_list=running_list,
                             )
-                            await db.commit()
-                        record_file_failed(
-                            task_id,
-                            filename,
-                            "RAG processing failed",
+                    except Exception as e:
+                        logger.warning(
+                            f"[{task_id}] Error polling RAG task {rag_task_id}: {e}"
                         )
-                        logger.warning(f"[{task_id}] File {filename} processing failed")
-
-                    else:
-                        # Still processing - update progress
                         all_done = False
-                        update_file_progress(
-                            task_id,
-                            filename,
-                            status="processing",
-                            done_list=done_list,
-                            running_list=running_list,
-                        )
-
-                except Exception as e:
-                    logger.warning(
-                        f"[{task_id}] Error polling RAG task {rag_task_id}: {e}"
-                    )
-                    all_done = False
-        finally:
-            if db:
-                await db.close()
+        except Exception as e:
+            logger.warning(f"[{task_id}] Database error in polling loop: {e}")
 
         if all_done:
             logger.info(f"[{task_id}] All RAG tasks completed")

@@ -24,9 +24,11 @@ export const KnowledgeImport: React.FC = () => {
         setTask(adminTask);
 
         // Also poll app for real-time step progress (done_list, running_list)
-        // Use the first file's rag_task_id if available, otherwise use the first file's filename
-        const firstFile = adminTask.files[0];
-        if (firstFile?.unit_ids?.length) {
+        // Check if any file has been uploaded to RAG (status='uploaded' or 'processing')
+        const hasUploadedFile = adminTask.files.some(f =>
+          f.status === 'uploaded' || f.status === 'processing' || f.status === 'done'
+        );
+        if (hasUploadedFile) {
           try {
             // Poll app task progress using admin task_id (they're linked)
             const appProgress = await pollAppTaskProgress(task.task_id);

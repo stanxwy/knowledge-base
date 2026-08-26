@@ -4,7 +4,8 @@ from __future__ import annotations
 import logging
 from collections.abc import Awaitable, Callable
 
-from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
+from fastapi import APIRouter, BackgroundTasks, Depends, File, HTTPException, UploadFile
+from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from admin.api.deps import require_permission
@@ -14,6 +15,7 @@ from admin.db.base import get_db
 from admin.domain.user import User as UserModel
 from admin.schemas.import_task import ImportTaskStatus
 from admin.services import import_task_store, importer
+from admin.services.rag_client import get_task_status
 
 logger = logging.getLogger(__name__)
 
@@ -27,6 +29,9 @@ def _ext_of(filename: str) -> str:
 
 
 router = APIRouter(prefix="/api/knowledge", tags=["knowledge-import"])
+
+# Sub-router for RAG status proxy (mounted at /api/v1)
+rag_status_router = APIRouter(prefix="/api/v1", tags=["rag-status"])
 
 
 async def _run_batch(
@@ -106,3 +111,32 @@ async def get_import_task(
     if task is None:
         raise exc.NotFoundError(f"import task {task_id} 不存在或已过期(admin 重启后会清空)")
     return task
+
+# ---------- RAG status proxy ---------- #
+
+
+class TaskStatusResponse(BaseModel):
+    """Response model for RAG task status."""
+    task_id: str
+    status: str
+    done_list: list[str]
+    running_list: list[str]
+
+
+@rag_status_router.get("/status/{task_id}")
+async def get_rag_status(
+    task_id: str,
+    _user: UserModel = Depends(require_permission("knowledge:import")),
+) -> TaskStatusResponse:
+    """Proxy to app's task status API for real-time progress monitoring."""
+    try:
+        progress = await get_task_status(task_id)
+        return TaskStatusResponse(
+            task_id=task_id,
+            status=progress.get("status", "unknown"),
+            done_list=progress.get("done_list", []),
+            running_list=progress.get("running_list", []),
+        )
+    except Exception as e:
+        logger.warning("Failed to fetch RAG task status for %s: %s", task_id, e)
+        raise HTTPException(status_code=503, detail=f"RAG engine unavailable: {e}") from e

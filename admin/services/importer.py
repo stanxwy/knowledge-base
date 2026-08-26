@@ -220,7 +220,7 @@ async def import_batch(
     if rag_tasks:
         import_task_store.start_rag_polling(
             task_id=task_id,
-            db_factory=lambda: AsyncSessionLocal(),
+            db_factory=AsyncSessionLocal,
             rag_tasks=rag_tasks,
             creator_id=creator_id,
         )
