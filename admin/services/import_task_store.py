@@ -202,7 +202,12 @@ async def _poll_rag_tasks(
 
             for filename, rag_task_id in rag_tasks.items():
                 try:
-                    status = await rag_client.get_task_status(rag_task_id)
+                    # Reuse task_router's /status/{task_id} endpoint
+                    # Returns: {task_id, status, done_list, running_list}
+                    progress = await rag_client.get_task_status(rag_task_id)
+                    status = progress.get("status", "unknown")
+                    done_list = progress.get("done_list", [])
+                    running_list = progress.get("running_list", [])
 
                     if status == "completed":
                         # Update KnowledgeUnit status
@@ -243,8 +248,15 @@ async def _poll_rag_tasks(
                         logger.warning(f"[{task_id}] File {filename} processing failed")
 
                     else:
-                        # Still processing
+                        # Still processing - update progress
                         all_done = False
+                        update_file_progress(
+                            task_id,
+                            filename,
+                            status="processing",
+                            done_list=done_list,
+                            running_list=running_list,
+                        )
 
                 except Exception as e:
                     logger.warning(
@@ -268,6 +280,28 @@ async def _poll_rag_tasks(
         _polling_tasks.pop(task_id, None)
 
 
+def update_file_progress(
+    task_id: str,
+    filename: str,
+    *,
+    status: str,
+    done_list: list[str] | None = None,
+    running_list: list[str] | None = None,
+) -> None:
+    """Update file progress with step details."""
+    def _mutate(files: list[ImportTaskFileResult]) -> None:
+        for f in files:
+            if f.filename == filename:
+                f.status = status  # type: ignore[assignment]
+                if done_list is not None:
+                    f.done_list = done_list
+                if running_list is not None:
+                    f.running_list = running_list
+                return
+
+    update_task(task_id, mutate_files=_mutate)
+
+
 __all__ = [
     "create_task",
     "get_task",
@@ -278,4 +312,5 @@ __all__ = [
     "associate_rag_task",
     "get_rag_task_mapping",
     "start_rag_polling",
+    "update_file_progress",
 ]

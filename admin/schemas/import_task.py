@@ -14,6 +14,8 @@ class ImportTaskFileResult(BaseModel):
     unit_ids: list[int] = []
     error: str | None = None
     message: str | None = None
+    done_list: list[str] = []
+    running_list: list[str] = []
 
 
 class ImportTaskStatus(BaseModel):

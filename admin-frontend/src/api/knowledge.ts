@@ -79,6 +79,8 @@ export interface ImportTaskFileResult {
   unit_ids: number[];
   error: string | null;
   message: string | null;
+  done_list: string[];
+  running_list: string[];
 }
 
 export interface ImportTaskStatus {
@@ -89,6 +91,7 @@ export interface ImportTaskStatus {
   updated_at: string;
 }
 
+export async function importFiles(files: File[]): Promise<ImportTaskStatus> {
 export async function importFiles(files: File[]): Promise<ImportTaskStatus> {
   const form = new FormData();
   for (const f of files) form.append('files', f);
@@ -101,5 +104,21 @@ export async function importFiles(files: File[]): Promise<ImportTaskStatus> {
 
 export async function pollImportTask(taskId: string): Promise<ImportTaskStatus> {
   const r = await api.get<ImportTaskStatus>(`/api/knowledge/tasks/${taskId}`);
+  return r.data;
+}
+
+export async function pollAppTaskProgress(taskId: string): Promise<{
+  task_id: string;
+  status: string;
+  done_list: string[];
+  running_list: string[];
+}> {
+  // Reuse app's /status/{task_id} endpoint for real-time progress
+  const r = await api.get<{
+    task_id: string;
+    status: string;
+    done_list: string[];
+    running_list: string[];
+  }>(`/api/v1/status/${taskId}`);
   return r.data;
 }
