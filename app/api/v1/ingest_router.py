@@ -41,3 +41,35 @@ async def upload_files(background_tasks: BackgroundTasks, files: list[UploadFile
         raise HTTPException(status_code=500, detail=str(e))
 
 
+
+
+@router.get("/ingest/tasks/{task_id}", summary="Get RAG ingestion task status")
+async def get_ingest_task_status(
+    task_id: str,
+):
+    """Query the status of a background ingestion task."""
+    try:
+        from app.utils.task_utils import (
+            TASK_STATUS_COMPLETED,
+            TASK_STATUS_FAILED,
+            TASK_STATUS_PENDING,
+            TASK_STATUS_PROCESSING,
+            get_task_status,
+        )
+
+        status = get_task_status(task_id)
+
+        # Map internal status to API response
+        status_map = {
+            TASK_STATUS_PENDING: "pending",
+            TASK_STATUS_PROCESSING: "processing",
+            TASK_STATUS_COMPLETED: "completed",
+            TASK_STATUS_FAILED: "failed",
+        }
+
+        return {
+            "task_id": task_id,
+            "status": status_map.get(status, status),
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

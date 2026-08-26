@@ -99,3 +99,20 @@ async def upload_files(
         raise RAGUnavailableError(f"RAG upload failed: HTTP {r.status_code} {r.text[:200]}")
     r.raise_for_status()
     return r.json()
+
+async def get_task_status(task_id: str) -> str:
+    """GET /api/v1/ingest/tasks/{task_id} — poll RAG processing status.
+
+    Returns one of: "pending", "processing", "completed", "failed", "timeout"
+    """
+    try:
+        async with _client() as c:
+            r = await c.get(f"/api/v1/ingest/tasks/{task_id}")
+    except httpx.HTTPError as e:
+        raise RAGUnavailableError(f"RAG unreachable: {e}") from e
+    if r.status_code >= 500:
+        raise RAGUnavailableError(f"RAG task status failed: HTTP {r.status_code} {r.text[:200]}")
+    r.raise_for_status()
+    data = r.json()
+    return data.get("status", "unknown")
+

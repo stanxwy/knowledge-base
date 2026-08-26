@@ -74,15 +74,16 @@ export async function checkPermissions(user_id: number, unit_ids: number[]) {
 
 export interface ImportTaskFileResult {
   filename: string;
-  status: 'pending' | 'parsing' | 'ingesting' | 'done' | 'failed';
+  status: 'pending' | 'parsing' | 'ingesting' | 'uploaded' | 'processing' | 'done' | 'failed' | 'timeout';
   unit_codes: string[];
   unit_ids: number[];
   error: string | null;
+  message: string | null;
 }
 
 export interface ImportTaskStatus {
   task_id: string;
-  status: 'pending' | 'running' | 'done' | 'failed';
+  status: 'pending' | 'running' | 'done' | 'failed' | 'timeout';
   files: ImportTaskFileResult[];
   created_at: string;
   updated_at: string;

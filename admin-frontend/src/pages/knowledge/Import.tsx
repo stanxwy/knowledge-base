@@ -17,7 +17,7 @@ export const KnowledgeImport: React.FC = () => {
       try {
         const r = await pollImportTask(task.task_id);
         setTask(r);
-        if (r.status === 'done' || r.status === 'failed') {
+        if (r.status === 'done' || r.status === 'failed' || r.status === 'timeout') {
           clearInterval(timer);
         }
       } catch (e) {
@@ -36,7 +36,7 @@ export const KnowledgeImport: React.FC = () => {
     try {
       const t = await importFiles(fileList);
       setTask(t);
-      message.success('已提交,正在后台解析');
+      message.success('已提交,正在上传至RAG引擎');
     } catch (e) {
       message.error(extractErrorMessage(e));
     } finally {
@@ -80,21 +80,27 @@ export const KnowledgeImport: React.FC = () => {
 
       {task && (
         <Card title={`导入任务 ${task.task_id.slice(0, 8)}...`} style={{ marginTop: 16 }}>
-          <Progress percent={progressPct} status={task.status === 'failed' ? 'exception' : undefined} />
+          <Progress percent={progressPct} status={task.status === 'failed' ? 'exception' : task.status === 'timeout' ? 'exception' : undefined} />
           <div style={{ marginTop: 16 }}>
             {task.files.map((f) => (
               <div key={f.filename} style={{ marginBottom: 8 }}>
                 <strong>{f.filename}</strong>: {f.status}
                 {f.status === 'done' && (
                   <span style={{ marginLeft: 8, color: '#52c41a' }}>
-                    → 产生 {f.unit_ids.length} 个知识单元
+                    → 已上传，RAG处理完成
                   </span>
                 )}
+                {f.status === 'uploaded' && (
+                  <span style={{ marginLeft: 8, color: '#1890ff' }}>
+                    → 已上传，等待RAG处理
+                  </span>
+                )}
+                {f.message && <span style={{ marginLeft: 8, color: '#8c8c8c' }}>({f.message})</span>}
                 {f.error && <span style={{ color: 'red', marginLeft: 8 }}>{f.error}</span>}
               </div>
             ))}
           </div>
-          {task.status === 'done' && (
+          {(task.status === 'done' || task.status === 'timeout') && (
             <Button type="primary" onClick={() => navigate('/admin/knowledge')}>
               查看知识单元列表
             </Button>
