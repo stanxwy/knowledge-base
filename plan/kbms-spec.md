@@ -57,17 +57,123 @@
 
 ### 2.1 ER 概览
 
+```mermaid
+erDiagram
+    users ||--o{ user_roles : "has"
+    roles ||--o{ user_roles : "granted to"
+    roles ||--o{ role_permissions : "binds"
+    permissions ||..o{ role_permissions : "may be referenced"
+    departments ||--o{ departments : "parent_id (self-tree)"
+    departments ||--o{ users : "department_id"
+    users ||--o{ knowledge_units : "creator_id"
+    knowledge_units ||--o{ unit_permissions : "access rules"
+    users ||--o{ ai_sessions : "owns"
+    ai_sessions ||--o{ ai_messages : "contains"
+    users ||--o{ qa_access_logs : "asks"
+    knowledge_units ||--o{ faqs : "related_unit_id"
+    knowledge_units ||--o{ knowledge_gaps : "resolved_unit_id"
+
+    users {
+        bigint id PK
+        varchar username "UQ"
+        varchar password_hash
+        varchar display_name
+        varchar email "UQ nullable"
+        bigint department_id FK
+        smallint status
+        boolean is_superuser
+        timestamptz last_login_at
+    }
+    departments {
+        bigint id PK
+        bigint parent_id FK "self-tree"
+        varchar name
+        bigint leader_id FK
+        int sort_order
+    }
+    roles {
+        bigint id PK
+        varchar role_code "UQ"
+        varchar role_name
+        boolean is_builtin
+    }
+    permissions {
+        bigint id PK
+        varchar permission_code "UQ"
+        varchar resource
+        varchar action
+    }
+    user_roles {
+        bigint id PK
+        bigint user_id FK
+        bigint role_id FK
+    }
+    role_permissions {
+        bigint id PK
+        bigint role_id FK
+        varchar permission_code
+    }
+    knowledge_units {
+        bigint id PK
+        varchar unit_code "UQ"
+        varchar title
+        text content
+        varchar status "draft/published/archived"
+        bigint creator_id FK
+    }
+    unit_permissions {
+        bigint id PK
+        bigint unit_id FK
+        varchar target_type "global/department/role/user"
+        bigint target_id "nullable"
+    }
+    ai_sessions {
+        uuid id PK
+        bigint user_id FK
+        varchar title
+    }
+    ai_messages {
+        bigint id PK
+        uuid session_id FK
+        varchar role "user/assistant"
+        text content
+        varchar source "faq/rag"
+    }
+    qa_access_logs {
+        bigint id PK
+        uuid session_id
+        bigint user_id FK
+        text question
+        jsonb recalled_unit_ids_json
+        jsonb authorized_unit_ids_json
+        jsonb unauthorized_unit_ids_json
+        int total_tokens
+        int response_time_ms
+        boolean is_gap
+    }
+    faqs {
+        bigint id PK
+        text question
+        text answer
+        bigint related_unit_id FK
+        varchar source_type "manual/auto_mined"
+        varchar status "pending_review/published/rejected"
+    }
+    knowledge_gaps {
+        bigint id PK
+        varchar question_pattern "UQ"
+        jsonb sample_questions_json
+        bigint ask_count
+        varchar status "unresolved/resolved/ignored"
+    }
 ```
-users (1) ──< (N) user_roles >── (N) roles ──< (N) role_permissions >── (N) permissions
-users (N) >── (1) departments (self-ref parent_id tree)
-users (1) ──< (N) knowledge_units ──< (N) unit_permissions
-users (1) ──< (N) qa_access_logs
-users (1) ──< (N) ai_sessions (1) ──< (N) ai_messages
-knowledge_units (1) ──< (N) faqs (related_unit_id)
-faqs (status=published) ── in-memory LRU cache ──>
-qa_access_logs ── async miner ──> faqs (status=pending_review) ── review ── published
-qa_access_logs ── gap detector ──> knowledge_gaps
-```
+
+> **关系说明**:
+> - `users.department_id` 与 `departments.leader_id` 都是 `SET NULL on delete`,保证删部门不级联删人。
+> - `user_roles` / `role_permissions` / `unit_permissions` 是 3 张关联表,M:N 解耦主表与权限/规则字典。
+> - `permissions` 是权限字典(供前端渲染权限树),`role_permissions.permission_code` 是冗余存的字符串(MVP 不强引用字典,便于扩展)。
+> - `qa_access_logs.question_embedding` (TEXT/JSON) 用于语义聚类(可在后期按需启用,MVP 不写入)。
+> - 虚线 `permissions ||..o{ role_permissions` 表示字典与角色绑定的关系是非强引用(角色可绑尚未注册的码)。
 
 ### 2.2 表结构(Postgres)
 
