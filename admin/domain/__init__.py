@@ -18,6 +18,8 @@ from admin.domain.unit_permission import (
 )
 from admin.domain.ai_session import AISession
 from admin.domain.qa_access_log import QAAccessLog
+from admin.domain.faq import FAQ
+from admin.domain.knowledge_gap import KnowledgeGap
 
 __all__ = [
     "User",
@@ -35,4 +37,6 @@ __all__ = [
     "VALID_TARGET_TYPES",
     "AISession",
     "QAAccessLog",
+    "FAQ",
+    "KnowledgeGap",
 ]

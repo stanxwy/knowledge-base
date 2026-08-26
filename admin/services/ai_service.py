@@ -34,7 +34,7 @@ from admin.domain.ai_session import AISession
 from admin.domain.knowledge_unit import KnowledgeUnit
 from admin.domain.qa_access_log import QAAccessLog
 from admin.domain.user import User
-from admin.services import data_permission_engine, faq_cache, rag_client
+from admin.services import data_permission_engine, faq_cache, gap_detector, rag_client
 
 logger = logging.getLogger(__name__)
 
@@ -214,6 +214,14 @@ async def chat_stream(
             response_time_ms=elapsed_ms,
             is_gap=True,
         )
+        try:
+            await gap_detector.upsert_gap(
+                db,
+                question_pattern=_normalize_pattern(question),
+                sample_question=question,
+            )
+        except Exception as e:
+            logger.warning("Failed to upsert gap: %s", e)
         return
 
     # ===== Step 3: check permissions =====

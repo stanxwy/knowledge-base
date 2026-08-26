@@ -30,6 +30,9 @@ _FAKE_ANSWER = "根据知识库,冰箱不制冷一般是压缩机问题或制冷
 @app.post("/api/v1/recall")
 async def recall(payload: dict):
     query = payload.get("query", "")
+    # Special test mode: return empty hits for trigger phrases.
+    if "no_hit" in os.environ.get("FAKE_RAG_MODE", ""):
+        return {"hits": []}
     return {
         "hits": [
             {"file_title": code, "item_name": "冰箱维修", "score": score}

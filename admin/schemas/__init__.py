@@ -45,6 +45,15 @@ from admin.schemas.dashboard import (
     UnitRank,
     DailyTrendPoint,
 )
+from admin.schemas.settlement import (
+    FAQRecommendation,
+    FAQPublished,
+    FAQReviewRequest,
+    FAQManualCreate,
+    KnowledgeGapOut,
+    KnowledgeGapUpdate,
+    KnowledgeGapCreateUnitRequest,
+)
 
 __all__ = [
     # auth
@@ -93,4 +102,12 @@ __all__ = [
     "QuestionRank",
     "UnitRank",
     "DailyTrendPoint",
+    # settlement
+    "FAQRecommendation",
+    "FAQPublished",
+    "FAQReviewRequest",
+    "FAQManualCreate",
+    "KnowledgeGapOut",
+    "KnowledgeGapUpdate",
+    "KnowledgeGapCreateUnitRequest",
 ]
