@@ -39,6 +39,12 @@ from admin.schemas.knowledge import (
 )
 from admin.schemas.import_task import ImportTaskStatus, ImportTaskFileResult
 from admin.schemas.ai import ChatRequest, ChatMessage, SessionSummary
+from admin.schemas.dashboard import (
+    DashboardMetrics,
+    QuestionRank,
+    UnitRank,
+    DailyTrendPoint,
+)
 
 __all__ = [
     # auth
@@ -82,4 +88,9 @@ __all__ = [
     "ChatRequest",
     "ChatMessage",
     "SessionSummary",
+    # dashboard
+    "DashboardMetrics",
+    "QuestionRank",
+    "UnitRank",
+    "DailyTrendPoint",
 ]
