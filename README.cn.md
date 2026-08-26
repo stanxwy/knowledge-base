@@ -1,6 +1,8 @@
 # 知识库 RAG 系统 — 项目架构分析与最佳实践总结
 
 > 基于 LangGraph 的知识库导入与智能检索系统（RAG），支持 PDF/Markdown 文档解析、多模态图片理解、混合向量检索与 LLM 问答。
+>
+> **v0.2 起新增 KBMS(Knowledge Base Management System)** — 在 `admin/` + `admin-frontend/` 中,提供用户/组织/角色/数据权限、AI 鉴权问答、数据看板、FAQ 沉淀与知识缺口识别等完整管理能力。
 
 ---
 
@@ -11,8 +13,100 @@
 3. [软件架构原则](#3-软件架构原则)
 4. [软件工程最佳实践](#4-软件工程最佳实践)
 5. [可优化改进之处](#5-可优化改进之处)
+6. [KBMS 扩展（v0.2+）](#6-kbms-扩展v02)
 
 ---
+
+## 6. KBMS 扩展（v0.2+）
+
+> 完整 PRD/SPEC 见 `plan/kbms-prd.md` 与 `plan/kbms-spec.md`。
+
+### 6.1 模块划分
+
+| 模块 | 路径 | 说明 |
+|---|---|---|
+| KBMS 后端 | `admin/` | 独立 FastAPI 进程（端口 8002），Postgres + SQLAlchemy async + Alembic |
+| KBMS 前端 | `admin-frontend/` | React 18 + Vite + AntD + Zustand SPA，构建产物由 admin 服务用 `StaticFiles` 托管在 `/admin/*` |
+| RAG 引擎 | `app/` | 既有代码，本期最小改动：新增 `/api/v1/recall` 与 `/api/v1/embed` 两个路由，`/query` 增加 `focus_file_titles` 透传字段 |
+
+### 6.2 服务端口
+
+| 端口 | 服务 | 说明 |
+|---|---|---|
+| 8000 | `kb-import` | RAG 摄入 |
+| 8001 | `kb-query` | RAG 问答 |
+| **8002** | **`kb-admin`** | **KBMS 后端 + 托管 SPA (`/admin/*`)** |
+| 5432 | `kbms-postgres` | KBMS 主库 |
+| 9000/9001 | `kb-minio` | 对象存储（RAG） |
+| 27017 | `kb-mongodb` | RAG 业务库 |
+| 19530 + 9000/9001 | Milvus stack | 向量库（RAG） |
+
+> Neo4j 已从 `app/docker-compose.yml` 中移除（代码确认无引用），由 `kbms-postgres` 统一承担关系建模。
+
+### 6.3 一键启动
+
+```bash
+# 0. 准备环境变量
+cp app/.env.example app/.env.prod
+# 编辑 app/.env.prod,填写真实 API Key / Postgres 密码 / JWT_SECRET(≥32 字符)
+
+# 1. 启动 RAG + KBMS 全栈
+docker compose up -d --build
+
+# 2. 初始化 KBMS 数据库 + 超级用户
+docker compose exec kb-admin alembic upgrade head
+docker compose exec kb-admin python -m admin.scripts.create_superuser
+
+# 3. (首次部署) 构建前端 SPA 产物到共享卷
+docker compose --profile build run --rm admin-frontend-build
+docker compose restart kb-admin
+```
+
+随后访问 `http://localhost:8002/admin/login`（默认账号 `admin` / `admin123`，**生产环境务必修改**）。
+
+### 6.4 关键设计要点
+
+- **数据权限**（SPEC §5.1）：四类权限实体 `global / department / role / user`，单知识单元可混合配置，OR 逻辑；默认拒绝；superuser bypass。
+- **AI 鉴权问答流**（SPEC §5.2）：admin 先 `recall` → `check_permissions` → 把 `authorized_unit_codes` 通过 `focus_file_titles` 传给 RAG → SSE 流桥接，前端展示来源 + 无权限提示。
+- **FAQ 沉淀**（SPEC §5.3）：APScheduler 后台定期扫描 `qa_access_logs`，高频问题自动生成 `pending_review` 候选；管理员审核通过后入内存 LRU + 持久化到 `faqs` 表。
+- **知识缺口**（SPEC §5.4）：recall 为空或全无授权时，记 `qa_access_logs.is_gap=true` 并 upsert `knowledge_gaps`；前端可一键建档补全。
+- **看板**（SPEC §5.7）：核心指标 + 问题 TOP + 知识热度 + 日趋势纯 SQL 聚合，按 `today / 7d / 30d / all` 切换。
+- **状态机 / SSE 协议 / 错误响应格式**：见 SPEC §3.4 / §3.8 / §5.2。
+
+### 6.5 本地开发（不依赖 Docker）
+
+```bash
+# 终端 1: Postgres
+docker run -d --name kbms-pg-dev -p 5432:5432 \
+  -e POSTGRES_USER=kbms -e POSTGRES_PASSWORD=kbms -e POSTGRES_DB=kbms postgres:16-alpine
+
+# 终端 2: RAG 引擎(原项目命令)
+uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
+
+# 终端 3: KBMS 后端
+cd admin && cp .env.example .env  # 修改 DATABASE_URL/JWT_SECRET/RAG_BASE_URL
+alembic upgrade head
+python -m admin.scripts.create_superuser
+uvicorn admin.main:app --host 0.0.0.0 --port 8002 --reload
+
+# 终端 4: KBMS 前端(Vite dev server 反代 /api 到 8002)
+cd admin-frontend && pnpm install && pnpm dev
+# 访问 http://localhost:5173/admin/login
+```
+
+### 6.6 端到端演示脚本
+
+详细 step-by-step 见 [`docs/kbms-demo.md`](docs/kbms-demo.md)，覆盖：
+1. 创建部门与用户 → 分配角色
+2. 上传文档 → 配置 4 类数据权限
+3. 普通用户在工作台提问 → 验证鉴权过滤与无权限提示
+4. 触发 FAQ 挖掘 → 审核 → 发布 → 验证缓存命中
+5. 制造无命中提问 → 一键建档补全知识缺口
+6. 查看看板指标变化
+
+---
+
+### 5. ...
 
 ## 1. 项目概览
 

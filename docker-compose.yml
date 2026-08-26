@@ -7,15 +7,33 @@
 #      在 Milvus 就绪后再启动，启动顺序由 Compose 保证。
 #
 # 使用方式（务必在项目根目录执行）：
-#   docker compose up -d --build     # 构建 kb-app 镜像并启动全部服务
-#   docker compose down              # 停止并移除全部服务
-#   docker compose ps               # 查看各服务健康状态
+#   docker compose up -d --build                       # 构建 kb-app / kb-admin 镜像并启动全部服务
+#   docker compose --profile build run admin-frontend-build   # 一次性构建前端 SPA
+#   docker compose down                                # 停止并移除全部服务
+#   docker compose ps                                  # 查看各服务健康状态
+#
+# 首次部署需要：
+#   1. 复制 app/.env.example 为 app/.env.prod 并填写真实 API Key / Postgres 密码 / JWT_SECRET
+#   2. docker compose up -d --build
+#   3. 在 kb-admin 容器内执行 alembic upgrade head + create_superuser:
+#        docker compose exec kb-admin alembic upgrade head
+#        docker compose exec kb-admin python -m admin.scripts.create_superuser
+#
+# 服务端口总览：
+#   - 8000 kb-import  : RAG 摄入服务
+#   - 8001 kb-query   : RAG 问答服务
+#   - 8002 kb-admin    : KBMS 管理后台(API + React SPA)
+#   - 5432 kbms-postgres : KBMS 主库
+#   - 9000/9001 kb-minio : 对象存储
+#   - 27017 kb-mongodb : RAG 业务库
+#   - Milvus stack    : infra/docker-compose.yml
 #
 # 说明：
 #   - 两文件原本都定义了名为 minio 的服务（业务用 kb-minio / Milvus 用 milvus-minio），
 #     已在 infra 中重命名为 milvus-minio 以避免合并冲突。
 #   - 各服务持久化卷路径基于各自 compose 文件所在目录（app/volumes、infra/volumes）。
 #   - 需要 Docker Compose v2.20+（include 指令的最低版本）。
+#   - Neo4j 已从 app/docker-compose.yml 中移除(代码确认无引用),由 kbms-postgres 接管关系模型.
 
 include:
   - infra/docker-compose.yml
